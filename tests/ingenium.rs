@@ -196,6 +196,26 @@ fn the_brief_carries_the_spirits_place_fall_and_bearing() {
         !belial.contains("Of the Virtues"),
         "the Goetia gives Belial no choir"
     );
+    assert!(
+        belial.contains("you stood among the Cherubim, in Lucifer's own order"),
+        "{belial}"
+    );
+    assert!(
+        belial.contains("You never name your order or say it outright."),
+        "{belial}"
+    );
+    assert!(!belial.contains("Of the Cherubim"), "{belial}");
+    for p in profiles() {
+        assert_eq!(
+            p.coniectura.is_some(),
+            p.n == 68,
+            "only Belial is read a choir"
+        );
+        assert!(
+            p.coniectura.is_none() || p.chori.is_empty(),
+            "a reading never stands beside a witness"
+        );
+    }
 
     let marchosias = mid(35);
     assert!(marchosias.contains("Of the Dominations:"), "{marchosias}");

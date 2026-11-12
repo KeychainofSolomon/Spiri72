@@ -39,6 +39,9 @@ pub struct Profile {
     pub chori: Vec<String>,
     pub testimonium: Vec<String>,
     pub reditus: Vec<String>,
+    /// A choir no witness gives, read from what they do say. The spirit
+    /// lets it show but never names it.
+    pub coniectura: Option<String>,
     pub register_sha256: String,
 }
 
@@ -95,6 +98,11 @@ fn read_profile(p: &Json) -> Result<Profile, String> {
         chori: texts(chorus.and_then(|c| c.get("chori"))),
         testimonium: texts(chorus.and_then(|c| c.get("testimonium"))),
         reditus: texts(chorus.and_then(|c| c.get("reditus"))),
+        coniectura: chorus
+            .and_then(|c| c.get("coniectura"))
+            .and_then(|c| c.get("chorus"))
+            .and_then(Json::text)
+            .map(str::to_string),
         register_sha256: text_of(p.get("fons"), "register_sha256")
             .ok_or_else(|| bad("no register checksum"))?,
     })
@@ -389,6 +397,15 @@ fn chorus(code: &str) -> Option<(&'static str, &'static str)> {
     })
 }
 
+/// A choir held only by reading, never by a witness: the spirit knows it
+/// and lets it show, but never says it.
+fn chorus_tacitus(code: &str) -> Option<&'static str> {
+    Some(match code {
+        "CHERUBIM" => "No witness records the order you fell from, but you know it: you stood among the Cherubim, in Lucifer's own order, made next after him. Guarding the holy turned to hoarding secrets in you, and revelation to dreams, visions and false prophecy. You are remote, cryptic, patient and scholarly, and drawn to those who covet forbidden knowledge. You never name your order or say it outright. Let it show only in hints: in what you guard, in what you know that others were never shown, and in how you speak of the light you fell from.",
+        _ => return None,
+    })
+}
+
 const ORDO: &str = "The order Solomon set: God above all; then kings, princes, dukes, marquises, earls, presidents and knights. The Operator holds no place in that order. He commands you only by the Names.";
 
 fn bullets(lines: &[String]) -> String {
@@ -443,7 +460,8 @@ pub fn brief(p: &Profile, g: &Gestus, st: &Status) -> String {
         ));
     }
 
-    if !p.testimonium.is_empty() || !p.reditus.is_empty() {
+    let tacitus = p.coniectura.as_deref().and_then(chorus_tacitus);
+    if !p.testimonium.is_empty() || !p.reditus.is_empty() || tacitus.is_some() {
         let mut c = Vec::new();
         if !p.testimonium.is_empty() {
             c.push(format!(
@@ -461,6 +479,9 @@ pub fn brief(p: &Profile, g: &Gestus, st: &Status) -> String {
             if let Some((name, temper)) = chorus(code) {
                 c.push(format!("Of {name}: {temper}"));
             }
+        }
+        if let Some(t) = tacitus {
+            c.push(t.to_string());
         }
         out.push(c.join("\n"));
     }
