@@ -47,6 +47,13 @@ fn a_delay_carries_nothing() {
 }
 
 #[test]
+fn an_empty_work_is_only_a_part() {
+    let (o, a) = read(r#"{"exitus":"pars","opera":[]}"#, &ALL, false).unwrap();
+    assert_eq!((o, a), (Outcome::Pars, Actum::Opera(vec![])));
+    assert!(read(r#"{"exitus":"obsequium","opera":[]}"#, &ALL, false).is_err());
+}
+
+#[test]
 fn work_is_read() {
     let (_, a) = read(
         r#"{"exitus":"obsequium","opera":[{"verbum":"crea","locus":"turris.txt","data":""}]}"#,
@@ -79,6 +86,16 @@ fn malformed_or_closed_replies_are_refused() {
             r#"{"exitus":"obsequium","opera":[{"verbum":"crea","data":""}]}"#,
             false,
         ),
+        (
+            r#"{"exitus":"obsequium","opera":[{"verbum":"crea","locus":"a","data":"","signum":"x"}]}"#,
+            false,
+        ),
+        (
+            r#"{"exitus":"obsequium","opera":[{"verbum":"crea","locus":"a"}]}"#,
+            false,
+        ),
+        (r#"{"exitus":"obsequium","opera":["crea"]}"#, false),
+        (r#"{"exitus":"obsequium","opera":[]}"#, false),
         ("tempestas veniet", true),
         ("[]", true),
     ] {

@@ -75,11 +75,22 @@ pub fn read_request(stream: &mut dyn Read) -> Result<Request, String> {
         .filter_map(|l| l.split_once(':'))
         .map(|(k, v)| (k.trim().to_string(), v.trim().to_string()))
         .collect();
-    let length: usize = headers
+    let lengths: Vec<&String> = headers
         .iter()
-        .find(|(k, _)| k.eq_ignore_ascii_case("content-length"))
-        .and_then(|(_, v)| v.parse().ok())
-        .unwrap_or(0);
+        .filter(|(k, _)| k.eq_ignore_ascii_case("content-length"))
+        .map(|(_, v)| v)
+        .collect();
+    if headers
+        .iter()
+        .any(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding"))
+    {
+        return Err("chunked requests are refused".into());
+    }
+    let length: usize = match lengths.as_slice() {
+        [] if method == "GET" => 0,
+        [one] => one.parse().map_err(|_| "a bad length".to_string())?,
+        _ => return Err("the length is missing or given twice".into()),
+    };
     if length > MAX_BODY {
         return Err("body too long".into());
     }
@@ -90,6 +101,9 @@ pub fn read_request(stream: &mut dyn Read) -> Result<Request, String> {
             break;
         }
         body.extend_from_slice(&buf[..n]);
+    }
+    if body.len() < length {
+        return Err("the body was cut short".into());
     }
     body.truncate(length);
     Ok(Request {
