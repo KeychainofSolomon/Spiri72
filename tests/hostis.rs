@@ -149,6 +149,10 @@ fn summon(circle: &Path, program: &str, replies: Vec<String>) -> Output {
         .args([
             &format!("{program}.annulus"),
             "--virga-probationis",
+            "--hora",
+            "2024-04-13T14:30:00Z",
+            "--locus",
+            "41.9,12.5",
             "--exemplar",
             &format!("http://127.0.0.1:{port}"),
         ])
@@ -314,6 +318,10 @@ fn a_spirit_never_sees_what_it_was_not_handed() {
         .args([
             "furfur.annulus",
             "--virga-probationis",
+            "--hora",
+            "2024-04-13T14:30:00Z",
+            "--locus",
+            "41.9,12.5",
             "--exemplar",
             &format!("http://127.0.0.1:{port}"),
         ])
@@ -566,6 +574,10 @@ fn a_hostile_model_server_cannot_crash_the_circle() {
             .args([
                 "furfur.annulus",
                 "--virga-probationis",
+                "--hora",
+                "2024-04-13T14:30:00Z",
+                "--locus",
+                "41.9,12.5",
                 "--exemplar",
                 &format!("http://127.0.0.1:{port}"),
             ])
@@ -627,6 +639,10 @@ fn a_hostile_server_cannot_command_the_terminal_through_an_error() {
         .args([
             "furfur.annulus",
             "--virga-probationis",
+            "--hora",
+            "2024-04-13T14:30:00Z",
+            "--locus",
+            "41.9,12.5",
             "--exemplar",
             &format!("http://127.0.0.1:{port}"),
         ])
