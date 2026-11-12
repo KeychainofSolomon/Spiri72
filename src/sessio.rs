@@ -73,10 +73,6 @@ pub fn unbindable(s: &Spirit) -> Option<String> {
             "{} is a President, who comes only after his king is called, and the kings are not built yet",
             s.name
         )),
-        Some("duke") => Some(format!(
-            "{} is a Duke, and Dukes are refused until the hours of the sky are declared",
-            s.name
-        )),
         _ if telling_offices(s).is_empty() => Some(format!(
             "{} has no office of telling that Spiri72 can speak through yet",
             s.name
@@ -229,6 +225,7 @@ pub fn ask_once(
     question: &str,
     handed: &[String],
     dir: &Path,
+    sky: &[String],
     will: &mut dyn Voluntas,
     out: &mut dyn Write,
     err: &mut dyn Write,
@@ -263,6 +260,7 @@ pub fn ask_once(
     ]
     .iter()
     .map(|s| s.to_string())
+    .chain(sky.iter().cloned())
     .collect();
     match ritus_with(&args, out, err, Some(will)) {
         Ok(code) => code,
@@ -279,6 +277,7 @@ pub fn sessio(
     err: &mut dyn Write,
     will: &mut dyn Voluntas,
     dir: &Path,
+    sky: &[String],
 ) -> u8 {
     let _ = writeln!(
         out,
@@ -322,7 +321,9 @@ pub fn sessio(
             continue;
         }
         let _ = writeln!(out);
-        let code = ask_once(spirit, &office, &question, &handed, dir, will, out, err);
+        let code = ask_once(
+            spirit, &office, &question, &handed, dir, sky, will, out, err,
+        );
         worst = worst.max(code);
         if code == 2 {
             let _ = writeln!(

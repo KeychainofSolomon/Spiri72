@@ -32,6 +32,9 @@ fn aula(d: &std::path::Path) -> Aula<'_> {
         token: "k".repeat(64),
         dir: d,
         exemplar: "http://127.0.0.1:8080".into(),
+        sky: ["--hora", "2024-04-13T14:30:00Z", "--locus", "41.9,12.5"]
+            .map(String::from)
+            .to_vec(),
         reachable: Box::new(|| true),
     }
 }
@@ -145,7 +148,9 @@ fn unbindable_spirits_wrong_offices_and_empty_questions_are_refused() {
     let d = dir("bad");
     let a = aula(&d);
     for body in [
-        r#"{"n":8,"officium":"FUTURA","quaestio":"q"}"#,
+        r#"{"n":5,"officium":"OCCULTA","quaestio":"q"}"#,
+        r#"{"n":34,"officium":"RESPONSA","quaestio":"q","locus":"north"}"#,
+        r#"{"n":34,"officium":"RESPONSA","quaestio":"q","caelum":"pluvia"}"#,
         r#"{"n":34,"officium":"TEMPESTAS","quaestio":"q"}"#,
         r#"{"n":34,"officium":"RESPONSA","quaestio":"   "}"#,
         r#"{"n":99,"officium":"RESPONSA","quaestio":"q"}"#,
@@ -225,5 +230,57 @@ fn malformed_requests_are_refused() {
     }
     assert!(
         read_request(&mut "GET /x/ HTTP/1.1\r\nHost: 127.0.0.1:4000\r\n\r\n".as_bytes()).is_ok()
+    );
+}
+
+#[test]
+fn the_hours_are_shown_for_every_spirit() {
+    let d = dir("tempus");
+    let a = aula(&d);
+    let ask = |body: &str| {
+        let r = a.handle(
+            &request(
+                "POST",
+                &format!("{}tempus", key()),
+                "Content-Type: application/json\r\n",
+                body,
+            ),
+            &mut Speaks,
+        );
+        annulus::lingua::json::parse(&String::from_utf8_lossy(&r.body)).unwrap()
+    };
+    let t = ask("{}");
+    assert_eq!(t.get("aetas").and_then(|v| v.number()), Some(4.0));
+    let closed = |t: &annulus::lingua::json::Json, n: &str| {
+        t.get("clausi")
+            .unwrap()
+            .get(n)
+            .unwrap()
+            .text()
+            .map(str::to_string)
+    };
+    assert_eq!(closed(&t, "34"), None);
+    assert!(closed(&t, "11").unwrap().contains("undeclared"));
+    assert!(closed(&t, "5").unwrap().contains("President"));
+    let morning = Aula {
+        sky: ["--hora", "2024-04-13T07:00:00Z", "--locus", "41.9,12.5"]
+            .map(String::from)
+            .to_vec(),
+        ..aula(&d)
+    };
+    let r = morning.handle(
+        &request(
+            "POST",
+            &format!("{}tempus", key()),
+            "Content-Type: application/json\r\n",
+            r#"{"caelum":"serenum"}"#,
+        ),
+        &mut Speaks,
+    );
+    let t = annulus::lingua::json::parse(&String::from_utf8_lossy(&r.body)).unwrap();
+    assert_eq!(
+        closed(&t, "11"),
+        None,
+        "Gusion should come on a clear morning"
     );
 }

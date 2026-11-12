@@ -75,7 +75,15 @@ fn model(content: &'static str) -> (u16, thread::JoinHandle<String>) {
 
 fn spiri72(dir: &PathBuf, port: u16, extra: &[&str]) -> std::process::Output {
     let url = format!("http://127.0.0.1:{port}");
-    let mut args = vec!["furfur.annulus", "--exemplar", &url];
+    let mut args = vec![
+        "furfur.annulus",
+        "--hora",
+        "2024-04-13T14:30:00Z",
+        "--locus",
+        "41.9,12.5",
+        "--exemplar",
+        &url,
+    ];
     args.extend_from_slice(extra);
     Command::new(BINARY)
         .current_dir(dir)

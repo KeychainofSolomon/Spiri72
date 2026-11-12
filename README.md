@@ -42,7 +42,9 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
 
    **Each question is its own rite**, written to `spiri72.ritus\` with its audit beside it: the ring is worn, the seal inscribed, the spirit called, its own restraints applied (Paimon's offering and binding by the Name, Belial's the same, Asmoday called by his name, Beleth before the ring and wand, Andras before the pentagram), the answer examined by an angel, and the spirit dismissed. The stores are kept in `annulus.domus\`.
 
-   **Who can be bound today:** 14 spirits (Vassago, Amon, Paimon, Sitri, Purson, Asmoday, Furfur, Raum, Shax, Balam, Orobas, Cimejes, Seere, Andromalius). The others are refused in plain words, by Annulus's own rules: Presidents come only after their king, and the kings are not built; Dukes wait for the hours of the sky; spirits of two ranks wait on the ruling for their seal's ink; and many spirits' offices (teaching, transforming, granting dignities) are not yet ones Spiri72 can speak through.
+   **The hours of the sky.** A spirit comes only in the hours of its rank, and only when the Moon is 2, 4, 6, 8, 10, 12 or 14 days old (`dynamic.md` §5.1 in Annulus). Set your place (latitude,longitude) and the sky at the foot of the page, or start with `--locus 52.52,13.40 --caelum serenum`: Kings come mid-morning and from mid-afternoon to sunset, Marquises from mid-afternoon to sunrise, Dukes from sunrise to noon under a clear sky, Princes by daylight, Earls at any hour. Without a place only Earls may come. The catalogue dims whoever cannot come now, and says why.
+
+**Who can be bound:** 25 spirits in their hours, the 14 of before and 11 Dukes. The others are refused in plain words, by Annulus's own rules: Presidents come only after their king, and the kings are not built; spirits of two ranks wait on the ruling for their seal's ink; and many spirits' offices (teaching, transforming, granting dignities) are not yet ones Spiri72 can speak through.
 
 6. Or run a whole Annulus program with the model as the spirits' will:
    ```

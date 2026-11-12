@@ -55,7 +55,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes arrive { from { opacity: 0; transform: scale(.82) rotate(-8deg); } to { opacity: 1; transform: none; } }
 .east { color: var(--gold); font-size: .8rem; letter-spacing: .3em; margin: .1rem 0 .1rem .3em; }
 
-.circle { position: relative; width: min(46rem, 100%, calc(100vh - 25rem)); min-width: 22rem; aspect-ratio: 1; }
+.circle { position: relative; width: min(46rem, 100%, calc(100vh - 26rem)); min-width: 22rem; aspect-ratio: 1; }
 .circle > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .circle .ring text { fill: var(--rubric); opacity: .7; font-family: var(--face); font-size: 21px; letter-spacing: 4px; }
 .bound .circle .ring text { opacity: 1; }
@@ -105,6 +105,10 @@ footer .dot { display: inline-block; width: .5rem; height: .5rem; border-radius:
 footer .up .dot { background: #7fb38a; }
 footer .down { color: var(--rubric); }
 footer .down .dot { background: var(--rubric); }
+footer .sky { display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; }
+footer .sky input, footer .sky select { background: var(--lapis-band); border: 1px solid var(--lapis-line); border-radius: 2px; padding: .2rem .45rem; font-size: .82rem; }
+footer .sky input { width: 9.5rem; }
+footer #tempus { color: var(--ink); }
 
 @media (max-width: 1100px) {
   body { height: auto; overflow: auto; grid-template-columns: minmax(15rem, 18rem) 1fr; grid-template-areas: "catalogue stage" "catalogue entry" "foot foot"; grid-template-rows: auto auto auto; }
@@ -134,7 +138,7 @@ footer .down .dot { background: var(--rubric); }
 
 <aside class="catalogue" aria-labelledby="catalogue-title">
   <h1 id="catalogue-title">The seventy-two</h1>
-  <p>Each seal is shown in the metal its rank is made in. Choose one to read what the witnesses record of that spirit.</p>
+  <p>Each seal is shown in the metal its rank is made in. Choose one to read what the witnesses record of that spirit. A spirit comes only in the hours of its rank, and only when the Moon is 2, 4, 6, 8, 10, 12 or 14 days old.</p>
   <label><input type="checkbox" id="only-open"> Show only spirits that can be bound now</label>
   <ul class="seals" id="seals"></ul>
 </aside>
@@ -186,15 +190,21 @@ footer .down .dot { background: var(--rubric); }
 </section>
 
 <footer>
+  <span class="sky">
+    <label>Your place <input id="locus" placeholder="52.52,13.40" autocomplete="off" aria-describedby="tempus"></label>
+    <label>The sky <select id="caelum"><option value="">not declared</option><option value="serenum">clear</option><option value="turbidum">not clear</option></select></label>
+    <span id="tempus"></span>
+  </span>
   <span id="model"><span class="dot"></span>Checking the model…</span>
   <span>Test wand: nothing done here is valid for a real installation.</span>
-  <span>Every question is kept as its own rite and audit in the folder Spiri72 was started from.</span>
 </footer>
 
 <script>
 const base = location.pathname.replace(/[^/]*$/, "");
 const METAL = { king: "gold", duke: "copper", prince: "tin", marquis: "silver", president: "mercury", earl: "copper silver", knight: "lead" };
-const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false };
+const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false, now: {}, sky: { locus: "", caelum: "" } };
+const closedOf = s => s.closed || state.now[s.n] || null;
+try { Object.assign(state.sky, JSON.parse(localStorage.getItem("spiri72-sky") || "{}")); } catch {}
 
 const el = (tag, props = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -239,11 +249,34 @@ function rankWords(s) {
 function renderCatalogue() {
   const list = document.getElementById("seals");
   list.replaceChildren(...state.spirits.map(s => {
-    const b = el("button", { type: "button", "aria-pressed": "false", "aria-label": `${s.n}. ${s.name}${s.closed ? " (cannot be bound yet)" : ""}`, title: `${s.n}. ${s.name}`, onclick: () => choose(s) },
+    const b = el("button", { type: "button", "aria-pressed": "false", "data-n": s.n, onclick: () => choose(s) },
       sealSvg(s.n, s), el("span", { class: "n" }, String(s.n)));
-    if (s.closed) b.setAttribute("data-closed", "");
     return el("li", {}, b);
   }));
+}
+
+function markClosed() {
+  document.querySelectorAll(".seals button").forEach(b => {
+    const s = state.spirits.find(x => x.n === Number(b.dataset.n));
+    const why = closedOf(s);
+    b.toggleAttribute("data-closed", !!why);
+    b.title = why ? `${s.n}. ${s.name}: ${why}` : `${s.n}. ${s.name}`;
+    b.setAttribute("aria-label", why ? `${s.n}. ${s.name}, cannot be bound now` : `${s.n}. ${s.name}`);
+  });
+}
+
+async function refreshTempus() {
+  const note = document.getElementById("tempus");
+  try {
+    const r = await fetch(base + "tempus", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state.sky) });
+    const t = await r.json();
+    if (t.error) { note.textContent = t.error; return; }
+    state.now = t.clausi;
+    const open = Object.values(t.clausi).filter(v => v === null).length;
+    note.textContent = `The Moon is ${t.aetas} days old. ${open ? `${open} of the 72 can be bound now.` : "None of the 72 can be bound now."}`;
+    markClosed();
+    if (state.chosen && !state.bound) renderEntry();
+  } catch { note.textContent = ""; }
 }
 
 function choose(s) {
@@ -251,7 +284,7 @@ function choose(s) {
   if (state.bound && state.chosen && state.chosen.n !== s.n) depart(true);
   state.chosen = s;
   state.office = s.telling[0] || null;
-  document.querySelectorAll(".seals button").forEach(b => b.setAttribute("aria-pressed", b.title.startsWith(`${s.n}.`) ? "true" : "false"));
+  document.querySelectorAll(".seals button").forEach(b => b.setAttribute("aria-pressed", Number(b.dataset.n) === s.n ? "true" : "false"));
   const seat = document.getElementById("seat");
   const svg = sealSvg(s.n, s);
   svg.setAttribute("x", "182"); svg.setAttribute("y", "212"); svg.setAttribute("width", "236"); svg.setAttribute("height", "236");
@@ -273,8 +306,8 @@ function renderEntry() {
     el("h3", {}, "Restrained by"), list(s.restraints.map(t => ({ text: t })), "None recorded"),
     el("h3", {}, "Truthfulness"), el("p", { style: "margin:0;line-height:1.5" }, `${s.veracity.toLowerCase()}. ${s.condition}`),
   ];
-  if (s.closed) {
-    parts.push(el("p", { class: "closed" }, `${s.closed}.`));
+  if (closedOf(s) && !state.bound) {
+    parts.push(el("p", { class: "closed" }, `${closedOf(s)[0].toUpperCase()}${closedOf(s).slice(1)}.`));
   } else if (!state.bound) {
     const actions = el("div", { class: "actions" });
     if (s.telling.length > 1) {
@@ -348,7 +381,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
   state.busy = true; setAsking(true);
   const wait = say(el("p", { class: "said waiting" }, `${s.name} is called, and the answer examined…`));
   try {
-    const r = await fetch(base + "roga", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, officium: state.office, quaestio: question, liber: state.liber || "" }) });
+    const r = await fetch(base + "roga", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, officium: state.office, quaestio: question, liber: state.liber || "", locus: state.sky.locus, caelum: state.sky.caelum }) });
     const a = await r.json();
     wait.remove();
     if (a.iudicium) {
@@ -370,6 +403,16 @@ document.getElementById("ask").addEventListener("submit", async e => {
   }
 });
 
+for (const id of ["locus", "caelum"]) {
+  const input = document.getElementById(id);
+  input.value = state.sky[id] || "";
+  input.addEventListener("change", () => {
+    state.sky[id] = input.value.trim();
+    try { localStorage.setItem("spiri72-sky", JSON.stringify(state.sky)); } catch {}
+    refreshTempus();
+  });
+}
+
 document.getElementById("only-open").addEventListener("change", e => document.querySelector(".catalogue").classList.toggle("hide-closed", e.target.checked));
 
 async function status() {
@@ -386,6 +429,7 @@ async function status() {
   const [spirits, seals] = await Promise.all([fetch(base + "spiritus").then(r => r.json()), fetch(base + "sigilla").then(r => r.json())]);
   state.spirits = spirits; state.seals = seals;
   renderCatalogue();
+  await refreshTempus(); setInterval(refreshTempus, 60000);
   status(); setInterval(status, 15000);
 })();
 </script>

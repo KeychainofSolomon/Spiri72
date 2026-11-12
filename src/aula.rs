@@ -5,6 +5,7 @@ use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
+use annulus::horae;
 use annulus::lingua::exsequi::Voluntas;
 use annulus::lingua::json::{self, Json};
 use annulus::lingua::registra::{goetia, Spirit};
@@ -247,7 +248,88 @@ fn first_error(log: &str) -> String {
         .to_string()
 }
 
-pub fn roga(body: &[u8], dir: &Path, will: &mut dyn Voluntas) -> Answer {
+fn sky_of(root: &Json, base: &[String]) -> Result<Vec<String>, String> {
+    let mut flags: Vec<(String, String)> = base
+        .chunks(2)
+        .filter_map(|c| Some((c.first()?.clone(), c.get(1)?.clone())))
+        .collect();
+    let mut set = |k: &str, v: String| {
+        flags.retain(|(f, _)| f != k);
+        flags.push((k.to_string(), v));
+    };
+    if let Some(l) = root
+        .get("locus")
+        .and_then(Json::text)
+        .filter(|l| !l.trim().is_empty())
+    {
+        horae::parse_locus(l)
+            .ok_or("the place must be latitude,longitude, for example 52.52,13.40")?;
+        set("--locus", l.trim().to_string());
+    }
+    match root.get("caelum").and_then(Json::text).unwrap_or("") {
+        "" => {}
+        c @ ("serenum" | "turbidum") => set("--caelum", c.to_string()),
+        _ => return Err("the sky must be serenum or turbidum".into()),
+    }
+    Ok(flags.into_iter().flat_map(|(k, v)| [k, v]).collect())
+}
+
+pub fn caelum_of(flags: &[String]) -> horae::Caelum {
+    let mut c = horae::Caelum::default();
+    for pair in flags.chunks(2) {
+        match (pair[0].as_str(), pair.get(1)) {
+            ("--hora", Some(v)) => c.hora = horae::parse_hora(v),
+            ("--locus", Some(v)) => c.locus = horae::parse_locus(v),
+            ("--caelum", Some(v)) => c.serenum = Some(v == "serenum"),
+            _ => {}
+        }
+    }
+    c.hora = Some(c.hora.unwrap_or_else(horae::now));
+    c
+}
+
+pub fn tempus(body: &[u8], base: &[String]) -> Answer {
+    let root = std::str::from_utf8(body)
+        .ok()
+        .and_then(|t| json::parse(t).ok())
+        .unwrap_or(Json::Null);
+    let flags = match sky_of(&root, base) {
+        Ok(f) => f,
+        Err(e) => {
+            return answer(
+                "400 Bad Request",
+                "application/json",
+                format!("{{\"error\":{}}}", quote(&e)),
+            )
+        }
+    };
+    let c = caelum_of(&flags);
+    let t = c.hora.unwrap_or(0);
+    let open: Vec<String> = goetia()
+        .spirits
+        .iter()
+        .map(|s| {
+            let why = unbindable(s).or_else(|| horae::admit(&s.ranks, &c).err());
+            format!(
+                "\"{}\":{}",
+                s.n,
+                why.map(|w| quote(&w)).unwrap_or_else(|| "null".into())
+            )
+        })
+        .collect();
+    answer(
+        "200 OK",
+        "application/json",
+        format!(
+            "{{\"hora\":{},\"aetas\":{},\"clausi\":{{{}}}}}",
+            quote(&horae::iso(t)),
+            horae::aetas_lunae(t as f64),
+            open.join(",")
+        ),
+    )
+}
+
+pub fn roga(body: &[u8], dir: &Path, sky: &[String], will: &mut dyn Voluntas) -> Answer {
     let bad = |why: &str| {
         answer(
             "400 Bad Request",
@@ -279,6 +361,10 @@ pub fn roga(body: &[u8], dir: &Path, will: &mut dyn Voluntas) -> Answer {
     if question.is_empty() || question.chars().count() > 2000 {
         return bad("the question must be between 1 and 2000 characters");
     }
+    let sky = match sky_of(&root, sky) {
+        Ok(f) => f,
+        Err(e) => return bad(&e),
+    };
     let liber = field("liber").trim().replace('\\', "/");
     let handed: Vec<String> = if liber.is_empty() {
         Vec::new()
@@ -288,7 +374,7 @@ pub fn roga(body: &[u8], dir: &Path, will: &mut dyn Voluntas) -> Answer {
     let mut out = Vec::new();
     let mut err = Vec::new();
     let code = ask_once(
-        spirit, &office, &question, &handed, dir, will, &mut out, &mut err,
+        spirit, &office, &question, &handed, dir, &sky, will, &mut out, &mut err,
     );
     let out = String::from_utf8_lossy(&out).to_string();
     let log = String::from_utf8_lossy(&err).to_string();
@@ -317,6 +403,7 @@ pub struct Aula<'a> {
     pub token: String,
     pub dir: &'a Path,
     pub exemplar: String,
+    pub sky: Vec<String>,
     pub reachable: Box<dyn Fn() -> bool + 'a>,
 }
 
@@ -352,7 +439,13 @@ impl Aula<'_> {
                 if req.header("content-type") != Some("application/json") {
                     return refused("wrong content type");
                 }
-                roga(&req.body, self.dir, will)
+                roga(&req.body, self.dir, &self.sky, will)
+            }
+            ("POST", "tempus") => {
+                if req.header("content-type") != Some("application/json") {
+                    return refused("wrong content type");
+                }
+                tempus(&req.body, &self.sky)
             }
             _ => answer("404 Not Found", "text/plain; charset=utf-8", "not found"),
         }
@@ -387,6 +480,7 @@ pub fn serve(
     exemplar: std::net::SocketAddr,
     exemplar_url: &str,
     dir: &Path,
+    sky: &[String],
     out: &mut dyn Write,
     open: bool,
 ) -> u8 {
@@ -403,6 +497,7 @@ pub fn serve(
         token: token(),
         dir,
         exemplar: exemplar_url.to_string(),
+        sky: sky.to_vec(),
         reachable: Box::new(move || {
             TcpStream::connect_timeout(&exemplar, Duration::from_millis(400)).is_ok()
         }),

@@ -25,9 +25,18 @@ fn main() -> ExitCode {
     let mut url = DEFAULT_MODEL.to_string();
     let mut max_tokens = None;
     let mut rest: Vec<String> = Vec::new();
+    let mut sky: Vec<String> = Vec::new();
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
         match a.as_str() {
+            "--hora" | "--locus" | "--caelum" => {
+                let Some(v) = it.next() else {
+                    let _ = writeln!(err, "error: {a} needs a value\n{USAGE}");
+                    return ExitCode::from(EXIT_USAGE);
+                };
+                sky.push(a);
+                sky.push(v);
+            }
             "--exemplar" | "--max-tokens" => {
                 let Some(v) = it.next() else {
                     let _ = writeln!(err, "error: {a} needs a value\n{USAGE}");
@@ -78,7 +87,9 @@ fn main() -> ExitCode {
         };
         if terminal {
             let mut input = io::stdin().lock();
-            return ExitCode::from(sessio(&mut input, &mut out, &mut err, &mut agens, &dir));
+            return ExitCode::from(sessio(
+                &mut input, &mut out, &mut err, &mut agens, &dir, &sky,
+            ));
         }
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();
@@ -87,10 +98,12 @@ fn main() -> ExitCode {
             address,
             &url,
             &dir,
+            &sky,
             &mut out,
             !no_browser,
         ));
     }
+    rest.extend(sky);
     match ritus_with(&rest, &mut out, &mut err, Some(&mut agens)) {
         Ok(code) => ExitCode::from(code),
         Err(Usage(why)) => {
