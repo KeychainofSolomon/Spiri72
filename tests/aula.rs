@@ -211,3 +211,19 @@ fn keys_are_long_and_never_repeat() {
     assert_eq!(a.len(), 64);
     assert_ne!(a, token());
 }
+
+#[test]
+fn malformed_requests_are_refused() {
+    for raw in [
+        "POST /x/roga HTTP/1.1\r\nHost: 127.0.0.1:4000\r\n\r\n{}",
+        "POST /x/roga HTTP/1.1\r\nHost: 127.0.0.1:4000\r\nContent-Length: 50\r\n\r\n{}",
+        "POST /x/roga HTTP/1.1\r\nHost: 127.0.0.1:4000\r\nContent-Length: 2\r\nContent-Length: 9\r\n\r\n{}",
+        "POST /x/roga HTTP/1.1\r\nHost: 127.0.0.1:4000\r\nContent-Length: -2\r\n\r\n{}",
+        "POST /x/roga HTTP/1.1\r\nHost: 127.0.0.1:4000\r\nTransfer-Encoding: chunked\r\n\r\n2\r\n{}\r\n0\r\n\r\n",
+    ] {
+        assert!(read_request(&mut raw.as_bytes()).is_err(), "{raw}");
+    }
+    assert!(
+        read_request(&mut "GET /x/ HTTP/1.1\r\nHost: 127.0.0.1:4000\r\n\r\n".as_bytes()).is_ok()
+    );
+}

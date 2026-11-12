@@ -106,6 +106,16 @@ pub fn read(reply: &str, open: &[Outcome], telling: bool) -> Result<(Outcome, Ac
     let effects = items
         .iter()
         .map(|item| {
+            let Json::Object(fields) = item else {
+                return Err("a work that is not an object");
+            };
+            if fields.len() != 3
+                || ["verbum", "locus", "data"]
+                    .iter()
+                    .any(|k| !fields.contains_key(*k))
+            {
+                return Err("a work must have exactly \"verbum\", \"locus\" and \"data\"");
+            }
             let text = |k: &str| item.get(k).and_then(Json::text).map(str::to_string);
             let verb = text("verbum")
                 .and_then(|w| VERBS.iter().find(|(n, _)| *n == w).map(|(_, v)| *v))
@@ -116,6 +126,9 @@ pub fn read(reply: &str, open: &[Outcome], telling: bool) -> Result<(Outcome, Ac
                 data: text("data").ok_or("a work without data")?,
             })
         })
-        .collect::<Result<Vec<_>, String>>()?;
+        .collect::<Result<Vec<_>, &str>>()?;
+    if effects.is_empty() && declared != Outcome::Pars {
+        return Err("the work is empty, yet declared whole".into());
+    }
     Ok((declared, Actum::Opera(effects)))
 }
