@@ -67,11 +67,23 @@ fn enclitics_are_taken_off() {
 }
 
 #[test]
-fn late_latin_is_left_out() {
-    // Church Latin: "diabolus" and "baptizare" are late (age D or after) in WORDS.
-    assert!(analyse("diabolus").is_empty());
-    assert!(analyse("baptizare").is_empty());
+fn later_latin_is_read_and_marked() {
+    for w in ["angelus", "exorcista", "diabolus", "baptizare"] {
+        let r = analyse(w);
+        assert!(!r.is_empty(), "{w}");
+        assert!(r.iter().all(|l| l.aetas.is_some()), "{w}: {r:?}");
+    }
     assert!(analyse("xyzzy").is_empty());
+}
+
+#[test]
+fn classical_readings_come_first_and_are_unmarked() {
+    let r = analyse("regis");
+    assert!(
+        r[0].lemma.starts_with("rex") && r[0].aetas.is_none(),
+        "{r:?}"
+    );
+    assert!(analyse("constringi").iter().any(|l| l.aetas.is_none()));
 }
 
 #[test]

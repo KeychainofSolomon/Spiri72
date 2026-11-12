@@ -6,8 +6,10 @@ PATH is a checkout of WORDS (DICTLINE.GEN, INFLECTS.LAT, UNIQUES.LAT,
 LICENCE.txt), for example https://github.com/mk270/whitakers-words.
 Writes lingua/latina/{verba,flexiones,singularia}.tsv and LICENCE.txt.
 
-Classical only: an entry or ending is kept when its AGE code is X (any age),
-A (archaic), B (early) or C (classical). D (late) onward are dropped.
+Classical first, later Latin marked: an entry or ending is kept when its AGE
+code is X (any age), A (archaic), B (early), C (classical), D (late), E (later),
+F (medieval) or G (scholarly, Renaissance and after). H (modern coinages) is
+dropped. Spiri72 marks every reading that rests on D to G with its period.
 Spelling is normalised the way Spiri72 reads: lower case, j -> i, v -> u.
 """
 
@@ -15,7 +17,7 @@ import re
 import sys
 from pathlib import Path
 
-CLASSICAL = set("XABC")
+KEPT = set("XABCDEFG")
 OUT = Path(__file__).resolve().parent.parent / "lingua" / "latina"
 POS_KEEP = {"N", "ADJ", "V", "PRON", "NUM", "ADV", "PREP", "CONJ", "INTERJ"}
 
@@ -36,7 +38,7 @@ def parse_inflects(text):
             ending, length, key, fields = "", int(t[-3]), t[-4], t[1:-4]
         else:
             ending, length, key, fields = t[-3], int(t[-4]), t[-5], t[1:-5]
-        if age not in CLASSICAL:
+        if age not in KEPT:
             continue
         assert length == len(ending), line
         rows.append((t[0], fields, int(key), norm(ending), age, freq))
@@ -70,7 +72,7 @@ def parse_dictline(text):
                         "meaning": meaning})
     keep = []
     for e in entries:
-        if e["pos"] not in POS_KEEP or e["age"] not in CLASSICAL:
+        if e["pos"] not in POS_KEEP or e["age"] not in KEPT:
             continue
         keep.append(e)
     return keep
@@ -222,7 +224,7 @@ def main():
         for i in range(0, len(lines) - 2, 3):
             form, info, meaning = lines[i].strip(), lines[i + 1].split(), lines[i + 2]
             age, freq = info[-5], info[-2]
-            if age not in CLASSICAL or info[0] not in POS_KEEP:
+            if age not in KEPT or info[0] not in POS_KEEP:
                 continue
             f.write("\t".join([norm(form), info[0], " ".join(info[1:-5]), age, freq, clean(meaning)]) + "\n")
 
