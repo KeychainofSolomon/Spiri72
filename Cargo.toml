@@ -1,0 +1,26 @@
+[package]
+name = "spiri72"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97.0"
+description = "A local language model as the will of the 72 spirits, bound by Annulus"
+license = "Unlicense"
+publish = false
+
+[lib]
+name = "spiri72"
+path = "src/lib.rs"
+
+[[bin]]
+name = "spiri72"
+path = "src/main.rs"
+
+[dependencies]
+annulus = { git = "https://github.com/KeychainofSolomon/Annulus", rev = "13058f126522f1c8118094b808594000cf83be73" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
