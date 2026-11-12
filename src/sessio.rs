@@ -222,6 +222,57 @@ fn choose_spirit(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn ask_once(
+    spirit: &Spirit,
+    office: &str,
+    question: &str,
+    handed: &[String],
+    dir: &Path,
+    will: &mut dyn Voluntas,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> u8 {
+    let rites = dir.join(RITES);
+    if let Err(e) = fs::create_dir_all(&rites) {
+        let _ = writeln!(err, "error: cannot make {}: {e}", rites.display());
+        return 1;
+    }
+    let program = match rite(spirit, office, question, handed) {
+        Ok(p) => p,
+        Err(e) => {
+            let _ = writeln!(err, "{e}");
+            return 2;
+        }
+    };
+    let path: PathBuf = (1u32..)
+        .map(|k| rites.join(format!("{}-{k}.annulus", spirit.label)))
+        .find(|p| !p.exists())
+        .expect("a free name");
+    if let Err(e) = fs::write(&path, program) {
+        let _ = writeln!(err, "error: cannot write {}: {e}", path.display());
+        return 1;
+    }
+    let args: Vec<String> = [
+        path.to_string_lossy().as_ref(),
+        "--virga-probationis",
+        "--mundus",
+        &dir.to_string_lossy(),
+        "--domus",
+        &dir.join(HOUSE).to_string_lossy(),
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    match ritus_with(&args, out, err, Some(will)) {
+        Ok(code) => code,
+        Err(usage) => {
+            let _ = writeln!(err, "error: {}", usage.0);
+            2
+        }
+    }
+}
+
 pub fn sessio(
     input: &mut dyn BufRead,
     out: &mut dyn Write,
@@ -249,17 +300,11 @@ pub fn sessio(
         Some(f) if f.is_empty() => Vec::new(),
         Some(f) => vec![f.replace('\\', "/")],
     };
-    let rites = dir.join(RITES);
-    if let Err(e) = fs::create_dir_all(&rites) {
-        let _ = writeln!(err, "error: cannot make {}: {e}", rites.display());
-        return 1;
-    }
     let _ = writeln!(
         out,
         "\n{} is bound through {office}. Each question is its own rite: the spirit is called, examined and dismissed.",
         spirit.name
     );
-    let mut asked = 0u32;
     let mut worst = 0u8;
     while let Some(question) = ask(
         input,
@@ -276,41 +321,8 @@ pub fn sessio(
             );
             continue;
         }
-        asked += 1;
-        let program = match rite(spirit, &office, &question, &handed) {
-            Ok(p) => p,
-            Err(e) => {
-                let _ = writeln!(err, "{e}");
-                return 2;
-            }
-        };
-        let path: PathBuf = (asked..)
-            .map(|k| rites.join(format!("{}-{k}.annulus", spirit.label)))
-            .find(|p| !p.exists())
-            .expect("a free name");
-        if let Err(e) = fs::write(&path, program) {
-            let _ = writeln!(err, "error: cannot write {}: {e}", path.display());
-            return 1;
-        }
-        let args: Vec<String> = [
-            path.to_string_lossy().as_ref(),
-            "--virga-probationis",
-            "--mundus",
-            &dir.to_string_lossy(),
-            "--domus",
-            &dir.join(HOUSE).to_string_lossy(),
-        ]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
         let _ = writeln!(out);
-        let code = match ritus_with(&args, out, err, Some(will)) {
-            Ok(code) => code,
-            Err(usage) => {
-                let _ = writeln!(err, "error: {}", usage.0);
-                2
-            }
-        };
+        let code = ask_once(spirit, &office, &question, &handed, dir, will, out, err);
         worst = worst.max(code);
         if code == 2 {
             let _ = writeln!(

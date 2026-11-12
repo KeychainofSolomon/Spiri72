@@ -32,11 +32,13 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
    ```
    cargo build --release
    ```
-5. Start Spiri72 and name the spirit you bind:
+5. Start Spiri72:
    ```
-   target\release\spiri72.exe
+   .\spiri72.exe
    ```
-   It asks which spirit you bind (a number from 1 to 72 or a name), shows you that spirit as the witnesses record it, and, if the spirit has more than one office of telling, through which office you charge it. You may hand it one file from the folder you started in. Then ask your questions; an empty line gives the spirit licence to depart.
+   It opens the binding page in your browser (only on this computer, behind a one-time key; keep the window open while you work). The seventy-two seals sit in order, each in the metal its rank is made in: Kings in gold, Dukes in copper, Princes in tin, Marquises in silver, Presidents in quicksilver, Earls in copper and silver alike, the Knight in lead. Choose a seal to read what the witnesses record of that spirit, then bind it: its seal appears in the Triangle of Art to the East, and you ask from within the Circle. The angel's judgement stands beside each answer. Prefer questions in the window itself? Run `.\spiri72.exe --terminal`.
+
+   **The seals** are traced from the plates of the 1916 printing of the Mathers/Crowley *Goetia* (Project Gutenberg 72679, public domain); see `sigilla/README.md` for each seal's figure. The Triangle and Circle follow figures 153–154 of the same printing.
 
    **Each question is its own rite**, written to `spiri72.ritus\` with its audit beside it: the ring is worn, the seal inscribed, the spirit called, its own restraints applied (Paimon's offering and binding by the Name, Belial's the same, Asmoday called by his name, Beleth before the ring and wand, Andras before the pentagram), the answer examined by an angel, and the spirit dismissed. The stores are kept in `annulus.domus\`.
 
