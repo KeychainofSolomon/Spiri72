@@ -29,14 +29,14 @@ None of this changes what a spirit may do. That stays in Annulus. To update the 
 
 ## Latin
 
-Spiri72 reads classical Latin itself, without the model. Its lexicon is William Whitaker's WORDS, kept to classical Latin (`lingua/latina/`). When a question or a handed text is mostly Latin, every word in it is parsed (its dictionary form, part of speech, the form it stands in, and its meaning), and the spirit is handed that reading aid beside the text, sealed like the texts themselves. The aid parses; it does not translate, and it guesses nothing: a word the lexicon does not hold is listed as not found. English is left alone.
+Spiri72 reads Latin itself, without the model. Its lexicon is William Whitaker's WORDS (`lingua/latina/`), from archaic to Renaissance Latin, with classical Latin as the standard. When a question or a handed text is mostly Latin, every word in it is parsed (its dictionary form, part of speech, the form it stands in, and its meaning), and the spirit is handed that reading aid beside the text, sealed like the texts themselves. The aid parses; it does not translate, and it guesses nothing: a word the lexicon does not hold is listed as not found. English is left alone.
 
 To read words yourself:
 ```
 .\spiri72.exe --latina "nisi rex cui paret invocaretur"
 ```
 
-Late, medieval and Church Latin are not in the lexicon, so grimoire words such as *angelus* or *pentaculum* show as not found.
+Classical readings come first. Late, medieval and Renaissance words (the Church and grimoire vocabulary: *angelus*, *exorcista*, *marchio*) are read too, and each such reading is marked with its period, for example "later Latin, not classical". Modern coinages are left out.
 
 ## Limits for now
 

@@ -31,10 +31,17 @@ fn main() -> ExitCode {
         {
             let found = spiri72::latina::analyse(w);
             if found.is_empty() {
-                println!("{w}: not in the classical lexicon");
+                println!("{w}: not in the lexicon");
             }
             for l in found {
-                println!("{w}: {} ({}), {}: {}", l.lemma, l.kind, l.form, l.meaning);
+                let period = l
+                    .aetas
+                    .map(|a| format!("; {a} Latin, not classical"))
+                    .unwrap_or_default();
+                println!(
+                    "{w}: {} ({}{period}), {}: {}",
+                    l.lemma, l.kind, l.form, l.meaning
+                );
             }
         }
         return ExitCode::SUCCESS;

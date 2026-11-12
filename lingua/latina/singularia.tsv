@@ -1,4 +1,6 @@
 # form	pos	fields	age	freq	meaning
+agantur	V	3 1 PRES PASSIVE SUB 3 P IMPERS	F	E	let them be treated; let it be a matter or question of;
+agatur	V	3 1 PRES PASSIVE SUB 3 S IMPERS	F	E	let it be treated; let it be a matter or question of;
 necessest	V	5 1 PRES ACTIVE IND 3 S IMPERS	X	C	it is necessary/essential/unavoidable/true; it is inevitable/by natural law;
 aforem	V	5 1 IMPF ACTIVE SUB 1 S TO_BEING	X	C	be away/absent/distant/missing; be free/removed from; be lacking; be distinct;
 afores	V	5 1 IMPF ACTIVE SUB 2 S TO_BEING	X	C	be away/absent/distant/missing; be free/removed from; be lacking; be distinct;
@@ -21,6 +23,9 @@ iusiurandum	N	2 1 NOM S N t	X	C	an oath (ius iurandum);
 iurisiurandi	N	2 1 GEN S N t	X	C	an oath (ius iurandum);
 iusiurandum	N	2 1 ACC S N t	X	C	an oath (ius iurandum);
 iureiurando	N	2 1 ABL S N t	X	C	an oath (ius iurandum);
+ec	PRON	3 1 NOM S F ADJECT	E	E	this; person/thing present/just mentioned/in this place; ((h)(a)ec); +DEMONS;
+ec	PRON	3 1 NOM P N ADJECT	E	E	these (pl.); persons/things/conditions present/here/just mentioned; +DEMONS;
+ec	PRON	3 1 ACC P N ADJECT	E	E	these (pl.); persons/things/conditions present/here/just mentioned; +DEMONS;
 eadem	PRON	4 2 NOM S F DEMONS	X	B	same, the same, the very same; also; (idem, eadem, idem);
 eadem	PRON	4 2 NOM P N DEMONS	X	B	same, the same, the very same; also; (idem, eadem, idem);
 eadem	PRON	4 2 ACC P N DEMONS	X	B	same, the same, the very same; also; (idem, eadem, idem);
@@ -34,6 +39,7 @@ quemquem	PRON	1 0 ACC S M ADJECT	X	C	whomever; every one who; whomever it be; ev
 quidquid	PRON	1 6 ACC S N ADJECT	X	C	whatever, whatsoever; everything which; each one; each; everything; anything;
 quicquid	PRON	1 6 ACC S N ADJECT	X	C	whatever, whatsoever; everything which; each one; each; everything; anything;
 quodquod	PRON	1 7 ACC S N ADJECT	X	C	whatever, whatsoever; everything which; each one; each; everything; anything;
+chodchod	PRON	1 7 ACC S N ADJECT	E	F	whatever; everything/anything (which); valuable merchandise (Souter);
 quoquo	PRON	1 0 ABL S X ADJECT	X	C	whoever; whatever, whatsoever; every one who; everything which; each one; each;
 quicquam	PRON	1 6 NOM S N ADJECT	X	C	any; anything; anything whatsoever;
 quicquam	PRON	1 6 ACC S N ADJECT	X	C	any; anything; anything whatsoever;

@@ -1,7 +1,9 @@
 //! Classical Latin, read deterministically.
 //!
 //! The lexicon is William Whitaker's WORDS (see `lingua/latina/LICENCE.txt`),
-//! kept to the classical ages (X, A, B, C) by `tools/latina.py`. A word is
+//! from archaic to Renaissance Latin (ages X and A to G; `tools/latina.py`).
+//! Classical readings come first; a reading that rests on a later entry or
+//! ending carries its period (`Lectio::aetas`). A word is
 //! read the way WORDS reads it: every split into a stem and an ending is
 //! tried, and a split stands when the stem belongs to an entry whose part of
 //! speech, declension or conjugation, gender and stem key all fit the ending.
@@ -22,6 +24,7 @@ struct Verbum {
     which: &'static str,
     variant: &'static str,
     codes: Vec<&'static str>,
+    age: &'static str,
     freq: &'static str,
     lemma: &'static str,
     kind: &'static str,
@@ -34,6 +37,7 @@ struct Flexio {
     variant: &'static str,
     key: u8,
     fields: Vec<&'static str>,
+    age: &'static str,
     freq: &'static str,
 }
 
@@ -41,6 +45,7 @@ struct Singulare {
     form: &'static str,
     pos: &'static str,
     fields: &'static str,
+    age: &'static str,
     meaning: &'static str,
 }
 
@@ -60,6 +65,9 @@ pub struct Lectio {
     pub kind: String,
     pub form: String,
     pub meaning: String,
+    /// The period, when the reading is not classical: "late", "later",
+    /// "medieval" or "scholarly". `None` for classical Latin.
+    pub aetas: Option<&'static str>,
 }
 
 fn rows(text: &'static str) -> impl Iterator<Item = Vec<&'static str>> {
@@ -86,6 +94,7 @@ fn lexicon() -> &'static Lexicon {
                 which: r[5],
                 variant: r[6],
                 codes: r[7].split(' ').filter(|c| !c.is_empty()).collect(),
+                age: r[8],
                 freq: r[9],
                 lemma: r[10],
                 kind: r[11],
@@ -102,6 +111,7 @@ fn lexicon() -> &'static Lexicon {
                 variant: r[2],
                 key: r[3].parse().unwrap_or(0),
                 fields: r[5].split(' ').filter(|c| !c.is_empty()).collect(),
+                age: r[6],
                 freq: r[7],
             });
         }
@@ -110,6 +120,7 @@ fn lexicon() -> &'static Lexicon {
                 form: r[0],
                 pos: r[1],
                 fields: r[2],
+                age: r[3],
                 meaning: r[5],
             })
             .collect();
@@ -244,6 +255,19 @@ fn form_of(pos: &str, fields: &[&str], key: u8) -> String {
     }
 }
 
+/// The later of two ages, as a period name; `None` if both are classical.
+fn aetas(a: &'static str, b: &'static str) -> Option<&'static str> {
+    // X means "any age", so it never makes a reading later.
+    let age = |x: &'static str| if x == "X" { "" } else { x };
+    match age(a).max(age(b)) {
+        "D" => Some("late"),
+        "E" => Some("later"),
+        "F" => Some("medieval"),
+        "G" => Some("scholarly"),
+        _ => None,
+    }
+}
+
 fn rank(freq: &str) -> u8 {
     freq.bytes().next().map_or(9, |b| b.saturating_sub(b'A'))
 }
@@ -253,13 +277,15 @@ fn analyse_plain(w: &str) -> Vec<Lectio> {
     let mut found: Vec<(u8, Lectio)> = Vec::new();
     for s in &lx.singularia {
         if s.form == w {
+            let period = aetas(s.age, "X");
             found.push((
-                0,
+                if period.is_some() { 100 } else { 0 },
                 Lectio {
                     lemma: s.form.to_string(),
                     kind: format!("irregular {}", s.pos.to_lowercase()),
                     form: s.fields.to_lowercase(),
                     meaning: s.meaning.to_string(),
+                    aetas: period,
                 },
             ));
         }
@@ -279,13 +305,15 @@ fn analyse_plain(w: &str) -> Vec<Lectio> {
                 if key != f.key || !fits(f, v) {
                     continue;
                 }
+                let period = aetas(v.age, f.age);
                 found.push((
-                    rank(v.freq) * 10 + rank(f.freq),
+                    rank(v.freq) * 10 + rank(f.freq) + if period.is_some() { 100 } else { 0 },
                     Lectio {
                         lemma: v.lemma.to_string(),
                         kind: v.kind.to_string(),
                         form: form_of(f.pos, &f.fields, f.key),
                         meaning: v.meaning.to_string(),
+                        aetas: period,
                     },
                 ));
             }
@@ -302,8 +330,8 @@ fn analyse_plain(w: &str) -> Vec<Lectio> {
 
 const TACKONS: [(&str, &str); 3] = [("que", "and"), ("ne", "question"), ("ue", "or")];
 
-/// Every reading of one word, most frequent first. Empty if the classical
-/// lexicon holds none.
+/// Every reading of one word: classical readings first, then later ones,
+/// each by frequency. Empty if the lexicon holds none.
 pub fn analyse(word: &str) -> Vec<Lectio> {
     let w = norm(word);
     if w.is_empty() {
@@ -330,6 +358,12 @@ pub fn analyse(word: &str) -> Vec<Lectio> {
     Vec::new()
 }
 
+fn period(l: &Lectio) -> String {
+    l.aetas
+        .map(|a| format!("; {a} Latin, not classical"))
+        .unwrap_or_default()
+}
+
 fn short(meaning: &str, max: usize) -> String {
     let m = meaning.trim();
     if m.chars().count() <= max {
@@ -350,7 +384,7 @@ fn tokens(text: &str) -> Vec<&str> {
 }
 
 /// Whether `text` is mostly Latin: at least half its words of two letters
-/// or more are found in the classical lexicon.
+/// or more are found in the lexicon.
 pub fn is_latin(text: &str) -> bool {
     let (mut total, mut latin) = (0usize, 0usize);
     for t in tokens(text) {
@@ -409,9 +443,10 @@ pub fn glossa(text: &str) -> Option<String> {
             continue;
         };
         out.push_str(&format!(
-            "{w}: {} ({}), {}: {}\n",
+            "{w}: {} ({}{}), {}: {}\n",
             first.lemma,
             first.kind,
+            period(first),
             first.form,
             short(&first.meaning, 110)
         ));
@@ -419,17 +454,14 @@ pub fn glossa(text: &str) -> Option<String> {
             .iter()
             .skip(1)
             .take(2)
-            .map(|l| format!("{} ({})", l.lemma, l.form))
+            .map(|l| format!("{} ({}{})", l.lemma, l.form, period(l)))
             .collect();
         if !others.is_empty() {
             out.push_str(&format!("  or: {}\n", others.join("; ")));
         }
     }
     if !unknown.is_empty() {
-        out.push_str(&format!(
-            "Not in the classical lexicon: {}\n",
-            unknown.join(", ")
-        ));
+        out.push_str(&format!("Not in the lexicon: {}\n", unknown.join(", ")));
     }
     if order.len() > MAX_WORDS {
         out.push_str(&format!(

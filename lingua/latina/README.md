@@ -6,7 +6,7 @@ Built by `tools/latina.py` from William Whitaker's WORDS (`DICTLINE.GEN`, `INFLE
 - `flexiones.tsv`: the endings, with the stem each attaches to.
 - `singularia.tsv`: irregular forms read whole.
 
-**Classical only.** An entry or ending is kept when WORDS dates it X (any age), A (archaic), B (early) or C (classical). Late, medieval, scholarly and modern Latin (D to H) is left out, so Church and grimoire words such as *angelus*, *exorcista* and *pentaculum* are not found.
+**Classical first, later Latin marked.** WORDS dates every entry and ending. Entries dated X (any age), A (archaic), B (early) and C (classical) are read as classical. Entries dated D (late, c. 200–600), E (later, c. 600–1000), F (medieval, c. 1000–1500) and G (scholarly, Renaissance and after) are kept too, so Church and grimoire words such as *angelus*, *exorcista* and *marchio* are found, but every reading that rests on one of them is marked with its period and comes after the classical readings. H (modern coinages) is left out.
 
 **Spelling** is normalised as Spiri72 reads: lower case, *j* as *i*, *v* as *u*.
 
