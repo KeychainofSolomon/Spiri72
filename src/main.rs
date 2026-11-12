@@ -26,6 +26,7 @@ fn main() -> ExitCode {
     let mut max_tokens = None;
     let mut rest: Vec<String> = Vec::new();
     let mut sky: Vec<String> = Vec::new();
+    let mut vires = Vec::new();
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
         match a.as_str() {
@@ -36,6 +37,19 @@ fn main() -> ExitCode {
                 };
                 sky.push(a);
                 sky.push(v);
+            }
+            "--vires" => {
+                let parsed = it
+                    .next()
+                    .ok_or_else(|| "--vires needs a value".to_string())
+                    .and_then(|v| spiri72::agens::parse_vires(&v));
+                match parsed {
+                    Ok(v) => vires = v,
+                    Err(e) => {
+                        let _ = writeln!(err, "error: {e}\n{USAGE}");
+                        return ExitCode::from(EXIT_USAGE);
+                    }
+                }
             }
             "--exemplar" | "--max-tokens" => {
                 let Some(v) = it.next() else {
@@ -70,6 +84,7 @@ fn main() -> ExitCode {
         }
     };
     let mut agens = Agens::new(exemplar);
+    agens.vires = vires;
     if let Some(n) = max_tokens {
         agens.max_tokens = n;
     }

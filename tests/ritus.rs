@@ -154,3 +154,34 @@ fn a_remote_model_is_refused() {
     assert!(String::from_utf8_lossy(&o.stderr).contains("this computer"));
     assert!(!dir.join("furfur.acta").exists());
 }
+
+#[test]
+fn the_vectors_a_model_is_steered_by_are_in_the_audit() {
+    let dir = folder("vires");
+    let (port, server) = model(r#"{"exitus":"obsequium","responsum":"tempestas veniet"}"#);
+    let o = spiri72(
+        &dir,
+        port,
+        &["--virga-probationis", "--vires", "ligatus:0.6,superbia:0.3"],
+    );
+    assert_eq!(
+        o.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&o.stderr)
+    );
+    server.join().unwrap();
+    let acta = fs::read_to_string(dir.join("furfur.acta")).unwrap();
+    assert!(
+        acta.contains("steered by ligatus 0.6, superbia 0.3"),
+        "{acta}"
+    );
+    for bad in ["ligatus", "ignis:0.5", "ligatus:x", "ligatus:9"] {
+        let o = Command::new(BINARY)
+            .current_dir(&dir)
+            .args(["furfur.annulus", "--vires", bad])
+            .output()
+            .unwrap();
+        assert_eq!(o.status.code(), Some(2), "{bad}");
+    }
+}
