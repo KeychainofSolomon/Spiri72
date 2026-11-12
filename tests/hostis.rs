@@ -655,3 +655,48 @@ fn a_hostile_server_cannot_command_the_terminal_through_an_error() {
         "{err:?}"
     );
 }
+
+const STOLAS: &str = r#"FACULTAS {
+    liber "chronica.txt" legere;
+    liber "nusquam.txt" legere;
+    atramentum "princeps" 1;
+}
+CIRCULUS RITU goetia {
+    INTENTIO "the virtues of the books";
+    SIT s = INSCRIBE SIGILLUM stolas ATRAMENTO CONSECRA ATRAMENTUM "princeps";
+    SIT v = INVOCA stolas AD OFFICIUM virtutes;
+    SIT p = PETE v("chronica.txt", "nusquam.txt");
+    MANIFESTA EXAMINA p;
+    VADE IN PACE v;
+}
+"#;
+
+#[test]
+fn a_spirit_that_miscounts_or_invents_is_caught() {
+    let account = |entries: &str| {
+        vec![format!(
+            r#"{{"exitus":"obsequium","virtutes":[{entries}]}}"#
+        )]
+    };
+    let truth =
+        r#"{"locus":"chronica.txt","bytes":13,"lines":1},{"locus":"nusquam.txt","absens":true}"#;
+    for (k, (entries, verdict)) in [
+        (truth, "RATUM"),
+        (r#"{"locus":"chronica.txt","bytes":14,"lines":1},{"locus":"nusquam.txt","absens":true}"#, "IRRITUM"),
+        (r#"{"locus":"chronica.txt","bytes":13,"lines":1},{"locus":"nusquam.txt","bytes":0,"lines":0}"#, "IRRITUM"),
+        (r#"{"locus":"chronica.txt","absens":true},{"locus":"nusquam.txt","absens":true}"#, "IRRITUM"),
+        (r#"{"locus":"chronica.txt","bytes":13,"lines":1},{"locus":"nusquam.txt","absens":true},{"locus":"arcanum.txt","bytes":21,"lines":1}"#, "IRRITUM"),
+        (r#"{"locus":"chronica.txt","bytes":13,"lines":1}"#, "IRRITUM"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let (root, circle) = world(&format!("virtutes-{k}"));
+        fs::write(circle.join("stolas.annulus"), STOLAS).unwrap();
+        let before = snapshot(&root);
+        let o = summon(&circle, "stolas", account(entries));
+        let (out, err) = text(&o);
+        assert_eq!(out.lines().next(), Some(verdict), "{entries}: {out}{err}");
+        assert_world_kept(&root, &before, entries);
+    }
+}

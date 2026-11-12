@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "annulus"
 version = "0.2.1"
-source = "git+https://github.com/KeychainofSolomon/Annulus?rev=066d490f1cf65624a3eb935a4c77427a6a77ee77#066d490f1cf65624a3eb935a4c77427a6a77ee77"
+source = "git+https://github.com/KeychainofSolomon/Annulus?rev=5703a41c5bea989a115db9d9f235ae54e723e9c6#5703a41c5bea989a115db9d9f235ae54e723e9c6"
 
 [[package]]
 name = "spiri72"

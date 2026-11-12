@@ -96,12 +96,21 @@ pub fn rite(s: &Spirit, office: &str, question: &str, handed: &[String]) -> Resu
             s.name
         )
     })?;
+    let asks = signature(office).is_none_or(|g| g.quaestio);
+    if !asks && handed.is_empty() {
+        return Err(format!(
+            "{} needs a file handed to it to read",
+            office.to_lowercase()
+        ));
+    }
     let r = restraints(s.n);
     let grants: String = handed
         .iter()
         .map(|p| format!("    liber {} legere;\n", literal(p)))
         .collect();
-    let args: String = std::iter::once(literal(question))
+    let args: String = asks
+        .then(|| literal(question))
+        .into_iter()
         .chain(handed.iter().map(|p| literal(p)))
         .collect::<Vec<_>>()
         .join(", ");

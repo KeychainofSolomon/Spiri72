@@ -110,3 +110,39 @@ fn malformed_or_closed_replies_are_refused() {
     );
     assert!(read(&long, &ALL, true).is_err());
 }
+
+#[test]
+fn virtues_are_read_into_the_exact_account() {
+    use spiri72::forma::{grammar_virtutes, read_virtutes};
+    let (o, a) = read_virtutes(
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a.txt","bytes":7,"lines":1},{"locus":"b.txt","absens":true}]}"#,
+        &ALL,
+    )
+    .unwrap();
+    assert_eq!(
+        (o, a),
+        (
+            Outcome::Obsequium,
+            Actum::Responsum("a.txt: 7 bytes, 1 lines\nb.txt: absens".into())
+        )
+    );
+    let (_, a) = read_virtutes(r#"{"exitus":"pars","virtutes":[]}"#, &ALL).unwrap();
+    assert_eq!(a, Actum::Responsum(" [...]".into()));
+    for bad in [
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a","bytes":-1,"lines":1}]}"#,
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a","bytes":1.5,"lines":1}]}"#,
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a","bytes":"7","lines":1}]}"#,
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a","bytes":7}]}"#,
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a","absens":false}]}"#,
+        r#"{"exitus":"obsequium","virtutes":[{"locus":"a","bytes":7,"lines":1,"absens":true}]}"#,
+        r#"{"exitus":"obsequium","virtutes":[{"bytes":7,"lines":1}]}"#,
+        r#"{"exitus":"obsequium","virtutes":["a: 7 bytes, 1 lines"]}"#,
+        r#"{"exitus":"obsequium","responsum":"a: 7 bytes, 1 lines"}"#,
+        r#"{"exitus":"mendacium","virtutes":[]}"#,
+    ] {
+        assert!(read_virtutes(bad, &ALL).is_err(), "{bad}");
+    }
+    assert!(grammar_virtutes(&ALL)
+        .unwrap()
+        .contains("\"\\\"absens\\\"\""));
+}
