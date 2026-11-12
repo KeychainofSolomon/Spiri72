@@ -1,6 +1,8 @@
 pub mod agens;
 pub mod aula;
+pub mod exempla;
 pub mod forma;
+pub mod ingenium;
 pub mod llama;
 pub mod persona;
 pub mod sessio;

@@ -12,7 +12,8 @@ const DEFAULT_MODEL: &str = "http://127.0.0.1:8080";
 
 const USAGE: &str =
     "usage: spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
-               [--max-tokens N] [any other flag of annulus ritus]
+               [--max-tokens N] [--sine-ingenio] [any other flag of annulus ritus]
+       spiri72 --exempla FILE.jsonl
        spiri72 --version";
 
 fn main() -> ExitCode {
@@ -22,7 +23,33 @@ fn main() -> ExitCode {
         println!("spiri72 {}", env!("CARGO_PKG_VERSION"));
         return ExitCode::SUCCESS;
     }
+    if args.first().map(String::as_str) == Some("--exempla") {
+        let Some(path) = args.get(1).filter(|_| args.len() == 2) else {
+            let _ = writeln!(err, "error: --exempla needs one file to write\n{USAGE}");
+            return ExitCode::from(EXIT_USAGE);
+        };
+        let made = std::fs::File::create_new(path).and_then(|f| {
+            let mut w = io::BufWriter::new(f);
+            let made = spiri72::exempla::exempla(&mut w)?;
+            w.flush()?;
+            Ok(made)
+        });
+        return match made {
+            Ok((v, pr, pe)) => {
+                println!(
+                    "wrote {} examples to {path}: {pe} persona, {v} virtutes, {pr} praeterita",
+                    v + pr + pe
+                );
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                let _ = writeln!(err, "error: cannot write {path}: {e}");
+                ExitCode::from(1)
+            }
+        };
+    }
     let mut url = DEFAULT_MODEL.to_string();
+    let mut ingenium = true;
     let mut max_tokens = None;
     let mut rest: Vec<String> = Vec::new();
     let mut sky: Vec<String> = Vec::new();
@@ -69,6 +96,7 @@ fn main() -> ExitCode {
                     }
                 }
             }
+            "--sine-ingenio" => ingenium = false,
             "--help" | "-h" => {
                 println!("{USAGE}");
                 return ExitCode::SUCCESS;
@@ -85,6 +113,8 @@ fn main() -> ExitCode {
     };
     let mut agens = Agens::new(exemplar);
     agens.vires = vires;
+    agens.ingenium = ingenium;
+    agens.domus = env::current_dir().ok();
     if let Some(n) = max_tokens {
         agens.max_tokens = n;
     }
@@ -100,6 +130,7 @@ fn main() -> ExitCode {
                 return ExitCode::from(1);
             }
         };
+        agens.ritus_proprius = true;
         if terminal {
             let mut input = io::stdin().lock();
             return ExitCode::from(sessio(

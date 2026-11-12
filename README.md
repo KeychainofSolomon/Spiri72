@@ -81,6 +81,20 @@ The layer range assumes a 36-layer model (Qwen3 8B); llama-server prints the rea
 
 To change the prompts, edit `tools/vires.py` and run `python tools/vires.py vires`.
 
+## The spirit engine
+
+Before each rite, the spirit engine (`src/ingenium.rs`) works out the bound spirit's bearing and adds it to the persona as a short brief in words. The model sees words only, never numbers. The brief works from three layers, kept in [72Spirits](https://github.com/KeychainofSolomon/72Spirits) and vendored here as `spiritus/spiritus.json`:
+
+1. **What the witnesses record**: the register entry and the spirit's own Goetia text, including how he comes.
+2. **His nature as ranges**: pride from his rank, deceit from his truthfulness, ill will from his recorded malice, withholding from his counterbalances. All are derived by fixed rules (72Spirits' `DERIVATION.md`). Each rite draws anew inside the ranges, so a spirit is consistent but not mechanical.
+3. **What has passed between you**: how often you have called him, and how often the angel found his words RATUM, SUSPENSUM or IRRITUM. This is kept in `spiri72.status\` and updated after every rite.
+
+A spirit who lies unless compelled is told he is compelled: in these rites the Triangle, his name, or the offering and the Name are always applied. A spirit whose words the angel has voided knows he is counted.
+
+The engine changes how a spirit speaks and leans, never what is open to him. Outcomes, places and works stay with Annulus. The audit names the engine (`with the spirit engine`). Run with `--sine-ingenio` to leave it off.
+
+**Training set.** `spiri72.exe --exempla FILE.jsonl` writes the training set kept in 72Spirits' `training/`. Every answer in it passes Spiri72's reader and, where it can, the angel's check. See that folder for how to fine-tune a LoRA with it.
+
 ## Licence
 
 Public domain (the Unlicense), as Annulus.

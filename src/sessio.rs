@@ -290,12 +290,51 @@ pub fn ask_once(
     .map(|s| s.to_string())
     .chain(sky.iter().cloned())
     .collect();
-    match ritus_with(&args, out, err, Some(will)) {
+    let mut tee = Tee {
+        inner: out,
+        seen: Vec::new(),
+    };
+    let code = match ritus_with(&args, &mut tee, err, Some(will)) {
         Ok(code) => code,
         Err(usage) => {
             let _ = writeln!(err, "error: {}", usage.0);
-            2
+            return 2;
         }
+    };
+    let seen = String::from_utf8_lossy(&tee.seen);
+    let iudicium = seen
+        .lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .filter(|l| ["RATUM", "SUSPENSUM", "IRRITUM"].contains(l));
+    if iudicium.is_some() {
+        if let Err(e) = crate::ingenium::record(dir, spirit.n, iudicium) {
+            let _ = writeln!(
+                err,
+                "warning: the spirit engine could not keep its record: {e}"
+            );
+        }
+    }
+    code
+}
+
+/// Passes the rite's output on and keeps a copy, so the angel's verdict
+/// can be recorded in the spirit's status.
+struct Tee<'a> {
+    inner: &'a mut dyn Write,
+    seen: Vec<u8>,
+}
+
+impl Write for Tee<'_> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let n = self.inner.write(buf)?;
+        if self.seen.len() < 1 << 20 {
+            self.seen.extend_from_slice(&buf[..n]);
+        }
+        Ok(n)
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.flush()
     }
 }
 
