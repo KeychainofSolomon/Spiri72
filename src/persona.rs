@@ -12,7 +12,7 @@ fn register() -> &'static Json {
     R.get_or_init(|| json::parse(GOETIA).expect("the goetia register is well formed"))
 }
 
-fn entry(n: u32) -> Option<&'static Json> {
+pub fn entry(n: u32) -> Option<&'static Json> {
     let root = register();
     let list = root.get("spirits").map(Json::list).unwrap_or(root.list());
     list.iter()

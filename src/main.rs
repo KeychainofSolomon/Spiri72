@@ -5,6 +5,7 @@ use std::process::ExitCode;
 use annulus::mandata::{ritus_with, Usage, EXIT_USAGE};
 use spiri72::agens::Agens;
 use spiri72::llama::parse_url;
+use spiri72::sessio::sessio;
 
 const DEFAULT_MODEL: &str = "http://127.0.0.1:8080";
 
@@ -63,6 +64,17 @@ fn main() -> ExitCode {
         agens.max_tokens = n;
     }
     let mut out = io::stdout().lock();
+    if rest.iter().all(|a| a == "--virga-probationis") {
+        let dir = match env::current_dir() {
+            Ok(d) => d,
+            Err(e) => {
+                let _ = writeln!(err, "error: cannot find this folder: {e}");
+                return ExitCode::from(1);
+            }
+        };
+        let mut input = io::stdin().lock();
+        return ExitCode::from(sessio(&mut input, &mut out, &mut err, &mut agens, &dir));
+    }
     match ritus_with(&rest, &mut out, &mut err, Some(&mut agens)) {
         Ok(code) => ExitCode::from(code),
         Err(Usage(why)) => {
