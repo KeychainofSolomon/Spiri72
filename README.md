@@ -16,7 +16,7 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
 
 ## Limits for now
 
-- **Test wand only.** Annulus records each turn's outcome, but whether a model lied or meant harm cannot be known. Until the core can record an outcome it does not know, a model runs only with `--virga-probationis`, and the audit says each outcome is the model's own declaration.
+- **Test wand only.** Annulus now records each of the model's turns as its own declaration, never as a known fact, so whether it lied or meant harm is never presumed. A model still runs only with `--virga-probationis` until Annulus has a real wand (its step 2d).
 - **This computer only.** The model's address must be `127.0.0.1`, `localhost` or `[::1]`.
 - **Telling offices are where the model is free.** A working office (building, copying, moving) passes only with exactly the work its office describes.
 
