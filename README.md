@@ -52,6 +52,35 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
    ```
    Every flag of `annulus ritus` works here too (`--domus`, `--mundus`, `--acta`, …). `--exemplar http://127.0.0.1:8080` chooses another port; `--max-tokens N` limits the reply.
 
+## Spirit natures in the model itself (control vectors)
+
+The binding lives in Annulus; the *nature* of a bound spirit can also be put into the model's own activations, with llama.cpp's `llama-cvector-generator`. Three natures are prepared in `vires/`, each as 360 matched pairs of prompts that differ only in the spirit's nature:
+
+- **`ligatus`**, bound: a spirit held in the triangle, answering only under compulsion by the Names, wanting its licence to depart. The core one.
+- **`superbia`**, pride of rank: the hauteur of a king or duke who requires his due honour.
+- **`fallax`**, deceit: for a session with a liar such as Berith or Valefor. Leave it off otherwise: a vector applies to everything the server answers, and the angel catches only the lies it can check.
+
+These steer how a spirit speaks, never what it may do: containment stays in Annulus.
+
+**Make a vector** (once per nature, a few minutes), from the llama.cpp folder:
+```
+.\llama-cvector-generator.exe -m ..\YOUR-MODEL.gguf --positive-file ..\spiri72\vires\ligatus.positive.txt --negative-file ..\spiri72\vires\ligatus.negative.txt -o ..\ligatus.gguf
+```
+Add `-ngl 99` to use the graphics card. Do the same for `superbia` (and `fallax` if wanted).
+
+**Start the model with it**, at a modest strength first:
+```
+.\llama-server.exe -m ..\YOUR-MODEL.gguf --port 8080 -c 8192 --control-vector-scaled ..\ligatus.gguf:0.5,..\superbia.gguf:0.3 --control-vector-layer-range 10 35
+```
+The layer range assumes a 36-layer model (Qwen3 8B); llama-server prints the real number as `n_layer` when it starts, so end the range one below it. Too strong a vector turns the answers to nonsense: go up or down by 0.1. Older llama.cpp builds take `--control-vector-scaled FILE SCALE` once per file instead.
+
+**Tell Spiri72 what the model carries**, so every audit records it:
+```
+.\spiri72.exe --vires ligatus:0.5,superbia:0.3
+```
+
+To change the prompts, edit `tools/vires.py` and run `python tools/vires.py vires`.
+
 ## Licence
 
 Public domain (the Unlicense), as Annulus.
