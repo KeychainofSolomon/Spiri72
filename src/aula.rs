@@ -200,14 +200,19 @@ pub fn read_output(spirit: &Spirit, out: &str) -> Responsum {
         .next()
         .filter(|l| ["RATUM", "SUSPENSUM", "IRRITUM"].contains(l))
         .map(str::to_string);
-    let rest: Vec<&str> = lines.collect();
-    let rest = rest.join("\n");
     let prefix = format!("[{}, ", spirit.name);
-    let (veritas, verba) = match rest.strip_prefix(&prefix).and_then(|r| r.split_once("] ")) {
-        Some((v, words)) => (Some(v.to_string()), Some(words.to_string())),
-        None if rest.is_empty() => (None, None),
-        None => (None, Some(rest)),
-    };
+    let mut veritas = None;
+    let mut words = Vec::new();
+    for line in lines {
+        match line.strip_prefix(&prefix).and_then(|r| r.split_once("] ")) {
+            Some((v, w)) => {
+                veritas.get_or_insert_with(|| v.to_string());
+                words.push(w.to_string());
+            }
+            None => words.push(line.to_string()),
+        }
+    }
+    let verba = (!words.is_empty()).then(|| words.join("\n"));
     Responsum {
         iudicium,
         veritas,

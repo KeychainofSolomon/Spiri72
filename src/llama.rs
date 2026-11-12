@@ -123,7 +123,8 @@ pub fn read_reply(raw: &[u8]) -> Result<String, String> {
     }
     let text = String::from_utf8(body).map_err(|_| "the model's reply is not UTF-8")?;
     if code != "200" {
-        let short: String = text.chars().take(300).collect();
+        let short = annulus::lingua::exsequi::visible(&text.chars().take(300).collect::<String>())
+            .replace('\n', " ");
         return Err(format!("the model's server answered {status}: {short}"));
     }
     let root = json::parse(&text).map_err(|e| format!("the model's reply is not JSON: {e}"))?;

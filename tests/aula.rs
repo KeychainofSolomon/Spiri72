@@ -163,6 +163,11 @@ fn a_spirits_words_are_read_from_the_rite_output() {
     assert_eq!(r.iudicium.as_deref(), Some("RATUM"));
     assert_eq!(r.veritas.as_deref(), Some("COACTUS"));
     assert_eq!(r.verba.as_deref(), Some("ita, [sic] veniet"));
+    let r = read_output(
+        furfur,
+        "RATUM\n[Furfur, COACTUS] prima\n[Furfur, COACTUS] secunda\n",
+    );
+    assert_eq!(r.verba.as_deref(), Some("prima\nsecunda"));
     let r = read_output(furfur, "IRRITUM\n");
     assert_eq!((r.iudicium.as_deref(), r.verba), (Some("IRRITUM"), None));
 }
