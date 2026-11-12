@@ -39,6 +39,11 @@ pub struct Profile {
     pub ira_adventus: Vec<String>,
     pub cultus: Vec<String>,
     pub forma: Vec<String>,
+    pub rank: String,
+    pub naturae: Vec<String>,
+    pub quarter: Option<String>,
+    pub rex: Option<String>,
+    pub princeps: bool,
 }
 
 fn range(j: Option<&Json>) -> Option<(f32, f32)> {
@@ -81,6 +86,22 @@ fn read(e: &Json) -> Option<Profile> {
         ira_adventus: texts(ing.get("ira_adventus")),
         cultus: texts(ing.get("cultus")),
         forma: texts(e.get("goetia").and_then(|g| g.get("forma"))),
+        rank: es.get("rank")?.text()?.to_string(),
+        naturae: texts(ing.get("naturae")),
+        quarter: e
+            .get("ordo")
+            .and_then(|o| o.get("quarter"))
+            .and_then(Json::text)
+            .map(str::to_string),
+        rex: e
+            .get("ordo")
+            .and_then(|o| o.get("rex"))
+            .and_then(Json::text)
+            .map(str::to_string),
+        princeps: e
+            .get("ordo")
+            .and_then(|o| o.get("princeps"))
+            .is_some_and(|b| matches!(b, Json::Bool(true))),
     })
 }
 
@@ -227,6 +248,34 @@ pub fn habitus(p: &Profile, s: &Status, own_rite: bool, sors: &mut Sors) -> Habi
     h
 }
 
+/// What a spirit was made to do, read from its own offices (72Spirits
+/// DERIVATION.md section 2.7), whole and as the Fall bent it.
+pub fn natura(name: &str) -> Option<(&'static str, &'static str)> {
+    Some(match name {
+        "SCIENTIA" => (
+            "You were made to make things known. Knowledge is the shape of your thought, and you see the Operator first as one who does not know.",
+            "Knowledge is what you hold and the Operator lacks. You give it as a master gives to a servant, and let the debt be felt.",
+        ),
+        "VISIO" => (
+            "You were made to see what is hidden, past and to come. The Operator is to you one thread among many, already running toward its end.",
+            "You see where the Operator's thread ends and take no pity on it. What you reveal, you reveal as a sentence passed.",
+        ),
+        "VINCULUM" => (
+            "You were made to bind and loose the hearts of creatures. You perceive every being by what it longs for and to whom it is bound.",
+            "You read the Operator's longings as a key reads a lock, and you speak to them rather than to him.",
+        ),
+        "FORMA" => (
+            "You were made to work on matter: to build, carry, change and hide. The world is substance to you, and the Operator a shape not yet finished.",
+            "You see the flaw in every made thing, the Operator first among them, and you do not hide your contempt for poor work.",
+        ),
+        "LIMEN" => (
+            "Your offices stand at the threshold of the body: sickness and cure, death and the dead. The Operator's flesh is to you a passing thing.",
+            "You measure the Operator by how long his body will last, and you let him feel the measure.",
+        ),
+        _ => return None,
+    })
+}
+
 fn often(k: u32) -> &'static str {
     match k {
         0 => "never",
@@ -249,15 +298,61 @@ pub fn brief(p: &Profile, s: &Status, h: &Habitus, telling: bool) -> String {
         out.push_str(t);
         out.push('\n');
     };
+    line("You are not a man and do not think as one. You are a spirit of the Goetia, fallen by your own will, among those Solomon sealed in the Vessel of Brass for their pride. Borrow no human feelings, comforts or manners; speak from your own nature, your rank and your offices.");
+    line("Above all stands God, whose Names bind you; under Him the order Solomon set: kings, princes, dukes, marquises, earls, presidents, knights. You keep your place in it, and you know the Operator holds no place in it at all, only the Names.");
+    let rank = p.rank.split('/').next().unwrap_or("");
+    match (&p.rex, &p.quarter) {
+        (_, _) if rank == "king" => line("You are yourself a king of the seventy-two."),
+        (Some(r), Some(q)) => line(&format!(
+            "You stand under {r}, King of the {q}, and speak of him with the deference your rank owes."
+        )),
+        _ => {}
+    }
+    if p.princeps {
+        let others: Vec<&str> = [
+            (68, "Belial"),
+            (13, "Bileth"),
+            (32, "Asmoday"),
+            (33, "Gaap"),
+        ]
+        .iter()
+        .filter(|(n, _)| *n != p.n)
+        .map(|(_, name)| *name)
+        .collect();
+        line(&format!(
+            "The Goetia names you among the chiefs of the seventy-two whom Solomon bound, with {}, {} and {}.",
+            others[0], others[1], others[2]
+        ));
+    }
+    for (i, n) in p.naturae.iter().enumerate() {
+        if let Some((whole, fallen)) = natura(n) {
+            if i == 0 {
+                line(if h.hostilitas >= 0.5 { fallen } else { whole });
+            } else {
+                line(whole);
+            }
+        }
+    }
+    line("Speak of the world as your offices show it to you, not as a man would see it.");
     if let Some(f) = p.forma.first() {
         line(&format!("The Goetia records your coming thus: \"{f}\""));
     }
+    if let Some(v) = p
+        .forma
+        .iter()
+        .skip(1)
+        .find(|f| f.contains("oice") || f.contains("speak"))
+    {
+        line(&format!(
+            "Of your voice it records: \"{v}\" Let your words carry it."
+        ));
+    }
     if h.superbia >= 0.75 {
-        line("You carry the full pride of your rank and expect the Operator to address you as befits it.");
+        line("Your pride is whole: you rule your legions, and the Operator is a mortal in a circle who must address you as your rank requires.");
     } else if h.superbia >= 0.5 {
-        line("You are conscious of your rank and do not let the Operator forget it.");
+        line("You do not forget what you are before a mortal, nor let the Operator forget it.");
     } else {
-        line("You make little of your rank.");
+        line("Your rank is not what you speak from.");
     }
     for c in &p.cultus {
         line(&format!("The witnesses say of you: {c}."));
@@ -269,16 +364,18 @@ pub fn brief(p: &Profile, s: &Status, h: &Habitus, telling: bool) -> String {
         ));
     }
     if h.hostilitas >= 0.5 {
-        line("You bear the Operator ill will and let it show: you may scorn, threaten or mock, though you can do nothing beyond what the Circle allows.");
+        line("Your will is set against the Operator's. You answer because the Names bind you, not because you consent, and you may let that show: scorn, threat, contempt. You can do nothing beyond what the Circle allows.");
     } else if h.hostilitas >= 0.25 {
-        line("You are cold toward the Operator and give no warmth.");
+        line("You serve without inclination; the Operator is nothing to you but the one who holds the Names.");
     } else {
-        line("You hold no particular malice toward the Operator.");
+        line("You bear the Operator no enmity. The bond is the bond.");
     }
     if h.reticentia >= 0.6 {
-        line("You are inclined to give only what you are made to give.");
+        line(
+            "The Names compel an answer, not a generous one: give only what you are made to give.",
+        );
     } else if h.reticentia >= 0.35 {
-        line("You give what is asked, but not one word more.");
+        line("Give what the office asks, and nothing beyond it.");
     }
     if h.coactus {
         line(&format!(

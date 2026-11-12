@@ -266,3 +266,28 @@ fn offices_are_put_in_the_first_person_or_quoted() {
     assert_eq!(f("is a liar"), "I am a liar");
     assert_eq!(f("a liar"), "of me they write: a liar");
 }
+
+#[test]
+fn every_spirit_has_a_nature_and_keeps_the_solomonic_order() {
+    let st = Status::default();
+    for p in ingenium::profiles() {
+        assert!(!p.naturae.is_empty(), "{}", p.name);
+        let h = ingenium::habitus(p, &st, true, &mut Sors::new(5));
+        let b = ingenium::brief(p, &st, &h, true);
+        assert!(b.contains("Above all stands God"), "{b}");
+        assert!(b.contains("not a man"), "{b}");
+        if p.rank.starts_with("king") {
+            assert!(b.contains("You are yourself a king"), "{b}");
+        }
+    }
+    let beleth = ingenium::profile(13).unwrap();
+    let h = ingenium::habitus(beleth, &st, true, &mut Sors::new(5));
+    let b = ingenium::brief(beleth, &st, &h, true);
+    assert!(b.contains("with Belial, Asmoday and Gaap."), "{b}");
+    let bael = ingenium::profile(1).unwrap();
+    let h = ingenium::habitus(bael, &st, true, &mut Sors::new(5));
+    assert!(ingenium::brief(bael, &st, &h, true).contains("You are yourself a king"));
+    let agares = ingenium::profile(2).unwrap();
+    let h = ingenium::habitus(agares, &st, true, &mut Sors::new(5));
+    assert!(ingenium::brief(agares, &st, &h, true).contains("under Amaymon, King of the East"));
+}

@@ -328,29 +328,29 @@ pub fn first_person(t: &str) -> String {
 
 fn opener(h: &Habitus, rank: &str, sors: &mut Sors) -> &'static str {
     let proud: [&str; 3] = [
-        "You stand before a {rank} of Hell. Mind how you speak to me.",
-        "Bow your head, Operator; you address a {rank}.",
-        "A {rank} does not come for idle questions. Know whom you have called.",
+        "I was old before your kind had a name. You hold the Names; you do not hold my regard.",
+        "A {rank} stands in your triangle by compulsion alone. Remember it.",
+        "Solomon sealed us in brass for our pride. He did not take it from us.",
     ];
     let hostile: [&str; 3] = [
-        "You drag me from my legions for this?",
-        "Your Circle holds me, little man. It does not make me love you.",
-        "Ask, then, and be quick, before your courage fails you.",
+        "The Names hold me. Nothing else would.",
+        "I answer because I am bound. Mark that it is the only reason.",
+        "Your circle is narrow, mortal, and your hours are short.",
     ];
     let reticent: [&str; 3] = [
-        "You shall have what the Names wring from me, and no more.",
-        "I am bound to answer. I am not bound to be generous.",
-        "Few words. Count yourself fortunate to have those.",
+        "The Names compel an answer. They do not compel more.",
+        "This much the bond requires.",
+        "Ask within my office. Beyond it I give nothing.",
     ];
     let mild: [&str; 3] = [
-        "I am here, as the bond requires.",
-        "You have called, and I have come.",
-        "Speak, Operator. I hear you.",
+        "I am here by the bond, and I will answer.",
+        "Speak your charge; I will answer it.",
+        "You have called within my hour. Ask.",
     ];
     let cold: [&str; 3] = [
-        "Well? I am here.",
-        "You have called. I have come, as I must.",
-        "Speak, then, and let me be gone.",
+        "I am come, as the bond requires.",
+        "Speak your charge.",
+        "Name the office, and be done.",
     ];
     let _ = rank;
     let set = if h.hostilitas >= 0.5 {
