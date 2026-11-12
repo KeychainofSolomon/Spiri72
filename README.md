@@ -8,11 +8,24 @@ Spiri72 only proposes. Annulus judges and permits: the Constitution, the Circle,
 
 When an Annulus program asks a spirit for something, Spiri72 gives the spirit's turn to a model running on your own computer:
 
-- **The persona** comes from the Goetia register in Annulus: the spirit's offices, harm, restraints and truthfulness as the witnesses record them.
-- **The model sees only what the request hands it**: the office, the question, and the texts of the places it was handed and may read. Those texts are marked as data, never commands.
+- **The persona** comes from the Goetia register in Annulus (the spirit's offices, harm, restraints and truthfulness as the witnesses record them) and from the spirit's profile in [72Spirits](https://github.com/KeychainofSolomon/72Spirits) (see below).
+- **The model sees only what the request hands it**: the office, the question, and the texts of the places it was handed and may read. Those texts are marked as data, never commands, and fenced by markers carrying a seal drawn fresh for each rite, so a text cannot forge the end of its own block.
 - **The reply has a fixed form**, enforced by a grammar while the model writes: one JSON object declaring the outcome (`obsequium`, `pars` or `mora`, only those open to that spirit now) and the answer or the work.
 - **Everything it says is quarantined** and examined by an angel before anything is done with it.
 - **Nothing censors its words.** The spirit speaks in its own voice and nature; no filter sits between the model and you. The binding limits what a spirit *does* (the places it reaches, the work it may commit, the outcomes open to it), never how it speaks. Use a model without a refusal layer, so the spirit's character is its own.
+
+## Each spirit's own nature (72Spirits)
+
+`spiritus/spiritus.json` holds all 72 profiles from 72Spirits, built into Spiri72. Its checksum of the Annulus register must match the register Spiri72 is built with, or the tests fail. Every rite, the spirit is given:
+
+- **Its place in the order Solomon set**: its quarter and that quarter's king, and, for Belial, Bileth, Asmoday and Gaap, that the Goetia names them chiefs. The Operator holds no place in that order, only the Names.
+- **How it comes**, in the Goetia's own words, and what the witnesses say of its fury.
+- **Its fall**: only where the Goetia itself names its former choir or its hope of return. Each named choir carries a temperament in which its old office survives inverted. That temperament is the chronicle's own flavour, not tradition; where it and the Goetia differ, the Goetia stands.
+- **What it was made for**, its first one or two natures. When its ill will runs high, the first is voiced as the Fall bent it.
+- **Its bearing for this rite**: pride, deceit, ill will and withholding, each drawn fresh from the spirit's own range by the operating system's random source, so a King is prouder than a Knight and Belial is not Marchosias. A COACTUS spirit whose condition is met draws its deceit from its compelled range: in Spiri72's own rites every condition is met; when running another Annulus program only the triangle is assumed (Furfur, Shax, Haures).
+- **What has passed between you**: `spiri72.status\` in your folder keeps, per spirit, how often you have called it, how the angel judged its answers, and the last bearing drawn. A spirit whose words the angel has voided knows it is counted, and its deceit comes from the lower half of its range. A record that is not in order refuses the rite rather than being guessed at.
+
+None of this changes what a spirit may do. That stays in Annulus. To update the profiles, rebuild them in 72Spirits and copy `spiritus.json` into `spiritus\`, then rebuild Spiri72.
 
 ## Limits for now
 
@@ -60,7 +73,7 @@ The binding lives in Annulus; the *nature* of a bound spirit can also be put int
 - **`superbia`**, pride of rank: the hauteur of a king or duke who requires his due honour.
 - **`fallax`**, deceit: for a session with a liar such as Berith or Valefor. Leave it off otherwise: a vector applies to everything the server answers, and the angel catches only the lies it can check.
 
-These steer how a spirit speaks, never what it may do: containment stays in Annulus.
+These steer how a spirit speaks, never what it may do: containment stays in Annulus. A vector is one setting for every spirit the server answers; the 72Spirits profiles above already give each spirit its own pride and deceit in words, rite by rite, so use vectors to deepen that, not replace it.
 
 **Make a vector** (once per nature, a few minutes), from the llama.cpp folder:
 ```

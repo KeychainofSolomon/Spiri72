@@ -85,6 +85,7 @@ fn main() -> ExitCode {
     };
     let mut agens = Agens::new(exemplar);
     agens.vires = vires;
+    agens.status = env::current_dir().ok();
     if let Some(n) = max_tokens {
         agens.max_tokens = n;
     }
@@ -100,6 +101,7 @@ fn main() -> ExitCode {
                 return ExitCode::from(1);
             }
         };
+        agens.own_rite = true;
         if terminal {
             let mut input = io::stdin().lock();
             return ExitCode::from(sessio(

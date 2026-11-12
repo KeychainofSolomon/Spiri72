@@ -1,15 +1,14 @@
-use std::collections::hash_map::RandomState;
-use std::hash::{BuildHasher, Hasher};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 use annulus::horae;
 use annulus::lingua::exsequi::Voluntas;
 use annulus::lingua::json::{self, Json};
 use annulus::lingua::registra::{goetia, Spirit};
 
+use crate::fors;
 use crate::llama::quote;
 use crate::persona::entry;
 use crate::sessio::{ask_once, telling_offices, unbindable};
@@ -19,20 +18,10 @@ const PAGE: &str = include_str!("../aula/index.html");
 const MAX_HEAD: usize = 16 * 1024;
 const MAX_BODY: usize = 64 * 1024;
 
-pub fn token() -> String {
-    let now = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    (0..4u64)
-        .map(|i| {
-            let mut h = RandomState::new().build_hasher();
-            h.write_u64(i);
-            h.write_u128(now);
-            h.write_u32(std::process::id());
-            format!("{:016x}", h.finish())
-        })
-        .collect()
+/// The one-time key of the binding page: 256 bits from the system's own
+/// cryptographic source.
+pub fn token() -> Result<String, String> {
+    fors::hex::<32>()
 }
 
 pub struct Request {
@@ -492,9 +481,16 @@ pub fn serve(
         }
     };
     let port = listener.local_addr().map(|a| a.port()).unwrap_or(0);
+    let token = match token() {
+        Ok(t) => t,
+        Err(e) => {
+            let _ = writeln!(out, "error: no key for the binding page: {e}");
+            return 1;
+        }
+    };
     let aula = Aula {
         port,
-        token: token(),
+        token,
         dir,
         exemplar: exemplar_url.to_string(),
         sky: sky.to_vec(),
