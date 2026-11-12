@@ -4,6 +4,7 @@ use std::process::ExitCode;
 
 use annulus::mandata::{ritus_with, Usage, EXIT_USAGE};
 use spiri72::agens::Agens;
+use spiri72::aula::serve;
 use spiri72::llama::parse_url;
 use spiri72::sessio::sessio;
 
@@ -23,7 +24,7 @@ fn main() -> ExitCode {
     }
     let mut url = DEFAULT_MODEL.to_string();
     let mut max_tokens = None;
-    let mut rest = Vec::new();
+    let mut rest: Vec<String> = Vec::new();
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
         match a.as_str() {
@@ -64,6 +65,9 @@ fn main() -> ExitCode {
         agens.max_tokens = n;
     }
     let mut out = io::stdout().lock();
+    let terminal = rest.iter().any(|a| a == "--terminal");
+    let no_browser = rest.iter().any(|a| a == "--no-browser");
+    rest.retain(|a| a != "--terminal" && a != "--no-browser");
     if rest.iter().all(|a| a == "--virga-probationis") {
         let dir = match env::current_dir() {
             Ok(d) => d,
@@ -72,8 +76,20 @@ fn main() -> ExitCode {
                 return ExitCode::from(1);
             }
         };
-        let mut input = io::stdin().lock();
-        return ExitCode::from(sessio(&mut input, &mut out, &mut err, &mut agens, &dir));
+        if terminal {
+            let mut input = io::stdin().lock();
+            return ExitCode::from(sessio(&mut input, &mut out, &mut err, &mut agens, &dir));
+        }
+        let address = agens.exemplar.address;
+        let url = agens.exemplar.url.clone();
+        return ExitCode::from(serve(
+            &mut agens,
+            address,
+            &url,
+            &dir,
+            &mut out,
+            !no_browser,
+        ));
     }
     match ritus_with(&rest, &mut out, &mut err, Some(&mut agens)) {
         Ok(code) => ExitCode::from(code),

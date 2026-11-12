@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spiri72</title>
+<style>
+:root {
+  --lapis: #0c1633;
+  --lapis-band: #15234c;
+  --lapis-line: #2a3b6e;
+  --ink: #dfe3ea;
+  --pewter: #8c95aa;
+  --rubric: #c8432c;
+  --face: "Palatino Linotype", "Book Antiqua", Palatino, "URW Palladio L", P052, Georgia, serif;
+  --measure: 34rem;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--lapis); color: var(--ink); font-family: var(--face); }
+body { height: 100vh; overflow: hidden; }
+body {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr) minmax(16rem, 21rem);
+  grid-template-rows: 1fr auto;
+  grid-template-areas: "catalogue stage entry" "foot foot foot";
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.catalogue { grid-area: catalogue; border-right: 1px solid var(--lapis-line); padding: 1.5rem 1.25rem; overflow-y: auto; min-height: 0; }
+.catalogue h1 { font-weight: normal; font-size: 1.35rem; letter-spacing: .02em; margin: 0 0 .25rem; }
+.catalogue p { color: var(--pewter); font-size: .9rem; line-height: 1.5; margin: 0 0 1rem; }
+.catalogue label { display: flex; gap: .5rem; align-items: center; font-size: .9rem; color: var(--pewter); margin-bottom: 1rem; cursor: pointer; }
+.seals { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: .35rem; }
+.seals button {
+  width: 100%; aspect-ratio: 1; padding: 3px; border: 1px solid transparent; border-radius: 50%;
+  background: none; cursor: pointer; display: grid; place-items: center; position: relative;
+}
+.seals button svg { width: 100%; height: 100%; display: block; }
+.seals button[data-closed] { opacity: .45; }
+.seals button:hover, .seals button[aria-pressed="true"] { border-color: var(--lapis-line); background: var(--lapis-band); }
+.seals button[aria-pressed="true"] { border-color: var(--ink); }
+.seals .n { position: absolute; bottom: -2px; right: -2px; font-size: .62rem; color: var(--pewter); }
+.hide-closed .seals li:has(button[data-closed]) { display: none; }
+
+.stage { grid-area: stage; display: grid; justify-items: center; align-content: start; padding: 1rem 1rem .75rem; gap: .15rem; min-width: 0; min-height: 0; overflow: hidden; }
+.triangle { width: min(15rem, 60%); }
+.triangle svg { width: 100%; display: block; overflow: visible; }
+.triangle .names text { fill: var(--pewter); font-family: var(--face); font-size: 30px; letter-spacing: 3px; transition: fill .6s; }
+.bound .triangle .names text { fill: var(--rubric); }
+.triangle .seat { transform-origin: 300px 330px; }
+.triangle .seat.arrive { animation: arrive .9s cubic-bezier(.2, .7, .2, 1); }
+@keyframes arrive { from { opacity: 0; transform: scale(.82) rotate(-8deg); } to { opacity: 1; transform: none; } }
+.east { color: var(--pewter); font-size: .8rem; letter-spacing: .3em; margin: .1rem 0 .1rem .3em; }
+
+.circle { position: relative; width: min(46rem, 100%, calc(100vh - 21rem)); min-width: 22rem; aspect-ratio: 1; }
+.circle > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.circle .ring text { fill: var(--pewter); font-family: var(--face); font-size: 21px; letter-spacing: 4px; }
+.bound .circle .ring text { fill: var(--ink); }
+.within { position: absolute; left: 18%; right: 18%; top: 17%; bottom: 15%; display: grid; grid-template-rows: 1fr auto; gap: .75rem; }
+.dialogue { overflow-y: auto; padding: .25rem .5rem; display: flex; flex-direction: column; gap: 1.1rem; scrollbar-width: thin; scrollbar-color: var(--lapis-line) transparent; }
+.dialogue .empty { margin: auto; text-align: center; color: var(--pewter); line-height: 1.6; max-width: 22rem; }
+.said { margin: 0; line-height: 1.55; }
+.said.operator { align-self: flex-end; text-align: right; max-width: 85%; }
+.said.operator::before { content: "You ask"; display: block; color: var(--pewter); font-size: .8rem; }
+.said.spirit { font-style: italic; border-left: 2px solid var(--metal, var(--ink)); padding-left: .85rem; max-width: 92%; white-space: pre-wrap; }
+.said.spirit .who { display: block; font-style: normal; color: var(--pewter); font-size: .8rem; margin-bottom: .15rem; }
+.said .verdict { font-style: normal; letter-spacing: .12em; font-size: .78rem; margin-left: .4rem; }
+.verdict.ratum { color: var(--ink); }
+.verdict.suspensum { color: var(--pewter); }
+.verdict.irritum, .said.refused { color: var(--rubric); }
+.said.refused { font-style: normal; border-left: 2px solid var(--rubric); padding-left: .85rem; }
+.said.waiting { color: var(--pewter); font-style: italic; }
+
+form.ask { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin: 0 7%; }
+form.ask textarea {
+  resize: none; height: 3.1rem; padding: .55rem .75rem; background: var(--lapis-band); border: 1px solid var(--lapis-line);
+  border-radius: 2px; line-height: 1.4;
+}
+form.ask textarea::placeholder { color: var(--pewter); }
+form.ask button, .entry button.primary {
+  border: 1px solid var(--ink); background: var(--ink); color: var(--lapis); padding: 0 1.1rem; border-radius: 2px; cursor: pointer;
+}
+form.ask button:disabled, form.ask textarea:disabled { opacity: .4; cursor: not-allowed; }
+
+.entry { grid-area: entry; border-left: 1px solid var(--lapis-line); padding: 1.5rem 1.4rem; overflow-y: auto; min-height: 0; }
+.entry h2 { font-weight: normal; font-size: 2rem; margin: 0; line-height: 1.1; }
+.entry .rank { color: var(--pewter); margin: .35rem 0 1.25rem; }
+.entry h3 { font-weight: normal; font-style: italic; color: var(--pewter); font-size: .95rem; margin: 1.1rem 0 .3rem; }
+.entry ul { margin: 0; padding-left: 1.1rem; line-height: 1.5; }
+.entry li { margin-bottom: .3rem; }
+.entry .kind { color: var(--pewter); font-size: .85rem; }
+.entry .closed { color: var(--rubric); line-height: 1.5; margin: 1.25rem 0 0; }
+.entry .actions { display: grid; gap: .6rem; margin-top: 1.5rem; }
+.entry .actions button { padding: .6rem 1rem; }
+.entry .actions button.quiet { background: none; border: 1px solid var(--lapis-line); color: var(--ink); border-radius: 2px; cursor: pointer; }
+.entry select, .entry input { width: 100%; padding: .45rem .6rem; background: var(--lapis-band); border: 1px solid var(--lapis-line); border-radius: 2px; }
+.entry .field { display: grid; gap: .3rem; margin-top: .9rem; font-size: .9rem; color: var(--pewter); }
+.entry .hint { color: var(--pewter); line-height: 1.6; }
+
+footer { grid-area: foot; border-top: 1px solid var(--lapis-line); padding: .7rem 1.4rem; font-size: .82rem; color: var(--pewter); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+footer .dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: var(--pewter); margin-right: .45rem; vertical-align: middle; }
+footer .up .dot { background: #7fb38a; }
+footer .down { color: var(--rubric); }
+footer .down .dot { background: var(--rubric); }
+
+@media (max-width: 1100px) {
+  body { height: auto; overflow: auto; grid-template-columns: minmax(15rem, 18rem) 1fr; grid-template-areas: "catalogue stage" "catalogue entry" "foot foot"; grid-template-rows: auto auto auto; }
+  .circle { width: min(40rem, 100%); }
+  .entry { border-left: none; border-top: 1px solid var(--lapis-line); max-height: none; }
+}
+@media (max-width: 720px) {
+  body { display: block; }
+  .catalogue, .entry { max-height: none; border: none; }
+  .seals { grid-template-columns: repeat(8, 1fr); }
+  .within { left: 13%; right: 13%; }
+}
+@media (prefers-reduced-motion: reduce) { .triangle .seat.arrive { animation: none; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="m-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3e2a6"/><stop offset=".55" stop-color="#b98c31"/><stop offset="1" stop-color="#e7cd7e"/></linearGradient>
+    <linearGradient id="m-copper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eeac85"/><stop offset=".55" stop-color="#9b5131"/><stop offset="1" stop-color="#d98d62"/></linearGradient>
+    <linearGradient id="m-tin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dfe4e6"/><stop offset=".55" stop-color="#8d979c"/><stop offset="1" stop-color="#c6cdd0"/></linearGradient>
+    <linearGradient id="m-silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#b3bbc7"/><stop offset="1" stop-color="#f0f3f8"/></linearGradient>
+    <linearGradient id="m-mercury" x1="0" y1="0" x2="1" y2=".4"><stop offset="0" stop-color="#eef3f7"/><stop offset=".3" stop-color="#7a8794"/><stop offset=".5" stop-color="#dbe3ea"/><stop offset=".75" stop-color="#6c7884"/><stop offset="1" stop-color="#cbd4dc"/></linearGradient>
+    <linearGradient id="m-lead" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a3a9ae"/><stop offset=".55" stop-color="#565c62"/><stop offset="1" stop-color="#8b9196"/></linearGradient>
+  </defs>
+</svg>
+
+<aside class="catalogue" aria-labelledby="catalogue-title">
+  <h1 id="catalogue-title">The seventy-two</h1>
+  <p>Each seal is shown in the metal its rank is made in. Choose one to read what the witnesses record of that spirit.</p>
+  <label><input type="checkbox" id="only-open"> Show only spirits that can be bound now</label>
+  <ul class="seals" id="seals"></ul>
+</aside>
+
+<main class="stage" id="stage">
+  <div class="triangle" aria-hidden="true">
+    <svg viewBox="0 0 600 560">
+      <path d="M300 40 L560 500 L40 500 Z" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+      <path id="side-l" d="M30 470 L282 24" fill="none"/>
+      <path id="side-r" d="M318 24 L570 470" fill="none"/>
+      <circle cx="300" cy="330" r="128" fill="none" stroke="var(--ink)" stroke-width="2"/>
+      <g class="names">
+        <text><textPath href="#side-l" startOffset="50%" text-anchor="middle">ANAPHAXETON</textPath></text>
+        <text><textPath href="#side-r" startOffset="50%" text-anchor="middle">TETRAGRAMMATON</textPath></text>
+        <text x="300" y="545" text-anchor="middle">PRIMEUMATON</text>
+        <text x="300" y="185" text-anchor="middle" font-size="22">CHA</text>
+        <text x="150" y="470" text-anchor="middle" font-size="22">MI</text>
+        <text x="450" y="470" text-anchor="middle" font-size="22">EL</text>
+      </g>
+      <g class="seat" id="seat"></g>
+    </svg>
+  </div>
+  <div class="east">EAST</div>
+  <div class="circle">
+    <svg viewBox="0 0 800 800" aria-hidden="true">
+      <circle cx="400" cy="400" r="392" fill="none" stroke="var(--ink)" stroke-width="2"/>
+      <circle cx="400" cy="400" r="352" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+      <circle cx="400" cy="400" r="340" fill="none" stroke="var(--lapis-line)" stroke-width="1"/>
+      <path id="ring" d="M400 30 a370 370 0 1 1 -0.1 0" fill="none"/>
+      <g class="ring">
+        <text><textPath href="#ring" startOffset="0" id="ring-text" textLength="2300" lengthAdjust="spacing"></textPath></text>
+      </g>
+    </svg>
+    <div class="within">
+      <div class="dialogue" id="dialogue" aria-live="polite">
+        <p class="empty" id="empty">Choose a seal from the seventy-two. The spirit you bind appears in the triangle, and you speak with it from within the circle.</p>
+      </div>
+      <form class="ask" id="ask">
+        <label for="question" class="visually-hidden" style="position:absolute;left:-9999px">Your question</label>
+        <textarea id="question" placeholder="Bind a spirit to ask a question" disabled maxlength="2000"></textarea>
+        <button type="submit" id="ask-button" disabled>Ask</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<section class="entry" id="entry" aria-live="polite">
+  <p class="hint">No spirit chosen.</p>
+</section>
+
+<footer>
+  <span id="model"><span class="dot"></span>Checking the model…</span>
+  <span>Test wand: nothing done here is valid for a real installation.</span>
+  <span>Every question is kept as its own rite and audit in the folder Spiri72 was started from.</span>
+</footer>
+
+<script>
+const base = location.pathname.replace(/[^/]*$/, "");
+const METAL = { king: "gold", duke: "copper", prince: "tin", marquis: "silver", president: "mercury", earl: "copper silver", knight: "lead" };
+const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false };
+
+const el = (tag, props = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v !== null && v !== undefined) e.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid !== null && kid !== undefined) e.append(kid);
+  return e;
+};
+
+function metals(spirit) {
+  return spirit.ranks.flatMap(r => (METAL[r] || "lead").split(" "));
+}
+
+function sealSvg(n, spirit) {
+  const holder = document.createElement("div");
+  holder.innerHTML = state.seals[n - 1];
+  const svg = holder.firstElementChild;
+  const m = metals(spirit);
+  let fill = `url(#m-${m[0]})`;
+  if (m.length > 1) {
+    const id = `split-${n}-${Math.random().toString(36).slice(2, 7)}`;
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    defs.innerHTML = `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0"><stop offset=".5" stop-color="${stopColor(m[0])}"/><stop offset=".5" stop-color="${stopColor(m[1])}"/></linearGradient>`;
+    svg.prepend(defs);
+    fill = `url(#${id})`;
+  }
+  svg.querySelectorAll("path").forEach(p => p.setAttribute("fill", fill));
+  svg.setAttribute("aria-hidden", "true");
+  return svg;
+}
+
+function stopColor(metal) {
+  return { gold: "#d2ad55", copper: "#c4774c", tin: "#aab3b8", silver: "#e3e8ef", mercury: "#b4bfc9", lead: "#7c8287" }[metal];
+}
+
+function rankWords(s) {
+  const names = s.ranks.map(r => r[0].toUpperCase() + r.slice(1));
+  return `${names.join(" and ")} of the Goetia, spirit ${s.n} of the 72, ruling ${s.legions} legions`;
+}
+
+function renderCatalogue() {
+  const list = document.getElementById("seals");
+  list.replaceChildren(...state.spirits.map(s => {
+    const b = el("button", { type: "button", "aria-pressed": "false", "aria-label": `${s.n}. ${s.name}${s.closed ? " (cannot be bound yet)" : ""}`, title: `${s.n}. ${s.name}`, onclick: () => choose(s) },
+      sealSvg(s.n, s), el("span", { class: "n" }, String(s.n)));
+    if (s.closed) b.setAttribute("data-closed", "");
+    return el("li", {}, b);
+  }));
+}
+
+function choose(s) {
+  if (state.busy) return;
+  if (state.bound && state.chosen && state.chosen.n !== s.n) depart(true);
+  state.chosen = s;
+  state.office = s.telling[0] || null;
+  document.querySelectorAll(".seals button").forEach(b => b.setAttribute("aria-pressed", b.title.startsWith(`${s.n}.`) ? "true" : "false"));
+  const seat = document.getElementById("seat");
+  const svg = sealSvg(s.n, s);
+  svg.setAttribute("x", "182"); svg.setAttribute("y", "212"); svg.setAttribute("width", "236"); svg.setAttribute("height", "236");
+  seat.replaceChildren(svg);
+  seat.classList.remove("arrive"); void seat.getBoundingClientRect(); seat.classList.add("arrive");
+  document.getElementById("stage").style.setProperty("--metal", stopColor(metals(s)[0]));
+  renderEntry();
+}
+
+function renderEntry() {
+  const s = state.chosen;
+  const entry = document.getElementById("entry");
+  const list = (items, kind) => items.length ? el("ul", {}, items.map(i => el("li", {}, i.text, i.kind ? el("span", { class: "kind" }, ` (${i.kind.toLowerCase()})`) : null))) : el("p", { class: "kind" }, kind);
+  const parts = [
+    el("h2", {}, s.name),
+    el("p", { class: "rank" }, rankWords(s)),
+    el("h3", {}, "Offices"), list(s.offices, "None recorded"),
+    el("h3", {}, "Harm"), list(s.harm.map(t => ({ text: t })), "None recorded"),
+    el("h3", {}, "Restrained by"), list(s.restraints.map(t => ({ text: t })), "None recorded"),
+    el("h3", {}, "Truthfulness"), el("p", { style: "margin:0;line-height:1.5" }, `${s.veracity.toLowerCase()}. ${s.condition}`),
+  ];
+  if (s.closed) {
+    parts.push(el("p", { class: "closed" }, `${s.closed}.`));
+  } else if (!state.bound) {
+    const actions = el("div", { class: "actions" });
+    if (s.telling.length > 1) {
+      const sel = el("select", { id: "office", onchange: e => state.office = e.target.value }, s.telling.map(o => el("option", { value: o }, o.toLowerCase())));
+      actions.append(el("label", { class: "field", for: "office" }, "Through which office", sel));
+    }
+    actions.append(el("label", { class: "field", for: "liber" }, "Hand a file from this folder to read (optional)", el("input", { id: "liber", placeholder: "for example chronica.txt", autocomplete: "off" })));
+    actions.append(el("button", { type: "button", class: "primary", onclick: bind }, `Bind ${s.name}`));
+    parts.push(actions);
+  } else {
+    parts.push(el("div", { class: "actions" },
+      el("p", { class: "hint", style: "margin:0" }, `${s.name} is bound through ${state.office.toLowerCase()}${state.liber ? `, and holds ${state.liber}` : ""}. Each question is its own rite: the spirit is called, its answer examined, and it is dismissed.`),
+      el("button", { type: "button", class: "quiet", onclick: () => depart(false) }, "Give licence to depart")));
+  }
+  entry.replaceChildren(...parts);
+}
+
+function say(node) {
+  const d = document.getElementById("dialogue");
+  document.getElementById("empty")?.remove();
+  d.append(node);
+  d.scrollTop = d.scrollHeight;
+  return node;
+}
+
+function bind() {
+  const s = state.chosen;
+  state.liber = (document.getElementById("liber")?.value || "").trim();
+  state.bound = true;
+  document.body.classList.add("bound");
+  document.getElementById("ring-text").textContent = ringFor(s);
+  say(el("p", { class: "said waiting" }, `${s.name} is bound through ${state.office.toLowerCase()}.`));
+  setAsking(true);
+  renderEntry();
+  document.getElementById("question").focus();
+}
+
+function depart(quietly) {
+  const s = state.chosen;
+  if (!state.bound) return;
+  state.bound = false;
+  document.body.classList.remove("bound");
+  document.getElementById("ring-text").textContent = ringFor(null);
+  if (!quietly) say(el("p", { class: "said waiting" }, `${s.name} has licence to depart.`));
+  setAsking(false);
+  renderEntry();
+}
+
+function setAsking(on) {
+  const q = document.getElementById("question");
+  q.disabled = !on || state.busy;
+  document.getElementById("ask-button").disabled = !on || state.busy;
+  q.placeholder = on ? `Ask ${state.chosen.name}` : "Bind a spirit to ask a question";
+}
+
+function ringFor(s) {
+  const cross = " ✠ ";
+  const names = ["ALPHA", "ADONAI", "TETRAGRAMMATON", "PRIMEUMATON", "ANAPHAXETON", "OMEGA"];
+  const once = names.join(cross);
+  return cross + once + cross + (s ? s.name.toUpperCase() : once) + cross;
+}
+
+document.getElementById("ask").addEventListener("submit", async e => {
+  e.preventDefault();
+  const q = document.getElementById("question");
+  const question = q.value.trim();
+  if (!question || !state.bound || state.busy) return;
+  const s = state.chosen;
+  say(el("p", { class: "said operator" }, question));
+  q.value = "";
+  state.busy = true; setAsking(true);
+  const wait = say(el("p", { class: "said waiting" }, `${s.name} is called, and the answer examined…`));
+  try {
+    const r = await fetch(base + "roga", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, officium: state.office, quaestio: question, liber: state.liber || "" }) });
+    const a = await r.json();
+    wait.remove();
+    if (a.iudicium) {
+      const verdict = el("span", { class: `verdict ${a.iudicium.toLowerCase()}`, title: "The angel's judgement" }, a.iudicium);
+      const node = el("p", { class: "said spirit" }, el("span", { class: "who" }, `${s.name}, ${(a.veritas || s.veracity).toLowerCase()}`, verdict));
+      node.append(a.verba ? a.verba : (a.iudicium === "RATUM" ? "" : "The work was not admitted, so nothing of it is shown."));
+      node.style.setProperty("--metal", stopColor(metals(s)[0]));
+      say(node);
+    } else {
+      say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
+    }
+    if (a.exitus === 2) depart(false);
+  } catch (err) {
+    wait.remove();
+    say(el("p", { class: "said refused" }, "Spiri72 did not answer. Check that it is still running in its window."));
+  } finally {
+    state.busy = false; setAsking(state.bound);
+    if (state.bound) q.focus();
+  }
+});
+
+document.getElementById("only-open").addEventListener("change", e => document.querySelector(".catalogue").classList.toggle("hide-closed", e.target.checked));
+
+async function status() {
+  const node = document.getElementById("model");
+  try {
+    const r = await (await fetch(base + "status")).json();
+    node.className = r.paratus ? "up" : "down";
+    node.lastChild.textContent = r.paratus ? `Model ready at ${r.exemplar}` : `No model answers at ${r.exemplar}. Start llama-server, then try again.`;
+  } catch { node.className = "down"; node.lastChild.textContent = "Spiri72 is not running."; }
+}
+
+(async () => {
+  document.getElementById("ring-text").textContent = ringFor(null);
+  const [spirits, seals] = await Promise.all([fetch(base + "spiritus").then(r => r.json()), fetch(base + "sigilla").then(r => r.json())]);
+  state.spirits = spirits; state.seals = seals;
+  renderCatalogue();
+  status(); setInterval(status, 15000);
+})();
+</script>
+</body>
+</html>

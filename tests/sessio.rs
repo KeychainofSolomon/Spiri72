@@ -68,7 +68,11 @@ fn model(content: &'static str) -> (u16, mpsc::Receiver<String>) {
 fn session(dir: &PathBuf, port: u16, typed: &str) -> (Option<i32>, String, String) {
     let mut child = Command::new(BINARY)
         .current_dir(dir)
-        .args(["--exemplar", &format!("http://127.0.0.1:{port}")])
+        .args([
+            "--terminal",
+            "--exemplar",
+            &format!("http://127.0.0.1:{port}"),
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
