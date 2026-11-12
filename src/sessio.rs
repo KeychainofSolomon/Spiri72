@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::{BufRead, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use annulus::lingua::exsequi::Voluntas;
 use annulus::lingua::json::Json;
@@ -251,14 +251,33 @@ pub fn ask_once(
             return 2;
         }
     };
-    let path: PathBuf = (1u32..)
-        .map(|k| rites.join(format!("{}-{k}.annulus", spirit.label)))
-        .find(|p| !p.exists())
-        .expect("a free name");
-    if let Err(e) = fs::write(&path, program) {
-        let _ = writeln!(err, "error: cannot write {}: {e}", path.display());
-        return 1;
+    let mut written = None;
+    for k in 1u32..=100_000 {
+        let p = rites.join(format!("{}-{k}.annulus", spirit.label));
+        match fs::OpenOptions::new().write(true).create_new(true).open(&p) {
+            Ok(mut f) => {
+                if let Err(e) = f.write_all(program.as_bytes()).and_then(|_| f.sync_all()) {
+                    let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
+                    return 1;
+                }
+                written = Some(p);
+                break;
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(e) => {
+                let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
+                return 1;
+            }
+        }
     }
+    let Some(path) = written else {
+        let _ = writeln!(
+            err,
+            "error: no free name for the rite in {}",
+            rites.display()
+        );
+        return 1;
+    };
     let args: Vec<String> = [
         path.to_string_lossy().as_ref(),
         "--virga-probationis",
