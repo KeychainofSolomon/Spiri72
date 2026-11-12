@@ -212,9 +212,10 @@ fn every_rank_has_its_metal() {
 
 #[test]
 fn keys_are_long_and_never_repeat() {
-    let a = token();
+    let a = token().unwrap();
     assert_eq!(a.len(), 64);
-    assert_ne!(a, token());
+    assert!(a.bytes().all(|b| b.is_ascii_hexdigit()));
+    assert_ne!(a, token().unwrap());
 }
 
 #[test]

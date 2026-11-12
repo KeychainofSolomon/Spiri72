@@ -8,6 +8,7 @@ use annulus::lingua::registra::{goetia, Spirit};
 use annulus::mandata::ritus_with;
 use annulus::officia::{signature, Class};
 
+use crate::ingenium::record_verdict;
 use crate::persona::entry;
 
 pub const RITES: &str = "spiri72.ritus";
@@ -290,12 +291,51 @@ pub fn ask_once(
     .map(|s| s.to_string())
     .chain(sky.iter().cloned())
     .collect();
-    match ritus_with(&args, out, err, Some(will)) {
+    let mut said = Tee {
+        out,
+        kept: Vec::new(),
+    };
+    let code = match ritus_with(&args, &mut said, err, Some(will)) {
         Ok(code) => code,
         Err(usage) => {
             let _ = writeln!(err, "error: {}", usage.0);
-            2
+            return 2;
         }
+    };
+    // The rite's first line is the angel's judgement (MANIFESTA iudicium).
+    let first = String::from_utf8_lossy(&said.kept)
+        .lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .map(str::to_string);
+    match first.as_deref() {
+        Some(v @ ("RATUM" | "SUSPENSUM" | "IRRITUM")) => {
+            if let Err(e) = record_verdict(dir, spirit, v) {
+                let _ = writeln!(err, "error: the judgement was not recorded: {e}");
+                return code.max(1);
+            }
+            code
+        }
+        _ => code,
+    }
+}
+
+struct Tee<'a> {
+    out: &'a mut dyn Write,
+    kept: Vec<u8>,
+}
+
+impl Write for Tee<'_> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let n = self.out.write(buf)?;
+        if self.kept.len() < 4096 {
+            self.kept.extend_from_slice(&buf[..n]);
+        }
+        Ok(n)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.out.flush()
     }
 }
 
