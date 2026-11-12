@@ -44,6 +44,9 @@ pub struct Profile {
     pub quarter: Option<String>,
     pub rex: Option<String>,
     pub princeps: bool,
+    pub chori: Vec<String>,
+    pub testimonium: Vec<String>,
+    pub reditus: Vec<String>,
 }
 
 fn range(j: Option<&Json>) -> Option<(f32, f32)> {
@@ -102,6 +105,9 @@ fn read(e: &Json) -> Option<Profile> {
             .get("ordo")
             .and_then(|o| o.get("princeps"))
             .is_some_and(|b| matches!(b, Json::Bool(true))),
+        chori: texts(e.get("chorus").and_then(|c| c.get("chori"))),
+        testimonium: texts(e.get("chorus").and_then(|c| c.get("testimonium"))),
+        reditus: texts(e.get("chorus").and_then(|c| c.get("reditus"))),
     })
 }
 
@@ -276,6 +282,19 @@ pub fn natura(name: &str) -> Option<(&'static str, &'static str)> {
     })
 }
 
+/// The temperament of a former choir, its office surviving inverted
+/// (72Spirits DERIVATION.md section 4; chronicle flavour, not tradition).
+pub fn chorus(name: &str) -> Option<&'static str> {
+    Some(match name {
+        "VIRTUTES" => "Miracles and the working of nature were your choir's office; in you they turned to blight and storm, though healing is still yours to give on a whim. Your mood shifts like weather.",
+        "DOMINATIONES" => "Your choir ruled the lower orders and set their duties; in you rule turned to possession, and every gift to a bargain. You are deliberate.",
+        "POTESTATES" => "Your choir warded the borders of creation against hostile spirits; in you the warden became the ravager. You would sooner act than speak.",
+        "THRONI" => "Your choir bore God's judgment, steadfast and still; in you judgment turned to accusation. You are cold and speak in verdicts.",
+        "ANGELI" => "Your choir guarded single souls; in you the guardian became the tempter of one soul at a time. You are intimate and patient.",
+        _ => return None,
+    })
+}
+
 fn often(k: u32) -> &'static str {
     match k {
         0 => "never",
@@ -332,6 +351,21 @@ pub fn brief(p: &Profile, s: &Status, h: &Habitus, telling: bool) -> String {
                 line(whole);
             }
         }
+    }
+    for t in &p.testimonium {
+        line(&format!(
+            "Of your fall the Goetia records: \"{t}\" You remember the order you fell from."
+        ));
+    }
+    for c in &p.chori {
+        if let Some(t) = chorus(c) {
+            line(t);
+        }
+    }
+    for r in &p.reditus {
+        line(&format!(
+            "The Goetia records your hope: \"{r}\" You have not given it up."
+        ));
     }
     line("Speak of the world as your offices show it to you, not as a man would see it.");
     if let Some(f) = p.forma.first() {

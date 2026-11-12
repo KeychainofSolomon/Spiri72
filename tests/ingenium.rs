@@ -159,6 +159,8 @@ fn the_brief_is_words_never_numbers() {
             .iter()
             .chain(&p.ira_adventus)
             .chain(&p.cultus)
+            .chain(&p.testimonium)
+            .chain(&p.reditus)
             .flat_map(|f| f.chars())
             .collect();
         for c in b.chars().filter(char::is_ascii_digit) {
@@ -290,4 +292,23 @@ fn every_spirit_has_a_nature_and_keeps_the_solomonic_order() {
     let agares = ingenium::profile(2).unwrap();
     let h = ingenium::habitus(agares, &st, true, &mut Sors::new(5));
     assert!(ingenium::brief(agares, &st, &h, true).contains("under Amaymon, King of the East"));
+}
+
+#[test]
+fn a_former_choir_is_spoken_only_where_the_goetia_gives_it() {
+    let st = Status::default();
+    let with: Vec<u32> = ingenium::profiles()
+        .iter()
+        .filter(|p| !p.chori.is_empty())
+        .map(|p| p.n)
+        .collect();
+    assert_eq!(with, vec![2, 8, 9, 13, 33, 35, 40, 47, 49, 53, 54]);
+    let phenex = ingenium::profile(37).unwrap();
+    let h = ingenium::habitus(phenex, &st, true, &mut Sors::new(2));
+    assert!(ingenium::brief(phenex, &st, &h, true).contains("Seventh Throne"));
+    let belial = ingenium::profile(68).unwrap();
+    let h = ingenium::habitus(belial, &st, true, &mut Sors::new(2));
+    let b = ingenium::brief(belial, &st, &h, true);
+    assert!(b.contains("fell first"), "{b}");
+    assert!(!b.contains("guarded single souls"), "{b}");
 }
