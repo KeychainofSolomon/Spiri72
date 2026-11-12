@@ -2,7 +2,10 @@ use annulus::lingua::exsequi::{Actum, Petitio, Voluntas};
 use annulus::nucleus::Outcome;
 use annulus::officia::{signature, Class};
 
+use std::path::PathBuf;
+
 use crate::forma;
+use crate::ingenium::{self, Sors};
 use crate::llama::{Exemplar, Rogatio};
 use crate::persona;
 
@@ -11,6 +14,12 @@ pub struct Agens {
     pub max_tokens: u32,
     pub temperature: f32,
     pub vires: Vec<(String, f32)>,
+    /// The spirit engine's brief is added to the persona when true.
+    pub ingenium: bool,
+    /// Where `spiri72.status\` lives; without it the engine knows no history.
+    pub domus: Option<PathBuf>,
+    /// True for Spiri72's own rites, where every spirit's restraints are applied.
+    pub ritus_proprius: bool,
 }
 
 impl Agens {
@@ -20,6 +29,9 @@ impl Agens {
             max_tokens: 1024,
             temperature: 0.7,
             vires: Vec::new(),
+            ingenium: true,
+            domus: None,
+            ritus_proprius: false,
         }
     }
 }
@@ -27,15 +39,14 @@ impl Agens {
 impl Voluntas for Agens {
     fn nomen(&self) -> String {
         let steered: Vec<String> = self.vires.iter().map(|(n, k)| format!("{n} {k}")).collect();
-        if steered.is_empty() {
-            format!("a local model at {}", self.exemplar.url)
-        } else {
-            format!(
-                "a local model at {}, steered by {}",
-                self.exemplar.url,
-                steered.join(", ")
-            )
+        let mut name = format!("a local model at {}", self.exemplar.url);
+        if !steered.is_empty() {
+            name.push_str(&format!(", steered by {}", steered.join(", ")));
         }
+        if self.ingenium {
+            name.push_str(", with the spirit engine");
+        }
+        name
     }
 
     fn age(&mut self, p: &Petitio) -> Result<(Outcome, Actum), String> {
@@ -48,7 +59,25 @@ impl Voluntas for Agens {
         } else {
             forma::grammar(&p.aperta, telling)?
         };
-        let system = persona::system(p);
+        let mut system = persona::system(p);
+        if self.ingenium {
+            if let Some(profile) = ingenium::profile(p.spirit.n) {
+                let status = self
+                    .domus
+                    .as_deref()
+                    .map(|d| ingenium::load(d, p.spirit.n))
+                    .unwrap_or_default();
+                let h = ingenium::habitus(
+                    profile,
+                    &status,
+                    self.ritus_proprius,
+                    &mut Sors::now(p.spirit.n),
+                );
+                let free = telling && !virtutes && p.officium != "PRAETERITA";
+                system.push_str("\n\n");
+                system.push_str(&ingenium::brief(profile, &status, &h, free));
+            }
+        }
         let user = persona::user(p, telling);
         let reply = self.exemplar.ask(&Rogatio {
             system: &system,
