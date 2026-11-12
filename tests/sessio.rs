@@ -256,3 +256,43 @@ fn the_spirit_speaks_unsoftened() {
         .unwrap()
         .contains("nothing you say is softened or withheld"));
 }
+
+#[test]
+fn a_sound_answer_is_taken_into_the_book_and_comes_back() {
+    let dir = folder("liber");
+    let (port, requests) = model(SPEAKS);
+    let (code, out, err) = session(
+        &dir,
+        port,
+        "furfur\n\nvenietne tempestas?\n+\n+\nquid dixisti?\n\n",
+    );
+    assert_eq!(code, Some(0), "{out}\n{err}");
+    assert!(out.contains("It is written in Furfur's book."), "{out}");
+    assert!(
+        out.contains("It was not written: that answer is already in the book.")
+            || out.contains("There is no sound answer to take up."),
+        "{out}"
+    );
+    let first = requests.recv().unwrap();
+    assert!(
+        !first.contains("what comes back to you"),
+        "nothing is in the book at the first rite"
+    );
+    let second = requests.recv().unwrap();
+    assert!(
+        second.contains("what comes back to you of this Operator"),
+        "{second}"
+    );
+    assert!(
+        second.contains("the Operator took it up: \\u201ctempestas veniet\\u201d")
+            || second.contains("the Operator took it up: \u{201c}tempestas veniet\u{201d}"),
+        "{second}"
+    );
+    let furfur = annulus::lingua::registra::goetia()
+        .spirits
+        .iter()
+        .find(|s| s.name == "Furfur")
+        .unwrap();
+    let book = spiri72::memoria::read(&dir, furfur).unwrap();
+    assert_eq!(book.len(), 3, "two rites noted and one answer received");
+}

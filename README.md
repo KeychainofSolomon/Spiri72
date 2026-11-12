@@ -23,9 +23,26 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
 - **Its fall**: only where the Goetia itself names its former choir or its hope of return. Each named choir carries a temperament in which its old office survives inverted. That temperament is the chronicle's own flavour, not tradition; where it and the Goetia differ, the Goetia stands. One spirit carries a choir by reading alone: Belial, made next after Lucifer by Weyer's account, is told he stood among the Cherubim, and lets it show only in hints, never naming it.
 - **What it was made for**, its first one or two natures. When its ill will runs high, the first is voiced as the Fall bent it.
 - **Its bearing for this rite**: pride, deceit, ill will and withholding, each drawn fresh from the spirit's own range by the operating system's random source, so a King is prouder than a Knight and Belial is not Marchosias. A COACTUS spirit whose condition is met draws its deceit from its compelled range: in Spiri72's own rites every condition is met; when running another Annulus program only the triangle is assumed (Furfur, Shax, Haures).
-- **What has passed between you**: `spiri72.status\` in your folder keeps, per spirit, how often you have called it, how the angel judged its answers, and the last bearing drawn. A spirit whose words the angel has voided knows it is counted, and its deceit comes from the lower half of its range. A record that is not in order refuses the rite rather than being guessed at.
+- **What has passed between you**: `spiri72.status\` in your folder keeps, per spirit, how often you have called it, how the angel judged its answers, and the last bearing drawn. A spirit whose words the angel has voided knows it is counted, and its deceit comes from the lower half of its range. What was said is kept apart, in each spirit's book (below). A record that is not in order refuses the rite rather than being guessed at.
 
 None of this changes what a spirit may do. That stays in Annulus. To update the profiles, rebuild them in 72Spirits and copy `spiritus.json` into `spiritus\`, then rebuild Spiri72.
+
+## Each spirit's book (memory)
+
+The model forgets everything between rites. What lasts is kept on disk, one book per spirit in `spiri72.liber\`, and never by the spirit itself:
+
+- **After every rite** Spiri72 writes what you asked, through which office, and how the angel judged it. None of the spirit's words go in.
+- **When you choose,** an answer the angel found sound is taken into the book: press **Take into …'s book** under it in the binding page, or type `+` in the terminal. Only then do the spirit's own words go in, marked as words you took up. Voided and suspended answers can never be taken up.
+- **Before every rite** a program that is not the spirit chooses what comes back: the latest few entries, those that best match your question (Latin by its dictionary form, so *regis* finds *rex*), and now and then an older one that resurfaces unbidden, more for heavier entries and on anniversaries, less as they age. They are shuffled and handed over sealed, with no sign of why any came back. The spirit cannot search the book or write in it.
+
+Each spirit sees only its own book. A book may grow to 1 GB. Each entry carries the hash of the one before it, so a book that was hand-edited, cut or planted refuses the rite. Until Annulus has a real wand, this catches a broken book but cannot prove who wrote it; taking an answer into the book will then need the wand as well.
+
+```
+.\spiri72.exe --liber furfur        (read Furfur's book)
+.\spiri72.exe --dele furfur 4       (strike entry 4)
+```
+
+Striking is written beside what it strikes; nothing is erased, and a struck entry never comes back to the spirit.
 
 ## Latin
 

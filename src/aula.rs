@@ -11,7 +11,7 @@ use annulus::lingua::registra::{goetia, Spirit};
 use crate::fors;
 use crate::llama::quote;
 use crate::persona::entry;
-use crate::sessio::{ask_once, telling_offices, unbindable};
+use crate::sessio::{ask_once_named, kept_sound, telling_offices, unbindable};
 use crate::sigilla::SIGILLA;
 
 const PAGE: &str = include_str!("../aula/index.html");
@@ -362,9 +362,10 @@ pub fn roga(body: &[u8], dir: &Path, sky: &[String], will: &mut dyn Voluntas) ->
     };
     let mut out = Vec::new();
     let mut err = Vec::new();
-    let code = ask_once(
+    let (code, ritus) = ask_once_named(
         spirit, &office, &question, &handed, dir, &sky, will, &mut out, &mut err,
     );
+    let ritus = ritus.filter(|r| kept_sound(dir, r));
     let out = String::from_utf8_lossy(&out).to_string();
     let log = String::from_utf8_lossy(&err).to_string();
     let r = read_output(spirit, &out);
@@ -378,13 +379,40 @@ pub fn roga(body: &[u8], dir: &Path, sky: &[String], will: &mut dyn Voluntas) ->
         "200 OK",
         "application/json",
         format!(
-            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{}}}",
+            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{}}}",
             opt(&r.iudicium),
             opt(&r.veritas),
             opt(&r.verba),
-            quote(&log)
+            quote(&log),
+            opt(&ritus)
         ),
     )
+}
+
+/// Takes a rite's sound answer into its spirit's book, at the Operator's click.
+pub fn recipe(body: &[u8], dir: &Path) -> Answer {
+    let reply = |status: &'static str, ok: bool, msg: &str| {
+        answer(
+            status,
+            "application/json",
+            format!("{{\"scriptum\":{ok},\"nuntius\":{}}}", quote(msg)),
+        )
+    };
+    let ritus = std::str::from_utf8(body)
+        .ok()
+        .and_then(|t| json::parse(t).ok())
+        .and_then(|j| j.get("ritus").and_then(Json::text).map(str::to_string));
+    let Some(ritus) = ritus else {
+        return reply("400 Bad Request", false, "no rite was named");
+    };
+    match crate::sessio::receive(dir, &ritus) {
+        Ok(e) => reply(
+            "200 OK",
+            true,
+            &format!("Written in the book as entry {}.", e.n),
+        ),
+        Err(e) => reply("400 Bad Request", false, &e),
+    }
 }
 
 pub struct Aula<'a> {
@@ -429,6 +457,12 @@ impl Aula<'_> {
                     return refused("wrong content type");
                 }
                 roga(&req.body, self.dir, &self.sky, will)
+            }
+            ("POST", "recipe") => {
+                if req.header("content-type") != Some("application/json") {
+                    return refused("wrong content type");
+                }
+                recipe(&req.body, self.dir)
             }
             ("POST", "tempus") => {
                 if req.header("content-type") != Some("application/json") {

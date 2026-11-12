@@ -9,6 +9,8 @@ use annulus::mandata::ritus_with;
 use annulus::officia::{signature, Class};
 
 use crate::ingenium::record_verdict;
+use crate::llama::quote;
+use crate::memoria;
 use crate::persona::entry;
 
 pub const RITES: &str = "spiri72.ritus";
@@ -240,16 +242,33 @@ pub fn ask_once(
     out: &mut dyn Write,
     err: &mut dyn Write,
 ) -> u8 {
+    ask_once_named(spirit, office, question, handed, dir, sky, will, out, err).0
+}
+
+/// As `ask_once`, also giving the rite's name (for example `furfur-3`) once
+/// the angel has judged it, so its answer can be taken into the book.
+#[allow(clippy::too_many_arguments)]
+pub fn ask_once_named(
+    spirit: &Spirit,
+    office: &str,
+    question: &str,
+    handed: &[String],
+    dir: &Path,
+    sky: &[String],
+    will: &mut dyn Voluntas,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> (u8, Option<String>) {
     let rites = dir.join(RITES);
     if let Err(e) = fs::create_dir_all(&rites) {
         let _ = writeln!(err, "error: cannot make {}: {e}", rites.display());
-        return 1;
+        return (1, None);
     }
     let program = match rite(spirit, office, question, handed) {
         Ok(p) => p,
         Err(e) => {
             let _ = writeln!(err, "{e}");
-            return 2;
+            return (2, None);
         }
     };
     let mut written = None;
@@ -259,7 +278,7 @@ pub fn ask_once(
             Ok(mut f) => {
                 if let Err(e) = f.write_all(program.as_bytes()).and_then(|_| f.sync_all()) {
                     let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
-                    return 1;
+                    return (1, None);
                 }
                 written = Some(p);
                 break;
@@ -267,7 +286,7 @@ pub fn ask_once(
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
             Err(e) => {
                 let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
-                return 1;
+                return (1, None);
             }
         }
     }
@@ -277,7 +296,7 @@ pub fn ask_once(
             "error: no free name for the rite in {}",
             rites.display()
         );
-        return 1;
+        return (1, None);
     };
     let args: Vec<String> = [
         path.to_string_lossy().as_ref(),
@@ -299,7 +318,7 @@ pub fn ask_once(
         Ok(code) => code,
         Err(usage) => {
             let _ = writeln!(err, "error: {}", usage.0);
-            return 2;
+            return (2, None);
         }
     };
     // The rite's first line is the angel's judgement (MANIFESTA iudicium).
@@ -312,11 +331,34 @@ pub fn ask_once(
         Some(v @ ("RATUM" | "SUSPENSUM" | "IRRITUM")) => {
             if let Err(e) = record_verdict(dir, spirit, v) {
                 let _ = writeln!(err, "error: the judgement was not recorded: {e}");
-                return code.max(1);
+                return (code.max(1), None);
             }
-            code
+            let name = path
+                .file_stem()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default();
+            let words = crate::aula::read_output(spirit, &String::from_utf8_lossy(&said.kept))
+                .verba
+                .unwrap_or_default();
+            let kept = format!(
+                "{{\"n\":{},\"officium\":{},\"quaestio\":{},\"iudicium\":{},\"verba\":{}}}\n",
+                spirit.n,
+                quote(office),
+                quote(question),
+                quote(v),
+                quote(&words)
+            );
+            if let Err(e) = fs::write(rites.join(format!("{name}.verba")), kept) {
+                let _ = writeln!(err, "error: the answer was not kept: {e}");
+                return (code.max(1), None);
+            }
+            if let Err(e) = memoria::note_rite(dir, spirit, &name, office, question, v) {
+                let _ = writeln!(err, "error: the rite was not written in the book: {e}");
+                return (code.max(1), None);
+            }
+            (code, Some(name))
         }
-        _ => code,
+        _ => (code, None),
     }
 }
 
@@ -373,6 +415,7 @@ pub fn sessio(
         spirit.name
     );
     let mut worst = 0u8;
+    let mut last: Option<String> = None;
     while let Some(question) = ask(
         input,
         out,
@@ -380,6 +423,22 @@ pub fn sessio(
     ) {
         if question.is_empty() {
             break;
+        }
+        if question == "+" {
+            match last.take() {
+                Some(r) => match receive(dir, &r) {
+                    Ok(_) => {
+                        let _ = writeln!(out, "It is written in {}'s book.", spirit.name);
+                    }
+                    Err(e) => {
+                        let _ = writeln!(out, "It was not written: {e}.");
+                    }
+                },
+                None => {
+                    let _ = writeln!(out, "There is no sound answer to take up.");
+                }
+            }
+            continue;
         }
         if question.chars().count() > MAX_QUESTION {
             let _ = writeln!(
@@ -389,10 +448,18 @@ pub fn sessio(
             continue;
         }
         let _ = writeln!(out);
-        let code = ask_once(
+        let (code, ritus) = ask_once_named(
             spirit, &office, &question, &handed, dir, sky, will, out, err,
         );
         worst = worst.max(code);
+        last = ritus.filter(|r| kept_sound(dir, r));
+        if last.is_some() {
+            let _ = writeln!(
+                out,
+                "(Type + to take this answer into {}'s book.)",
+                spirit.name
+            );
+        }
         if code == 2 {
             let _ = writeln!(
                 out,
@@ -404,4 +471,68 @@ pub fn sessio(
     }
     let _ = writeln!(out, "\n{} has licence to depart.", spirit.name);
     worst
+}
+
+/// Takes the answer of a rite the angel found sound into its spirit's book.
+/// The rite is named as `ask_once_named` gave it; the words are read from
+/// what Spiri72 kept, never from the caller.
+pub fn receive(dir: &Path, ritus: &str) -> Result<memoria::Entry, String> {
+    let (label, k) = ritus
+        .rsplit_once('-')
+        .filter(|(l, k)| {
+            !l.is_empty()
+                && l.chars().all(|c| c.is_ascii_lowercase() || c == '_')
+                && !k.is_empty()
+                && k.chars().all(|c| c.is_ascii_digit())
+        })
+        .ok_or("that is not the name of a rite")?;
+    let _ = k;
+    let path = dir.join(RITES).join(format!("{ritus}.verba"));
+    let meta =
+        fs::symlink_metadata(&path).map_err(|_| "no answer of that rite was kept".to_string())?;
+    if !meta.is_file() || meta.len() > memoria::MAX_ENTRY as u64 * 2 {
+        return Err("that rite's answer is not one Spiri72 keeps".into());
+    }
+    let text = fs::read_to_string(&path).map_err(|e| format!("cannot read the rite: {e}"))?;
+    let j = annulus::lingua::json::parse(text.trim())
+        .map_err(|_| "that rite's answer is not in order")?;
+    let txt = |k: &str| {
+        j.get(k)
+            .and_then(annulus::lingua::json::Json::text)
+            .unwrap_or("")
+            .to_string()
+    };
+    let n = j
+        .get("n")
+        .and_then(annulus::lingua::json::Json::number)
+        .ok_or("that rite names no spirit")?;
+    let spirit = goetia()
+        .spirits
+        .iter()
+        .find(|s| s.n as f64 == n && s.label == label)
+        .ok_or("that rite's spirit is not the one its name gives")?;
+    memoria::receive(
+        dir,
+        spirit,
+        ritus,
+        &txt("officium"),
+        &txt("quaestio"),
+        &txt("iudicium"),
+        &txt("verba"),
+    )
+}
+
+/// Whether the kept answer of a rite was found sound and holds words.
+pub fn kept_sound(dir: &Path, ritus: &str) -> bool {
+    fs::read_to_string(dir.join(RITES).join(format!("{ritus}.verba")))
+        .ok()
+        .and_then(|t| annulus::lingua::json::parse(t.trim()).ok())
+        .is_some_and(|j| {
+            j.get("iudicium")
+                .and_then(annulus::lingua::json::Json::text)
+                == Some("RATUM")
+                && j.get("verba")
+                    .and_then(annulus::lingua::json::Json::text)
+                    .is_some_and(|v| !v.trim().is_empty())
+        })
 }

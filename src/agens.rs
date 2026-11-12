@@ -8,6 +8,7 @@ use crate::forma;
 use crate::fors;
 use crate::ingenium::{self, Status};
 use crate::llama::{Exemplar, Rogatio};
+use crate::memoria;
 use crate::persona;
 
 pub struct Agens {
@@ -68,7 +69,11 @@ impl Voluntas for Agens {
         }
         let brief = ingenium::brief(profile, &gestus, &before);
         let system = persona::system(p, &brief);
-        let user = persona::user(p, telling, &fors::hex::<8>()?);
+        let memoria = match &self.status {
+            Some(dir) => memoria::for_rite(dir, p.spirit, p.quaestio.unwrap_or(""))?,
+            None => None,
+        };
+        let user = persona::user_remembering(p, telling, &fors::hex::<8>()?, memoria.as_deref());
         let reply = self.exemplar.ask(&Rogatio {
             system: &system,
             user: &user,
