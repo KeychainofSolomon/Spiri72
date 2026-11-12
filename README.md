@@ -27,6 +27,17 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
 
 None of this changes what a spirit may do. That stays in Annulus. To update the profiles, rebuild them in 72Spirits and copy `spiritus.json` into `spiritus\`, then rebuild Spiri72.
 
+## Latin
+
+Spiri72 reads classical Latin itself, without the model. Its lexicon is William Whitaker's WORDS, kept to classical Latin (`lingua/latina/`). When a question or a handed text is mostly Latin, every word in it is parsed (its dictionary form, part of speech, the form it stands in, and its meaning), and the spirit is handed that reading aid beside the text, sealed like the texts themselves. The aid parses; it does not translate, and it guesses nothing: a word the lexicon does not hold is listed as not found. English is left alone.
+
+To read words yourself:
+```
+.\spiri72.exe --latina "nisi rex cui paret invocaretur"
+```
+
+Late, medieval and Church Latin are not in the lexicon, so grimoire words such as *angelus* or *pentaculum* show as not found.
+
 ## Limits for now
 
 - **Test wand only.** Annulus now records each of the model's turns as its own declaration, never as a known fact, so whether it lied or meant harm is never presumed. A model still runs only with `--virga-probationis` until Annulus has a real wand (its step 2d).

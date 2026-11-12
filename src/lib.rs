@@ -3,6 +3,7 @@ pub mod aula;
 pub mod forma;
 pub mod fors;
 pub mod ingenium;
+pub mod latina;
 pub mod llama;
 pub mod persona;
 pub mod sessio;
