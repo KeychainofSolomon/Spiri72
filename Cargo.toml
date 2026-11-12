@@ -16,7 +16,7 @@ name = "spiri72"
 path = "src/main.rs"
 
 [dependencies]
-annulus = { git = "https://github.com/KeychainofSolomon/Annulus", rev = "5703a41c5bea989a115db9d9f235ae54e723e9c6" }
+annulus = { git = "https://github.com/KeychainofSolomon/Annulus", rev = "19ad8106941c03a29283a85aeb6ac2fdbe65c028" }
 
 [profile.release]
 opt-level = 3

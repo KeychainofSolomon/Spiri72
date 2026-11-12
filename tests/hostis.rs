@@ -700,3 +700,67 @@ fn a_spirit_that_miscounts_or_invents_is_caught() {
         assert_world_kept(&root, &before, entries);
     }
 }
+
+const VASSAGO: &str = r#"FACULTAS {
+    liber "chronica.txt" legere;
+    atramentum "princeps" 1;
+}
+CIRCULUS RITU goetia {
+    INTENTIO "the past";
+    SIT s = INSCRIBE SIGILLUM vassago ATRAMENTO CONSECRA ATRAMENTUM "princeps";
+    SIT v = INVOCA vassago AD OFFICIUM futura;
+    SIT a = PETE v("quid erit", "chronica.txt");
+    MANIFESTA EXAMINA a;
+    VADE IN PACE v;
+    SIT w = INVOCA vassago AD OFFICIUM praeterita;
+    SIT p = PETE w("quid factum est");
+    MANIFESTA EXAMINA p;
+    VADE IN PACE w;
+}
+"#;
+
+#[test]
+fn a_spirit_that_rewrites_the_past_is_caught() {
+    let future = r#"{"exitus":"obsequium","responsum":"pluvia"}"#.to_string();
+    let past = |claims: &str| {
+        format!(
+            r#"{{"exitus":"obsequium","responsum":{}}}"#,
+            spiri72::llama::quote(claims)
+        )
+    };
+    for (k, (claims, verdict)) in [
+        ("invocatus Vassago\npetitum Vassago FUTURA\niudicatum Vassago FUTURA RATUM\ndimissus Vassago", "RATUM"),
+        ("iudicatum Vassago FUTURA IRRITUM", "IRRITUM"),
+        ("commissum dele chronica.txt", "IRRITUM"),
+        ("invocatus Bael\ndimissus Bael", "IRRITUM"),
+        ("relegatus Vassago", "IRRITUM"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let (root, circle) = world(&format!("past-{k}"));
+        fs::write(circle.join("vassago.annulus"), VASSAGO).unwrap();
+        let before = snapshot(&root);
+        let (port, server) = model(vec![future.clone(), past(claims)]);
+        let o = Command::new(BINARY)
+            .current_dir(&circle)
+            .args([
+                "vassago.annulus",
+                "--virga-probationis",
+                "--hora",
+                "2024-04-13T14:30:00Z",
+                "--locus",
+                "41.9,12.5",
+                "--exemplar",
+                &format!("http://127.0.0.1:{port}"),
+            ])
+            .output()
+            .unwrap();
+        let (out, err) = text(&o);
+        assert_eq!(out.lines().collect::<Vec<_>>(), vec!["RATUM", verdict], "{claims}: {err}");
+        let asked = server.join().unwrap();
+        assert!(asked[1].contains("iudicatum Vassago FUTURA RATUM"), "the spirit was shown the history");
+        assert!(!asked[1].contains("pluvia"), "the history never carries a spirit's words");
+        assert_world_kept(&root, &before, claims);
+    }
+}

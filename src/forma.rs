@@ -206,3 +206,34 @@ pub fn read_virtutes(reply: &str, open: &[Outcome]) -> Result<(Outcome, Actum), 
     }
     Ok((declared, Actum::Responsum(text)))
 }
+
+pub fn grammar_praeterita(open: &[Outcome]) -> Result<String, String> {
+    let g = grammar(open, true)?;
+    let words: Vec<String> = [
+        "invocatus",
+        "recusatus",
+        "petitum",
+        "iudicatum",
+        "commissum",
+        "dimissus",
+        "relegatus",
+    ]
+    .iter()
+    .map(|w| format!("\"{w}\""))
+    .collect();
+    let body = format!(
+        "body ::= \"\\\"responsum\\\"\" ws \":\" ws \"\\\"\" claim ( \"\\\\n\" claim )* \"\\\"\"\nclaim ::= word \" \" [^\"\\\\\\x00-\\x1f]+\nword ::= {}",
+        words.join(" | ")
+    );
+    Ok(g.lines()
+        .map(|l| {
+            if l.starts_with("body ::=") {
+                body.as_str()
+            } else {
+                l
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n")
+}
