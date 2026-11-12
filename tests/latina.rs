@@ -105,3 +105,9 @@ fn latin_gets_one() {
         1
     );
 }
+
+#[test]
+fn other_words_of_the_same_spelling_are_shown() {
+    let g = glossa("liber regis est").unwrap();
+    assert!(g.contains("book, volume"), "{g}");
+}
