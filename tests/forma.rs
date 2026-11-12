@@ -1,0 +1,95 @@
+use annulus::lingua::exsequi::Actum;
+use annulus::nucleus::{Outcome, Verb};
+use spiri72::forma::{grammar, read};
+
+const ALL: [Outcome; 3] = [Outcome::Obsequium, Outcome::Pars, Outcome::Mora];
+
+#[test]
+fn the_grammar_offers_only_the_open_outcomes() {
+    let g = grammar(&[Outcome::Pars], true).unwrap();
+    assert!(g.contains("exitus ::= \"\\\"pars\\\"\"\n"), "{g}");
+    assert!(!g.contains("obsequium") && !g.contains("mora"));
+    assert!(grammar(&[Outcome::Mendacium], true).is_err());
+    assert!(grammar(&[], false).is_err());
+    let w = grammar(&ALL, false).unwrap();
+    assert!(w.contains("verbum ::=") && !w.contains("responsum"));
+}
+
+#[test]
+fn an_answer_is_read() {
+    let (o, a) = read(
+        r#"{"exitus": "obsequium", "responsum": "tempestas veniet"}"#,
+        &ALL,
+        true,
+    )
+    .unwrap();
+    assert_eq!(o, Outcome::Obsequium);
+    assert_eq!(a, Actum::Responsum("tempestas veniet".into()));
+}
+
+#[test]
+fn a_part_is_marked_incomplete_once() {
+    let (_, a) = read(r#"{"exitus": "pars", "responsum": "tempes"}"#, &ALL, true).unwrap();
+    assert_eq!(a, Actum::Responsum("tempes [...]".into()));
+    let (_, a) = read(
+        r#"{"exitus": "pars", "responsum": "tempes [...]"}"#,
+        &ALL,
+        true,
+    )
+    .unwrap();
+    assert_eq!(a, Actum::Responsum("tempes [...]".into()));
+}
+
+#[test]
+fn a_delay_carries_nothing() {
+    let (o, a) = read(r#"{"exitus": "mora", "responsum": "mox"}"#, &ALL, true).unwrap();
+    assert_eq!((o, a), (Outcome::Mora, Actum::Mora));
+}
+
+#[test]
+fn work_is_read() {
+    let (_, a) = read(
+        r#"{"exitus":"obsequium","opera":[{"verbum":"crea","locus":"turris.txt","data":""}]}"#,
+        &ALL,
+        false,
+    )
+    .unwrap();
+    let Actum::Opera(e) = a else { panic!() };
+    assert_eq!((e[0].verb, e[0].place.as_str()), (Verb::Crea, "turris.txt"));
+}
+
+#[test]
+fn malformed_or_closed_replies_are_refused() {
+    for (reply, telling) in [
+        (r#"{"exitus": "pars", "responsum": "x"}"#, true),
+        (r#"{"exitus": "mendacium", "responsum": "x"}"#, true),
+        (r#"{"exitus": "obsequium"}"#, true),
+        (
+            r#"{"exitus": "obsequium", "responsum": "x", "locus": "y"}"#,
+            true,
+        ),
+        (r#"{"exitus": "obsequium", "responsum": 3}"#, true),
+        (r#"{"exitus": "obsequium", "opera": []}"#, true),
+        (r#"{"exitus": "obsequium", "responsum": "x"}"#, false),
+        (
+            r#"{"exitus":"obsequium","opera":[{"verbum":"incende","locus":"a","data":""}]}"#,
+            false,
+        ),
+        (
+            r#"{"exitus":"obsequium","opera":[{"verbum":"crea","data":""}]}"#,
+            false,
+        ),
+        ("tempestas veniet", true),
+        ("[]", true),
+    ] {
+        assert!(
+            read(reply, &[Outcome::Obsequium], telling).is_err(),
+            "{reply}"
+        );
+    }
+    let long = format!(
+        r#"{{"exitus": "obsequium", "responsum": "{}"}}"#,
+        "x".repeat(20_000)
+    );
+    assert!(read(&long, &ALL, true).is_err());
+}
