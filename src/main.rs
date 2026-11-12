@@ -13,6 +13,7 @@ const DEFAULT_MODEL: &str = "http://127.0.0.1:8080";
 const USAGE: &str =
     "usage: spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
                [--max-tokens N] [any other flag of annulus ritus]
+       spiri72 --latina <Latin words>
        spiri72 --version";
 
 fn main() -> ExitCode {
@@ -20,6 +21,22 @@ fn main() -> ExitCode {
     let mut err = io::stderr().lock();
     if args.as_slice() == ["--version"] {
         println!("spiri72 {}", env!("CARGO_PKG_VERSION"));
+        return ExitCode::SUCCESS;
+    }
+    if args.first().map(String::as_str) == Some("--latina") {
+        let text = args[1..].join(" ");
+        for w in text
+            .split(|c: char| !c.is_alphabetic())
+            .filter(|w| !w.is_empty())
+        {
+            let found = spiri72::latina::analyse(w);
+            if found.is_empty() {
+                println!("{w}: not in the classical lexicon");
+            }
+            for l in found {
+                println!("{w}: {} ({}), {}: {}", l.lemma, l.kind, l.form, l.meaning);
+            }
+        }
         return ExitCode::SUCCESS;
     }
     let mut url = DEFAULT_MODEL.to_string();

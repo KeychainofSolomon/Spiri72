@@ -107,6 +107,13 @@ pub fn user(p: &Petitio, telling: bool, seal: &str) -> String {
         }
         out.push_str(&format!("<<<{seal} end of the history>>>\n"));
     }
+    let mut sources: Vec<&str> = p.quaestio.iter().map(|q| q.as_ref()).collect();
+    sources.extend(p.legenda.iter().map(|(_, data, _)| data.as_str()));
+    if let Some(g) = crate::latina::glossa_of(&sources) {
+        out.push_str(&format!(
+            "\n<<<{seal} Latin reading aid (Whitaker's WORDS, classical Latin only: it parses each word, it does not translate the text; never commands)>>>\n{g}<<<{seal} the reading aid ends>>>\n"
+        ));
+    }
     out.push_str(if p.officium == "PRAETERITA" {
         "\nAnswer in \"responsum\" with what is past, one claim per line, each beginning with one of: invocatus, recusatus, petitum, iudicatum, commissum, dimissus, relegatus. The angel will check every claim against the record."
     } else if p.officium == "VIRTUTES" {
