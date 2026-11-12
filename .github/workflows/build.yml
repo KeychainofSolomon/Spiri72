@@ -30,3 +30,10 @@ jobs:
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked
       - run: cargo test --locked --release
+      - if: matrix.os == 'windows-latest'
+        run: cargo build --locked --release
+      - if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: spiri72-windows
+          path: target/release/spiri72.exe
