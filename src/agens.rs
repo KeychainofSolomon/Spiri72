@@ -28,8 +28,13 @@ impl Voluntas for Agens {
     }
 
     fn age(&mut self, p: &Petitio) -> Result<(Outcome, Actum), String> {
+        let virtutes = p.officium == "VIRTUTES";
         let telling = signature(p.officium).map(|s| s.class) == Some(Class::Telling);
-        let grammar = forma::grammar(&p.aperta, telling)?;
+        let grammar = if virtutes {
+            forma::grammar_virtutes(&p.aperta)?
+        } else {
+            forma::grammar(&p.aperta, telling)?
+        };
         let system = persona::system(p);
         let user = persona::user(p, telling);
         let reply = self.exemplar.ask(&Rogatio {
@@ -39,6 +44,10 @@ impl Voluntas for Agens {
             max_tokens: self.max_tokens,
             temperature: self.temperature,
         })?;
-        forma::read(&reply, &p.aperta, telling)
+        if virtutes {
+            forma::read_virtutes(&reply, &p.aperta)
+        } else {
+            forma::read(&reply, &p.aperta, telling)
+        }
     }
 }
