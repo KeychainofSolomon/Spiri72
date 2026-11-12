@@ -72,6 +72,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .verdict.suspensum { color: var(--pewter); }
 .verdict.irritum, .said.refused { color: var(--rubric); }
 .said.refused { font-style: normal; border-left: 2px solid var(--rubric); padding-left: .85rem; }
+.said .recipe { display: block; margin-top: .4rem; font-style: normal; font-size: .8rem; background: none; border: 1px solid var(--lapis-line); color: var(--ink); border-radius: 2px; cursor: pointer; padding: .15rem .5rem; }
+.said .recipe[disabled] { cursor: default; color: var(--pewter); }
 .said.waiting { color: var(--pewter); font-style: italic; }
 
 form.ask { display: grid; grid-template-columns: 1fr auto; gap: .5rem; width: min(34rem, 100%); margin-top: .9rem; }
@@ -388,6 +390,19 @@ document.getElementById("ask").addEventListener("submit", async e => {
       const verdict = el("span", { class: `verdict ${a.iudicium.toLowerCase()}`, title: "The angel's judgement" }, a.iudicium);
       const node = el("p", { class: "said spirit" }, el("span", { class: "who" }, `${s.name}, ${(a.veritas || s.veracity).toLowerCase()}`, verdict));
       node.append(a.verba ? a.verba : (a.iudicium === "RATUM" ? "" : "The work was not admitted, so nothing of it is shown."));
+      if (a.ritus) {
+        const take = el("button", { class: "recipe", type: "button", title: `Write this answer in ${s.name}'s book, so it can come back to the spirit in later rites` }, `Take into ${s.name}'s book`);
+        take.addEventListener("click", async () => {
+          take.disabled = true;
+          try {
+            const t = await (await fetch(base + "recipe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ritus: a.ritus }) })).json();
+            take.textContent = t.scriptum ? `Written in ${s.name}'s book` : `Not written: ${t.nuntius}`;
+          } catch (err) {
+            take.textContent = "Not written: Spiri72 did not answer";
+          }
+        });
+        node.append(take);
+      }
       node.style.setProperty("--metal", stopColor(metals(s)[0]));
       say(node);
     } else {

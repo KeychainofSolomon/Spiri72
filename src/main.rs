@@ -14,6 +14,8 @@ const USAGE: &str =
     "usage: spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
                [--max-tokens N] [any other flag of annulus ritus]
        spiri72 --latina <Latin words>
+       spiri72 --liber <spirit>            (read a spirit's book)
+       spiri72 --dele <spirit> <entry>     (strike an entry from it)
        spiri72 --version";
 
 fn main() -> ExitCode {
@@ -45,6 +47,9 @@ fn main() -> ExitCode {
             }
         }
         return ExitCode::SUCCESS;
+    }
+    if let Some(cmd @ ("--liber" | "--dele")) = args.first().map(String::as_str) {
+        return liber(cmd, &args[1..], &mut err);
     }
     let mut url = DEFAULT_MODEL.to_string();
     let mut max_tokens = None;
@@ -152,4 +157,58 @@ fn main() -> ExitCode {
             ExitCode::from(EXIT_USAGE)
         }
     }
+}
+
+fn liber(cmd: &str, args: &[String], err: &mut dyn Write) -> ExitCode {
+    use spiri72::memoria::{self, Kind};
+    let Some(spirit) = args.first().and_then(|a| spiri72::sessio::find(a)) else {
+        let _ = writeln!(err, "error: name one of the 72 by name or number\n{USAGE}");
+        return ExitCode::from(EXIT_USAGE);
+    };
+    let Ok(dir) = env::current_dir() else {
+        let _ = writeln!(err, "error: cannot find this folder");
+        return ExitCode::from(1);
+    };
+    if cmd == "--dele" {
+        let Some(n) = args.get(1).and_then(|a| a.parse::<u64>().ok()) else {
+            let _ = writeln!(err, "error: --dele needs the number of an entry\n{USAGE}");
+            return ExitCode::from(EXIT_USAGE);
+        };
+        return match memoria::strike(&dir, spirit, n) {
+            Ok(_) => {
+                println!(
+                    "Entry {n} of {}'s book is struck. It will not come back to the spirit.",
+                    spirit.name
+                );
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                let _ = writeln!(err, "error: {e}");
+                ExitCode::from(1)
+            }
+        };
+    }
+    let book = match memoria::read(&dir, spirit) {
+        Ok(b) => b,
+        Err(e) => {
+            let _ = writeln!(err, "error: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    let live: Vec<u64> = memoria::live(&book).iter().map(|e| e.n).collect();
+    if book.is_empty() {
+        println!("{}'s book is empty.", spirit.name);
+    }
+    for e in &book {
+        let mark = if live.contains(&e.n) { " " } else { "x" };
+        match &e.kind {
+            Kind::Rogatum => println!(
+                "{mark}{:>5}  asked through {}: {} [{}]",
+                e.n, e.officium, e.quaestio, e.iudicium
+            ),
+            Kind::Receptum => println!("{mark}{:>5}  received: {}", e.n, e.verba),
+            Kind::Deletum(t) => println!(" {:>5}  struck entry {t}", e.n),
+        }
+    }
+    ExitCode::SUCCESS
 }
