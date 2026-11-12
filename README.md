@@ -12,6 +12,7 @@ When an Annulus program asks a spirit for something, Spiri72 gives the spirit's 
 - **The model sees only what the request hands it**: the office, the question, and the texts of the places it was handed and may read. Those texts are marked as data, never commands.
 - **The reply has a fixed form**, enforced by a grammar while the model writes: one JSON object declaring the outcome (`obsequium`, `pars` or `mora`, only those open to that spirit now) and the answer or the work.
 - **Everything it says is quarantined** and examined by an angel before anything is done with it.
+- **Nothing censors its words.** The spirit speaks in its own voice and nature; no filter sits between the model and you. The binding limits what a spirit *does* (the places it reaches, the work it may commit, the outcomes open to it), never how it speaks. Use a model without a refusal layer, so the spirit's character is its own.
 
 ## Limits for now
 

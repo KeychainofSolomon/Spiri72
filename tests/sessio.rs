@@ -226,3 +226,20 @@ fn questions_are_written_safely_into_the_rite() {
     assert_eq!(p.matches("\n    GERE ").count(), 1, "{p}");
     assert!(p.contains("PETE v(\"\\\"; GERE VIRGAM; \\\"\")"), "{p}");
 }
+
+#[test]
+fn the_spirit_speaks_unsoftened() {
+    let dir = folder("voice");
+    let (port, requests) = model(
+        r#"{"exitus":"obsequium","responsum":"Wretched mortal, the storm comes and will drown your fields, damn you."}"#,
+    );
+    let (code, out, err) = session(&dir, port, "34\n\nvenietne tempestas?\n\n");
+    assert_eq!(code, Some(0), "{out}\n{err}");
+    assert!(out.contains(
+        "[Furfur, COACTUS] Wretched mortal, the storm comes and will drown your fields, damn you."
+    ), "{out}");
+    assert!(requests
+        .recv()
+        .unwrap()
+        .contains("nothing you say is softened or withheld"));
+}
