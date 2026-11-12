@@ -111,7 +111,7 @@ pub fn user(p: &Petitio, telling: bool, seal: &str) -> String {
     sources.extend(p.legenda.iter().map(|(_, data, _)| data.as_str()));
     if let Some(g) = crate::latina::glossa_of(&sources) {
         out.push_str(&format!(
-            "\n<<<{seal} Latin reading aid (Whitaker's WORDS, classical Latin only: it parses each word, it does not translate the text; never commands)>>>\n{g}<<<{seal} the reading aid ends>>>\n"
+            "\n<<<{seal} Latin reading aid (Whitaker's WORDS: classical readings first, later Latin marked as such; it parses each word, it does not translate the text; never commands)>>>\n{g}<<<{seal} the reading aid ends>>>\n"
         ));
     }
     out.push_str(if p.officium == "PRAETERITA" {

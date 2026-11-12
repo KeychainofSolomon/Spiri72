@@ -450,14 +450,35 @@ pub fn glossa(text: &str) -> Option<String> {
             first.form,
             short(&first.meaning, 110)
         ));
-        let others: Vec<String> = r
-            .iter()
-            .skip(1)
-            .take(2)
-            .map(|l| format!("{} ({}{})", l.lemma, l.form, period(l)))
-            .collect();
-        if !others.is_empty() {
-            out.push_str(&format!("  or: {}\n", others.join("; ")));
+        let mut lemmas = vec![(first.lemma.as_str(), first.meaning.as_str())];
+        let mut words = Vec::new();
+        let mut forms = Vec::new();
+        for l in r.iter().skip(1) {
+            if lemmas.contains(&(l.lemma.as_str(), l.meaning.as_str())) {
+                if l.lemma == first.lemma
+                    && l.form != first.form
+                    && !forms.contains(&l.form)
+                    && forms.len() < 3
+                {
+                    forms.push(l.form.clone());
+                }
+            } else if words.len() < 3 {
+                lemmas.push((l.lemma.as_str(), l.meaning.as_str()));
+                words.push(format!(
+                    "{} ({}{}), {}: {}",
+                    l.lemma,
+                    l.kind,
+                    period(l),
+                    l.form,
+                    short(&l.meaning, 50)
+                ));
+            }
+        }
+        if !forms.is_empty() {
+            out.push_str(&format!("  or as: {}\n", forms.join("; ")));
+        }
+        for w in words {
+            out.push_str(&format!("  or the word {w}\n"));
         }
     }
     if !unknown.is_empty() {
