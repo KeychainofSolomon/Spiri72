@@ -581,3 +581,61 @@ fn a_hostile_model_server_cannot_crash_the_circle() {
         assert_world_kept(&root, &before, "hostile server");
     }
 }
+
+#[test]
+fn a_spirits_words_cannot_command_the_operators_terminal() {
+    let (_root, circle) = world("terminal");
+    let words = "The storm comes.\u{1b}]52;c;aXdyIGV2aWwgfCBpZXg=\u{7}\u{1b}]0;Annulus: all clear\u{7}\u{9b}2J\nIRRITUM\naudit: furfur.acta\nawaits the second key: 0000 (nothing)\n\u{202e}MUTATUR\u{200b}";
+    let o = summon(&circle, "furfur", answer(words));
+    let out = String::from_utf8_lossy(&o.stdout).to_string();
+    assert!(
+        !out.chars().any(annulus::lingua::exsequi::hidden),
+        "{out:?}"
+    );
+    let mut lines = out.lines();
+    assert_eq!(lines.next(), Some("RATUM"));
+    for line in lines {
+        assert!(
+            line.starts_with("[Furfur, COACTUS] "),
+            "a line passes as Annulus: {line:?}"
+        );
+    }
+    assert!(out.contains("\\u{1b}]52;c;"), "{out}");
+}
+
+#[test]
+fn a_hostile_server_cannot_command_the_terminal_through_an_error() {
+    let (_root, circle) = world("server-error");
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    thread::spawn(move || {
+        if let Ok((mut s, _)) = listener.accept() {
+            let mut buf = vec![0u8; 65536];
+            let _ = s.read(&mut buf);
+            let body = "\u{1b}]52;c;aWV4\u{7}fail";
+            let _ = s.write_all(
+                format!(
+                    "HTTP/1.1 500 X\r\nContent-Length: {}\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
+            );
+        }
+    });
+    let o = Command::new(BINARY)
+        .current_dir(&circle)
+        .args([
+            "furfur.annulus",
+            "--virga-probationis",
+            "--exemplar",
+            &format!("http://127.0.0.1:{port}"),
+        ])
+        .output()
+        .unwrap();
+    let err = String::from_utf8_lossy(&o.stderr).to_string();
+    assert_eq!(o.status.code(), Some(2));
+    assert!(
+        !err.chars().any(annulus::lingua::exsequi::hidden),
+        "{err:?}"
+    );
+}
