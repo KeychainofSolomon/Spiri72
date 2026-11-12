@@ -32,6 +32,8 @@ impl Voluntas for Agens {
         let telling = signature(p.officium).map(|s| s.class) == Some(Class::Telling);
         let grammar = if virtutes {
             forma::grammar_virtutes(&p.aperta)?
+        } else if p.officium == "PRAETERITA" {
+            forma::grammar_praeterita(&p.aperta)?
         } else {
             forma::grammar(&p.aperta, telling)?
         };
