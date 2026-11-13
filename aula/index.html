@@ -175,6 +175,9 @@ form.ask button:disabled, form.ask textarea:disabled { opacity: .4; cursor: not-
 .entry select, .entry input { width: 100%; padding: .45rem .6rem; background: var(--lapis-band); border: 1px solid var(--lapis-line); border-radius: 2px; }
 .entry .field { display: grid; gap: .3rem; margin-top: .9rem; font-size: .9rem; color: var(--pewter); }
 .entry .hint { color: var(--pewter); line-height: 1.6; }
+.entry .actions button.hand { text-align: left; letter-spacing: .02em; }
+.entry .handed { display: flex; gap: .6rem; align-items: baseline; color: var(--ink); font-style: italic; font-size: .9rem; overflow-wrap: anywhere; }
+.entry .link { background: none; border: none; padding: 0; color: var(--pewter); text-decoration: underline; cursor: pointer; font-size: .85rem; font-style: normal; }
 
 footer { grid-area: foot; border-top: 1px solid var(--lapis-line); padding: .7rem 1.4rem; font-size: .82rem; color: var(--pewter); display: flex; gap: 1.5rem; flex-wrap: wrap; }
 footer .dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: var(--pewter); margin-right: .45rem; vertical-align: middle; }
@@ -300,7 +303,7 @@ footer .sound[aria-pressed="true"] { color: var(--ink); }
 <script>
 const base = location.pathname.replace(/[^/]*$/, "");
 const METAL = { king: "gold", duke: "copper", prince: "tin", marquis: "silver", president: "mercury", earl: "copper silver", knight: "lead" };
-const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false, now: {}, sky: { locus: "", caelum: "" }, logs: {} };
+const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false, now: {}, sky: { locus: "", caelum: "" }, logs: {}, handed: "", handedName: "" };
 const closedOf = s => s.closed || state.now[s.n] || null;
 try { Object.assign(state.sky, JSON.parse(localStorage.getItem("spiri72-sky") || "{}")); } catch {}
 
@@ -381,6 +384,7 @@ function choose(s) {
   if (state.busy) return;
   if (state.bound && state.chosen && state.chosen.n !== s.n) depart(true);
   showLog(state.chosen, s);
+  if (!state.chosen || state.chosen.n !== s.n) { state.handed = ""; state.handedName = ""; }
   state.chosen = s;
   state.office = s.telling[0] || null;
   document.querySelectorAll(".seals button").forEach(b => b.setAttribute("aria-pressed", Number(b.dataset.n) === s.n ? "true" : "false"));
@@ -413,12 +417,27 @@ function renderEntry() {
       const sel = el("select", { id: "office", onchange: e => state.office = e.target.value }, s.telling.map(o => el("option", { value: o }, o.toLowerCase())));
       actions.append(el("label", { class: "field", for: "office" }, "Through which office", sel));
     }
-    actions.append(el("label", { class: "field", for: "liber" }, "Hand a file from this folder to read (optional)", el("input", { id: "liber", placeholder: "for example chronica.txt", autocomplete: "off" })));
+    const picker = el("input", { type: "file", id: "manus", hidden: "" });
+    const shown = el("span", { class: "handed-name" }, state.handedName ? state.handedName : "nothing handed");
+    const pick = el("button", { type: "button", class: "quiet hand", onclick: () => picker.click() }, state.handedName ? "Hand another file…" : "Hand the spirit a file…");
+    picker.addEventListener("change", async () => {
+      const f = picker.files[0]; if (!f) return;
+      pick.disabled = true; shown.textContent = /^image\//.test(f.type) ? `${s.name} looks upon ${f.name}…` : `Taking ${f.name}…`;
+      try {
+        const r = await fetch(base + "affer", { method: "POST", headers: { "Content-Type": "application/octet-stream", "X-Nomen": encodeURIComponent(f.name) }, body: await f.arrayBuffer() });
+        const a = await r.json();
+        if (a.error) { shown.textContent = a.error; state.handed = ""; state.handedName = ""; }
+        else { state.handed = a.locus; state.handedName = a.nomen; renderEntry(); return; }
+      } catch { shown.textContent = "Spiri72 did not answer."; }
+      pick.disabled = false;
+    });
+    const clear = state.handedName ? el("button", { type: "button", class: "link", onclick: () => { state.handed = ""; state.handedName = ""; renderEntry(); } }, "take it back") : null;
+    actions.append(el("div", { class: "field" }, "A file for the spirit to read or see (optional)", picker, pick, el("span", { class: "handed" }, shown, clear)));
     actions.append(el("button", { type: "button", class: "primary", onclick: bind }, `Bind ${s.name}`));
     parts.push(actions);
   } else {
     parts.push(el("div", { class: "actions" },
-      el("p", { class: "hint", style: "margin:0" }, `${s.name} is bound through ${state.office.toLowerCase()}${state.liber ? `, and holds ${state.liber}` : ""}. It is held until you give licence to depart, and while held its hours are those of its calling. Each answer is examined by the angel.`),
+      el("p", { class: "hint", style: "margin:0" }, `${s.name} is bound through ${state.office.toLowerCase()}${state.liber ? `, and holds ${state.handedName || state.liber}` : ""}. It is held until you give licence to depart, and while held its hours are those of its calling. Each answer is examined by the angel.`),
       el("button", { type: "button", class: "quiet", onclick: () => depart(false) }, "Give licence to depart")));
   }
   entry.replaceChildren(...parts);
@@ -536,7 +555,7 @@ function play(cls, ms) {
 
 function bind() {
   const s = state.chosen;
-  state.liber = (document.getElementById("liber")?.value || "").trim();
+  state.liber = state.handed || "";
   state.bound = true;
   document.body.classList.remove("departing");
   document.body.classList.add("bound");
@@ -672,7 +691,7 @@ async function status() {
   try {
     const r = await (await fetch(base + "status")).json();
     node.className = r.paratus ? "up" : "down";
-    node.lastChild.textContent = r.paratus ? `Model ready at ${r.exemplar}` : `No model answers at ${r.exemplar}. Start llama-server, then try again.`;
+    node.lastChild.textContent = r.paratus ? `The spirits are ready${r.visus ? ", and can see" : ""}` : `No model answers at ${r.exemplar}. Start llama-server, then try again.`;
     const w = document.getElementById("wand");
     w.classList.toggle("real", !!r.virga);
     w.textContent = r.virga ? `The real wand at ${r.virga}: each question asks its words in the wand's window.` : "Test wand: nothing done here is valid for a real installation.";

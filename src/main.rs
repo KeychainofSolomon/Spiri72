@@ -172,6 +172,17 @@ fn main() -> ExitCode {
                 &mut out,
             )
         };
+        // the eyes wake only beside a model Spiri72 looks after itself
+        let mut eyes = if named_model {
+            None
+        } else {
+            spiri72::initium::wake_eyes(
+                agens.exemplar.address,
+                &ini,
+                &mut io::stdin().lock(),
+                &mut out,
+            )
+        };
         let stop = |model: &mut Option<std::process::Child>| {
             if let Some(c) = model.as_mut() {
                 let _ = c.kill();
@@ -182,12 +193,14 @@ fn main() -> ExitCode {
             let mut input = io::stdin().lock();
             let code = sessio(&mut input, &mut out, &mut err, &mut agens, &dir, &sky);
             stop(&mut model);
+            stop(&mut eyes);
             return ExitCode::from(code);
         }
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();
         let code = serve(&mut agens, address, &url, &dir, &sky, &mut out, !no_browser);
         stop(&mut model);
+        stop(&mut eyes);
         return ExitCode::from(code);
     }
     rest.extend(sky);
