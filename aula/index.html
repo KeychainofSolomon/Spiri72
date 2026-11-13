@@ -137,6 +137,11 @@ body.departing .circle .ring text, body.departing .triangle .seat { animation: f
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
 .said.bound-note { color: var(--gold); letter-spacing: .04em; }
 
+/* the spirit's words surface from the centre of the circle, out of smoke */
+.circle .puff { position: absolute; left: 50%; top: 50%; width: 46%; aspect-ratio: 1; margin: -23% 0 0 -23%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle closest-side, rgba(255, 255, 255, .55), rgba(255, 255, 255, .12) 55%, transparent 75%); filter: url(#smoke); opacity: 0; }
+.said.spirit .w { display: inline-block; }
+
 /* every word arrives */
 .said { animation: rise .5s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
@@ -199,6 +204,13 @@ footer #wand.real { color: var(--gold); }
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <filter id="smoke" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency=".011 .018" numOctaves="4" seed="9" result="noise">
+        <animate attributeName="seed" values="9;10;11;12;13;14;15;16" dur="2.4s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="90" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
     <linearGradient id="m-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3e2a6"/><stop offset=".55" stop-color="#b98c31"/><stop offset="1" stop-color="#e7cd7e"/></linearGradient>
     <linearGradient id="m-copper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eeac85"/><stop offset=".55" stop-color="#9b5131"/><stop offset="1" stop-color="#d98d62"/></linearGradient>
     <linearGradient id="m-tin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dfe4e6"/><stop offset=".55" stop-color="#8d979c"/><stop offset="1" stop-color="#c6cdd0"/></linearGradient>
@@ -420,6 +432,35 @@ function showLog(from, to) {
   d.scrollTop = d.scrollHeight;
 }
 
+// The spirit's words, one span a word, keeping the spaces and line breaks between them.
+function smokeWords(text) {
+  return text.split(/(\s+)/).filter(t => t).map(t => /^\s+$/.test(t) ? document.createTextNode(t) : el("span", { class: "w" }, t));
+}
+
+// They surface from the centre of the circle: a breath of smoke there, the answer drawn
+// out of it to its place, and each word condensing out of the haze in turn.
+// How long it takes is the spirit's own: about one answer in four stands at once, the rest
+// come at a tempo drawn afresh each time, from quick to slow.
+function surface(node) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (Math.random() < .25) return;
+  const k = .45 + Math.random() ** 1.6 * 1.9;
+  const circle = document.querySelector(".circle");
+  const puff = el("div", { class: "puff" });
+  circle.append(puff);
+  puff.animate([{ opacity: 0, transform: "scale(.25) rotate(0deg)" }, { opacity: .9, offset: .35 }, { opacity: 0, transform: "scale(1.9) rotate(40deg)" }],
+    { duration: 2600 * k, easing: "cubic-bezier(.2, .6, .3, 1)" }).finished.then(() => puff.remove(), () => puff.remove());
+  const c = circle.getBoundingClientRect(), r = node.getBoundingClientRect();
+  const dx = c.left + c.width / 2 - (r.left + r.width / 2), dy = c.top + c.height / 2 - (r.top + r.height / 2);
+  node.style.animation = "none";
+  node.animate([{ transform: `translate(${dx}px, ${dy}px) scale(.3)`, opacity: 0, filter: "blur(14px)" },
+    { opacity: .7, filter: "blur(5px)", offset: .45 }, { transform: "none", opacity: 1, filter: "blur(0)" }],
+    { duration: 1700 * k, easing: "cubic-bezier(.2, .7, .2, 1)" });
+  node.querySelectorAll(".w").forEach((w, i) => w.animate(
+    [{ opacity: 0, filter: "blur(9px)", transform: "translateY(7px) scale(1.25)" }, { opacity: 1, filter: "blur(0)", transform: "none" }],
+    { duration: 1300 * k, delay: (600 + Math.min(i * 38 * (.5 + Math.random()), 2200)) * k, easing: "cubic-bezier(.2, .7, .2, 1)", fill: "backwards" }));
+}
+
 function say(node) {
   const d = document.getElementById("dialogue");
   document.getElementById("empty")?.remove();
@@ -510,7 +551,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
     if (a.iudicium) {
       const verdict = el("span", { class: `verdict ${a.iudicium.toLowerCase()}`, title: "The angel's judgement" }, a.iudicium);
       const node = el("p", { class: "said spirit" }, el("span", { class: "who" }, `${s.name}, ${(a.veritas || s.veracity).toLowerCase()}`, verdict));
-      node.append(a.verba ? a.verba : (a.iudicium === "RATUM" ? "" : "The work was not admitted, so nothing of it is shown."));
+      node.append(...(a.verba ? smokeWords(a.verba) : [a.iudicium === "RATUM" ? "" : "The work was not admitted, so nothing of it is shown."]));
       if (a.ritus) {
         const take = el("button", { class: "recipe", type: "button", title: `Write this answer in ${s.name}'s book, so it can come back to the spirit in later rites` }, `Take into ${s.name}'s book`);
         take.addEventListener("click", async () => {
@@ -527,6 +568,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
       node.style.setProperty("--metal", stopColor(metals(s)[0]));
       node.classList.add(`verdict-${a.iudicium.toLowerCase()}`);
       say(node);
+      if (a.verba) surface(node);
     } else {
       say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
     }
