@@ -54,6 +54,7 @@ fn main() -> ExitCode {
     }
     let mut url = DEFAULT_MODEL.to_string();
     let mut max_tokens = None;
+    let mut named_model = false;
     let mut rest: Vec<String> = Vec::new();
     let mut sky: Vec<String> = Vec::new();
     let mut vires = Vec::new();
@@ -87,6 +88,7 @@ fn main() -> ExitCode {
                     return ExitCode::from(EXIT_USAGE);
                 };
                 if a == "--exemplar" {
+                    named_model = true;
                     url = v;
                 } else {
                     match v.parse::<u32>() {
@@ -159,12 +161,17 @@ fn main() -> ExitCode {
             .ok()
             .and_then(|p| p.parent().map(|d| d.join(spiri72::initium::INI)))
             .unwrap_or_else(|| dir.join(spiri72::initium::INI));
-        let mut model = spiri72::initium::wake_model(
-            agens.exemplar.address,
-            &ini,
-            &mut io::stdin().lock(),
-            &mut out,
-        );
+        // A model named with --exemplar is the Operator's own: only the default one is woken.
+        let mut model = if named_model {
+            None
+        } else {
+            spiri72::initium::wake_model(
+                agens.exemplar.address,
+                &ini,
+                &mut io::stdin().lock(),
+                &mut out,
+            )
+        };
         let stop = |model: &mut Option<std::process::Child>| {
             if let Some(c) = model.as_mut() {
                 let _ = c.kill();
