@@ -40,6 +40,7 @@ fn aula(d: &std::path::Path) -> Aula<'_> {
         pulsus: std::cell::RefCell::new(spiri72::pulsus::Pulsus::new(30)),
         eyes_seen: Default::default(),
         eyes: None,
+        consulta: Default::default(),
     }
 }
 
