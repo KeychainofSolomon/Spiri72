@@ -176,7 +176,10 @@ form.ask button:disabled, form.ask textarea:disabled { opacity: .4; cursor: not-
 .entry .field { display: grid; gap: .3rem; margin-top: .9rem; font-size: .9rem; color: var(--pewter); }
 .entry .hint { color: var(--pewter); line-height: 1.6; }
 .entry .actions button.hand { text-align: left; letter-spacing: .02em; }
-.entry .handed { display: flex; gap: .6rem; align-items: baseline; color: var(--ink); font-style: italic; font-size: .9rem; overflow-wrap: anywhere; }
+.entry .handed { display: flex; gap: .8rem; align-items: center; color: var(--ink); font-style: italic; font-size: .9rem; overflow-wrap: anywhere; }
+.entry .handed-words { display: flex; flex-direction: column; gap: .2rem; align-items: flex-start; min-width: 0; }
+.entry .thumb { flex: none; width: 4.5rem; height: 4.5rem; object-fit: cover; border: 1px solid var(--ink); padding: 2px; background: #000; animation: rise .5s cubic-bezier(.2, .7, .2, 1) both; }
+.entry .thumb.page { margin: 0; overflow: hidden; font: 5px/1.3 var(--face); color: var(--pewter); white-space: pre-wrap; padding: 4px; }
 .entry .link { background: none; border: none; padding: 0; color: var(--pewter); text-decoration: underline; cursor: pointer; font-size: .85rem; font-style: normal; }
 
 footer { grid-area: foot; border-top: 1px solid var(--lapis-line); padding: .7rem 1.4rem; font-size: .82rem; color: var(--pewter); display: flex; gap: 1.5rem; flex-wrap: wrap; }
@@ -384,7 +387,7 @@ function choose(s) {
   if (state.busy) return;
   if (state.bound && state.chosen && state.chosen.n !== s.n) depart(true);
   showLog(state.chosen, s);
-  if (!state.chosen || state.chosen.n !== s.n) { state.handed = ""; state.handedName = ""; }
+  if (!state.chosen || state.chosen.n !== s.n) { state.handed = ""; state.handedName = ""; state.handedThumb = null; }
   state.chosen = s;
   state.office = s.telling[0] || null;
   document.querySelectorAll(".seals button").forEach(b => b.setAttribute("aria-pressed", Number(b.dataset.n) === s.n ? "true" : "false"));
@@ -419,20 +422,28 @@ function renderEntry() {
     }
     const picker = el("input", { type: "file", id: "manus", hidden: "" });
     const shown = el("span", { class: "handed-name" }, state.handedName ? state.handedName : "nothing handed");
+    const thumb = state.handedThumb ? thumbOf(state.handedThumb) : null;
     const pick = el("button", { type: "button", class: "quiet hand", onclick: () => picker.click() }, state.handedName ? "Hand another file…" : "Hand the spirit a file…");
     picker.addEventListener("change", async () => {
       const f = picker.files[0]; if (!f) return;
+      // the thumbnail is made here, in the page; the file itself goes to Spiri72 only below
+      const look = await new Promise(done => {
+        const r = new FileReader();
+        if (/^image\//.test(f.type)) { r.onload = () => done({ image: r.result }); r.readAsDataURL(f); }
+        else { r.onload = () => done({ text: String(r.result).slice(0, 600) }); r.readAsText(f.slice(0, 2400)); }
+        r.onerror = () => done(null);
+      });
       pick.disabled = true; shown.textContent = /^image\//.test(f.type) ? `${s.name} looks upon ${f.name}…` : `Taking ${f.name}…`;
       try {
         const r = await fetch(base + "affer", { method: "POST", headers: { "Content-Type": "application/octet-stream", "X-Nomen": encodeURIComponent(f.name) }, body: await f.arrayBuffer() });
         const a = await r.json();
-        if (a.error) { shown.textContent = a.error; state.handed = ""; state.handedName = ""; }
-        else { state.handed = a.locus; state.handedName = a.nomen; renderEntry(); return; }
+        if (a.error) { shown.textContent = a.error; state.handed = ""; state.handedName = ""; state.handedThumb = null; }
+        else { state.handed = a.locus; state.handedName = a.nomen; state.handedThumb = look; renderEntry(); return; }
       } catch { shown.textContent = "Spiri72 did not answer."; }
       pick.disabled = false;
     });
-    const clear = state.handedName ? el("button", { type: "button", class: "link", onclick: () => { state.handed = ""; state.handedName = ""; renderEntry(); } }, "take it back") : null;
-    actions.append(el("div", { class: "field" }, "A file for the spirit to read or see (optional)", picker, pick, el("span", { class: "handed" }, shown, clear)));
+    const clear = state.handedName ? el("button", { type: "button", class: "link", onclick: () => { state.handed = ""; state.handedName = ""; state.handedThumb = null; renderEntry(); } }, "take it back") : null;
+    actions.append(el("div", { class: "field" }, "A file for the spirit to read or see (optional)", picker, pick, el("div", { class: "handed" }, thumb, el("span", { class: "handed-words" }, shown, clear))));
     actions.append(el("button", { type: "button", class: "primary", onclick: bind }, `Bind ${s.name}`));
     parts.push(actions);
   } else {
@@ -441,6 +452,14 @@ function renderEntry() {
       el("button", { type: "button", class: "quiet", onclick: () => depart(false) }, "Give licence to depart")));
   }
   entry.replaceChildren(...parts);
+}
+
+// A small likeness of the file about to be handed: the picture itself, or a page of its
+// first lines.
+function thumbOf(look) {
+  if (look.image) { const i = el("img", { class: "thumb", alt: "" }); i.src = look.image; return i; }
+  if (look.text !== undefined) return el("pre", { class: "thumb page", "aria-hidden": "true" }, look.text);
+  return null;
 }
 
 // Each spirit keeps its own dialogue: put the last one's away, bring this one's back.
