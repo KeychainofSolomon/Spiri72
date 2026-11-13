@@ -23,7 +23,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -40,6 +40,9 @@ pub const LIBER: &str = "spiri72.liber";
 pub const MAX_BOOK: u64 = 1 << 30;
 /// The longest entry the book takes.
 pub const MAX_ENTRY: usize = 64 * 1024;
+/// The longest line of the book: one entry with its longest fields, escaped, and its
+/// bookkeeping. A longer line is refused before it is held in memory.
+pub const MAX_LINE: usize = 8 * MAX_ENTRY + 4096;
 /// How many of the latest entries always come back.
 pub const RECENT: usize = 3;
 /// How many entries matching the question come back.
@@ -142,8 +145,10 @@ pub fn read(dir: &Path, s: &Spirit) -> Result<Vec<Entry>, String> {
     if !meta.is_file() || meta.len() > MAX_BOOK {
         return Err(format!("{} is not a book Spiri72 keeps", path.display()));
     }
-    let text =
-        fs::read_to_string(&path).map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+    // read one line at a time, each bounded, so the book is never held twice over
+    // (outside review, 2026-11-13)
+    let file = fs::File::open(&path).map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+    let mut reader = std::io::BufReader::new(file.take(MAX_BOOK + 1));
     let broken = |why: &str| {
         format!(
             "{} is not in order ({why}); the rite is refused",
@@ -152,7 +157,24 @@ pub fn read(dir: &Path, s: &Spirit) -> Result<Vec<Entry>, String> {
     };
     let mut out: Vec<Entry> = Vec::new();
     let mut prev = GENESIS.to_string();
-    for line in text.lines() {
+    let mut raw: Vec<u8> = Vec::new();
+    loop {
+        raw.clear();
+        let got = std::io::BufRead::read_until(
+            &mut (&mut reader).take(MAX_LINE as u64 + 1),
+            b'\n',
+            &mut raw,
+        )
+        .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+        if got == 0 {
+            break;
+        }
+        if raw.len() > MAX_LINE {
+            return Err(broken("an entry is longer than any the book takes"));
+        }
+        let line = std::str::from_utf8(&raw)
+            .map_err(|_| broken("a line is not text"))?
+            .trim_end_matches(['\n', '\r']);
         let j = json::parse(line).map_err(|_| broken("a line is not an entry"))?;
         let num = |k: &str| j.get(k).and_then(Json::number);
         let txt = |k: &str| j.get(k).and_then(Json::text).map(str::to_string);
@@ -383,30 +405,30 @@ pub fn recall<'a>(
 
     let q = terms(question);
     if !q.is_empty() {
-        let docs: Vec<(&Entry, HashSet<String>)> = live
-            .iter()
-            .map(|e| (*e, terms(&format!("{} {}", e.quaestio, e.verba))))
-            .collect();
-        let mut df: HashMap<&str, usize> = HashMap::new();
-        for (_, ts) in &docs {
-            for t in ts {
-                if q.contains(t) {
-                    *df.entry(t.as_str()).or_default() += 1;
-                }
+        // two passes over the entries, keeping only the question's own terms, so the
+        // book is not copied into a second index (outside review, 2026-11-13)
+        let asked = |e: &Entry| -> Vec<String> {
+            terms(&format!("{} {}", e.quaestio, e.verba))
+                .into_iter()
+                .filter(|t| q.contains(t))
+                .collect()
+        };
+        let mut df: HashMap<String, usize> = HashMap::new();
+        for e in &live {
+            for t in asked(e) {
+                *df.entry(t).or_default() += 1;
             }
         }
-        let total = docs.len().max(1) as f64;
-        let mut scored: Vec<(f64, &Entry)> = docs
+        let total = live.len().max(1) as f64;
+        let mut scored: Vec<(f64, &Entry)> = live
             .iter()
-            .map(|(e, ts)| {
-                let score: f64 = ts
+            .filter_map(|e| {
+                let score: f64 = asked(e)
                     .iter()
-                    .filter(|t| q.contains(*t))
                     .map(|t| (1.0 + total / df[t.as_str()] as f64).ln())
                     .sum();
-                (score, *e)
+                (score > 0.0).then_some((score, *e))
             })
-            .filter(|(s, _)| *s > 0.0)
             .collect();
         scored.sort_by(|a, b| b.0.total_cmp(&a.0).then(b.1.n.cmp(&a.1.n)));
         for (_, e) in scored.into_iter().take(MATCHED) {
