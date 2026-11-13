@@ -50,6 +50,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .triangle svg { width: 100%; display: block; overflow: visible; }
 .triangle .names text { fill: var(--rubric); opacity: .55; font-family: var(--face); font-size: 30px; letter-spacing: 3px; transition: opacity .6s; }
 .bound .triangle .names text { opacity: 1; }
+.triangle .frame { stroke-dasharray: 1; }
+.binding .triangle .frame { animation: draw 1.2s cubic-bezier(.55, 0, .25, 1) both; }
+.binding .triangle .names text { animation: kindle .8s ease-out both; }
+.binding .triangle .names text:nth-child(2) { animation-delay: .15s; }
+.binding .triangle .names text:nth-child(3) { animation-delay: .3s; }
+.binding .triangle .names text:nth-child(4) { animation-delay: .45s; }
+.binding .triangle .names text:nth-child(5) { animation-delay: .6s; }
+.binding .triangle .names text:nth-child(6) { animation-delay: .75s; }
+body.bound .triangle .seat { animation: halo 5s ease-in-out infinite; }
+body.binding .triangle .seat { animation: seize 1.6s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes halo { 0%, 100% { filter: drop-shadow(0 0 3px var(--metal, var(--gold))); } 50% { filter: drop-shadow(0 0 12px var(--metal, var(--gold))); } }
+@keyframes seize { 0% { filter: drop-shadow(0 0 0 transparent); transform: scale(1); } 35% { filter: drop-shadow(0 0 22px #fff3c8); transform: scale(1.06); } 100% { filter: drop-shadow(0 0 4px var(--metal, var(--gold))); transform: scale(1); } }
+.seals button { transition: transform .25s, border-color .25s, background .25s; }
+.seals button:not([data-closed]):hover { transform: scale(1.08); }
 .triangle .seat { transform-origin: 300px 330px; }
 .triangle .seat.arrive { animation: arrive .9s cubic-bezier(.2, .7, .2, 1); }
 @keyframes arrive { from { opacity: 0; transform: scale(.82) rotate(-8deg); } to { opacity: 1; transform: none; } }
@@ -57,11 +71,45 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .circle { position: relative; width: min(46rem, 100%, calc(100vh - 26rem)); min-width: 22rem; aspect-ratio: 1; }
 .circle > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.circle .ring text { fill: var(--rubric); opacity: .7; font-family: var(--face); font-size: 21px; letter-spacing: 4px; }
+.circle .ring text { fill: var(--rubric); opacity: .7; font-family: var(--face); font-size: 21px; transition: opacity .8s; }
 .bound .circle .ring text { opacity: 1; }
-.within { position: absolute; left: 17%; right: 17%; top: 16%; bottom: 14%; display: grid; }
-.dialogue { overflow-y: auto; padding: .25rem .5rem; display: flex; flex-direction: column; gap: 1.1rem; scrollbar-width: thin; scrollbar-color: var(--lapis-line) transparent; }
+.circle .ring { transform-box: view-box; transform-origin: 50% 50%; }
+.bound .circle .ring { animation: turn 360s linear infinite; }
+@keyframes turn { to { transform: rotate(360deg); } }
+
+/* the binding */
+@property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.circle::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: conic-gradient(from var(--sweep), transparent 0 78%, rgba(243, 226, 166, .15) 86%, rgba(255, 240, 190, .95) 99%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 85%, #000 87.5%, #000 98.5%, transparent 100%);
+          mask-image: radial-gradient(circle closest-side, transparent 85%, #000 87.5%, #000 98.5%, transparent 100%); }
+.circle::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle closest-side, color-mix(in srgb, var(--metal, var(--gold)) 22%, transparent), transparent 70%); transition: opacity 1.2s; }
+.bound .circle::after { opacity: .55; animation: breathe 6s ease-in-out infinite; }
+.binding .circle::before { animation: sweep 1.8s cubic-bezier(.55, 0, .25, 1) forwards; }
+@keyframes sweep { 0% { opacity: 1; --sweep: -90deg; } 85% { opacity: 1; } 100% { opacity: 0; --sweep: 270deg; } }
+.circle .rim { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.binding .circle .rim { animation: draw 1.6s cubic-bezier(.55, 0, .25, 1) both; }
+.binding .circle .rim.r2 { animation-delay: .15s; }
+.binding .circle .rim.r3 { animation-delay: .3s; }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.binding .circle .ring text { animation: kindle 1.4s ease-out .9s both; }
+@keyframes kindle { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: none; } }
+.circle .wave { fill: none; stroke: var(--gold); stroke-width: 3; opacity: 0; transform-box: view-box; transform-origin: 50% 50%; }
+.binding .circle .wave { animation: wave 1.5s cubic-bezier(.2, .7, .2, 1) 1.2s; }
+.binding .circle .wave.w2 { animation-delay: 1.45s; }
+@keyframes wave { from { opacity: .8; transform: scale(.08); stroke-width: 10; } to { opacity: 0; transform: scale(1); stroke-width: 1; } }
+body.departing .circle .ring text, body.departing .triangle .seat { animation: fade-out .9s ease-in both; }
+@keyframes fade-out { to { opacity: .15; filter: blur(3px); } }
+@keyframes breathe { 50% { opacity: .3; } }
+/* the dialogue lives in the inner circle (r 340 of 800): a round window whose rim dissolves */
+.within { position: absolute; inset: 8%; border-radius: 50%; display: grid; overflow: hidden;
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 74%, transparent 97%);
+          mask-image: radial-gradient(circle closest-side, #000 74%, transparent 97%); }
+.dialogue { overflow-y: auto; padding: 17% 15% 19%; display: flex; flex-direction: column; gap: 1.1rem; scrollbar-width: none; }
+.dialogue::-webkit-scrollbar { display: none; }
 .dialogue .empty { margin: auto; text-align: center; color: var(--pewter); line-height: 1.6; max-width: 22rem; }
+.dialogue > :first-child:not(.empty) { margin-top: auto; }
 .said { margin: 0; line-height: 1.55; }
 .said.operator { align-self: flex-end; text-align: right; max-width: 85%; }
 .said.operator::before { content: "You ask"; display: block; color: var(--pewter); font-size: .8rem; }
@@ -74,7 +122,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .said.refused { font-style: normal; border-left: 2px solid var(--rubric); padding-left: .85rem; }
 .said .recipe { display: block; margin-top: .4rem; font-style: normal; font-size: .8rem; background: none; border: 1px solid var(--lapis-line); color: var(--ink); border-radius: 2px; cursor: pointer; padding: .15rem .5rem; }
 .said .recipe[disabled] { cursor: default; color: var(--pewter); }
-.said.waiting { color: var(--pewter); font-style: italic; }
+.said.waiting { color: var(--pewter); font-style: italic; align-self: center; text-align: center; max-width: 90%; }
+.said.waiting.calling { background: linear-gradient(90deg, var(--pewter) 0 40%, var(--gold) 50%, var(--pewter) 60% 100%) 0 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 2.4s linear infinite; }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+.said.bound-note { color: var(--gold); letter-spacing: .04em; }
+
+/* every word arrives */
+.said { animation: rise .5s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+.said.spirit.verdict-ratum .verdict { animation: glint 1.4s ease-out .2s both; }
+@keyframes glint { 0% { text-shadow: none; } 30% { text-shadow: 0 0 10px var(--gold), 0 0 2px #fff; color: var(--gold); } 100% { text-shadow: none; } }
+.said.spirit.verdict-irritum, .said.refused { animation: rise .5s cubic-bezier(.2, .7, .2, 1) both, tremor .45s ease-in-out .45s; }
+@keyframes tremor { 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
 
 form.ask { display: grid; grid-template-columns: 1fr auto; gap: .5rem; width: min(34rem, 100%); margin-top: .9rem; }
 form.ask textarea {
@@ -111,6 +171,7 @@ footer .sky { display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; }
 footer .sky input, footer .sky select { background: var(--lapis-band); border: 1px solid var(--lapis-line); border-radius: 2px; padding: .2rem .45rem; font-size: .82rem; }
 footer .sky input { width: 9.5rem; }
 footer #tempus { color: var(--ink); }
+footer #wand.real { color: var(--gold); }
 
 @media (max-width: 1100px) {
   body { height: auto; overflow: auto; grid-template-columns: minmax(15rem, 18rem) 1fr; grid-template-areas: "catalogue stage" "catalogue entry" "foot foot"; grid-template-rows: auto auto auto; }
@@ -123,7 +184,7 @@ footer #tempus { color: var(--ink); }
   .seals { grid-template-columns: repeat(8, 1fr); }
   .within { left: 13%; right: 13%; }
 }
-@media (prefers-reduced-motion: reduce) { .triangle .seat.arrive { animation: none; } * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -148,7 +209,7 @@ footer #tempus { color: var(--ink); }
 <main class="stage" id="stage">
   <div class="triangle" aria-hidden="true">
     <svg viewBox="0 0 600 560">
-      <path d="M300 40 L560 500 L40 500 Z" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+      <path class="frame" pathLength="1" d="M300 40 L560 500 L40 500 Z" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
       <path id="side-l" d="M30 470 L282 24" fill="none"/>
       <path id="side-r" d="M318 24 L570 470" fill="none"/>
       <circle cx="300" cy="330" r="128" fill="none" stroke="var(--gold)" stroke-width="2"/>
@@ -166,12 +227,15 @@ footer #tempus { color: var(--ink); }
   <div class="east">EAST</div>
   <div class="circle">
     <svg viewBox="0 0 800 800" aria-hidden="true">
-      <circle cx="400" cy="400" r="392" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
-      <circle cx="400" cy="400" r="352" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
-      <circle cx="400" cy="400" r="340" fill="none" stroke="var(--lapis-line)" stroke-width="1"/>
+      <circle class="rim r1" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="392" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+      <circle class="rim r2" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="352" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
+      <circle class="rim r3" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="340" fill="none" stroke="var(--lapis-line)" stroke-width="1"/>
+      <circle class="wave" cx="400" cy="400" r="370"/>
+      <circle class="wave w2" cx="400" cy="400" r="370"/>
       <path id="ring" d="M400 30 a370 370 0 1 1 -0.1 0" fill="none"/>
       <g class="ring">
-        <text><textPath href="#ring" startOffset="0" id="ring-text" textLength="2300" lengthAdjust="spacing"></textPath></text>
+        <text id="ring-line"><textPath href="#ring" startOffset="0" id="ring-text"></textPath></text>
+        <text id="ring-measure" visibility="hidden" x="0" y="-100"></text>
       </g>
     </svg>
     <div class="within">
@@ -198,7 +262,7 @@ footer #tempus { color: var(--ink); }
     <span id="tempus"></span>
   </span>
   <span id="model"><span class="dot"></span>Checking the model…</span>
-  <span>Test wand: nothing done here is valid for a real installation.</span>
+  <span id="wand">Test wand: nothing done here is valid for a real installation.</span>
 </footer>
 
 <script>
@@ -335,13 +399,20 @@ function say(node) {
   return node;
 }
 
+function play(cls, ms) {
+  document.body.classList.remove(cls); void document.body.offsetWidth; document.body.classList.add(cls);
+  clearTimeout(play[cls]); play[cls] = setTimeout(() => document.body.classList.remove(cls), ms);
+}
+
 function bind() {
   const s = state.chosen;
   state.liber = (document.getElementById("liber")?.value || "").trim();
   state.bound = true;
+  document.body.classList.remove("departing");
   document.body.classList.add("bound");
-  document.getElementById("ring-text").textContent = ringFor(s);
-  say(el("p", { class: "said waiting" }, `${s.name} is bound through ${state.office.toLowerCase()}.`));
+  fitRing(ringFor(s));
+  play("binding", 3000);
+  say(el("p", { class: "said waiting bound-note" }, `${s.name} is bound through ${state.office.toLowerCase()}.`));
   setAsking(true);
   renderEntry();
   document.getElementById("question").focus();
@@ -352,8 +423,9 @@ function depart(quietly) {
   if (!state.bound) return;
   fetch(base + "dimitte", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, locus: state.sky.locus, caelum: state.sky.caelum }) }).catch(() => {});
   state.bound = false;
-  document.body.classList.remove("bound");
-  document.getElementById("ring-text").textContent = ringFor(null);
+  document.body.classList.remove("bound", "binding");
+  play("departing", 900);
+  setTimeout(() => { if (!state.bound) fitRing(ringFor(null)); }, 900);
   if (!quietly) say(el("p", { class: "said waiting" }, `${s.name} has licence to depart.`));
   setAsking(false);
   renderEntry();
@@ -369,8 +441,22 @@ function setAsking(on) {
 function ringFor(s) {
   const cross = " ✠ ";
   const names = ["ALPHA", "ADONAI", "TETRAGRAMMATON", "PRIMEUMATON", "ANAPHAXETON", "OMEGA"];
-  const once = names.join(cross);
-  return cross + once + cross + (s ? s.name.toUpperCase() : once) + cross;
+  return names.join(cross) + cross + (s ? s.name.toUpperCase() + cross : "");  // one turn of the ring; fitRing repeats it to fill the circle
+}
+
+// Fits the ring's words to the whole circle: no overlap where the line meets its start.
+function fitRing(text) {
+  const line = document.getElementById("ring-line"), path = document.getElementById("ring-text"), probe = document.getElementById("ring-measure");
+  const around = 2 * Math.PI * 370; let letters;
+  let size = 21;
+  probe.style.fontSize = size + "px"; probe.style.letterSpacing = "0px"; probe.textContent = text;
+  const times = Math.max(1, Math.floor(around * .97 / probe.getComputedTextLength()));
+  text = text.repeat(times); letters = [...text].length; probe.textContent = text;
+  let len = probe.getComputedTextLength();
+  if (len > around * .9) { size = size * around * .9 / len; probe.style.fontSize = size + "px"; len = probe.getComputedTextLength(); }
+  line.style.fontSize = size + "px";
+  line.style.letterSpacing = Math.max(0, (around - len) / letters) + "px";
+  path.textContent = text;
 }
 
 document.getElementById("ask").addEventListener("submit", async e => {
@@ -382,7 +468,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
   say(el("p", { class: "said operator" }, question));
   q.value = "";
   state.busy = true; setAsking(true);
-  const wait = say(el("p", { class: "said waiting" }, `${s.name} is called, and the answer examined…`));
+  const wait = say(el("p", { class: "said waiting calling" }, `${s.name} is called, and the answer examined…`));
   try {
     const r = await fetch(base + "roga", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, officium: state.office, quaestio: question, liber: state.liber || "", locus: state.sky.locus, caelum: state.sky.caelum }) });
     const a = await r.json();
@@ -405,6 +491,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
         node.append(take);
       }
       node.style.setProperty("--metal", stopColor(metals(s)[0]));
+      node.classList.add(`verdict-${a.iudicium.toLowerCase()}`);
       say(node);
     } else {
       say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
@@ -438,11 +525,15 @@ async function status() {
     const r = await (await fetch(base + "status")).json();
     node.className = r.paratus ? "up" : "down";
     node.lastChild.textContent = r.paratus ? `Model ready at ${r.exemplar}` : `No model answers at ${r.exemplar}. Start llama-server, then try again.`;
+    const w = document.getElementById("wand");
+    w.classList.toggle("real", !!r.virga);
+    w.textContent = r.virga ? `The real wand at ${r.virga}: each question asks its words in the wand's window.` : "Test wand: nothing done here is valid for a real installation.";
   } catch { node.className = "down"; node.lastChild.textContent = "Spiri72 is not running."; }
 }
 
 (async () => {
-  document.getElementById("ring-text").textContent = ringFor(null);
+  fitRing(ringFor(null));
+  document.fonts?.ready.then(() => fitRing(ringFor(state.bound ? state.chosen : null)));
   const [spirits, seals] = await Promise.all([fetch(base + "spiritus").then(r => r.json()), fetch(base + "sigilla").then(r => r.json())]);
   state.spirits = spirits; state.seals = seals;
   renderCatalogue();
