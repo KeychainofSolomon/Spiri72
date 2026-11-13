@@ -65,18 +65,14 @@ Classical readings come first. Late, medieval and Renaissance words (the Church 
 
 1. Download llama.cpp's Vulkan build for Windows from its releases page on GitHub (a file named like `llama-…-bin-win-vulkan-x64.zip`) and unzip it.
 2. Get a model file in GGUF format, for example a Qwen3 8B at `Q4_K_M` (about 5 GB, which fits in 16 GB of memory).
-3. Start the model server in a terminal, from the unzipped folder:
-   ```
-   llama-server.exe -m path\to\model.gguf --port 8080 -c 8192
-   ```
-4. Install Rust from rustup.rs, then in this folder build Spiri72:
+3. Install Rust from rustup.rs, then in this folder build Spiri72:
    ```
    cargo build --release
    ```
-5. Start Spiri72:
-   ```
-   .\spiri72.exe
-   ```
+4. Start Spiri72 by double-clicking `target\release\spiri72.exe` (or run `.\spiri72.exe`). Nothing needs typing:
+   - **The wand** is found by itself when its stick is plugged in; without it the test wand is used. (`--virga E:\` names a stick; `--virga-probationis` asks for the test wand.)
+   - **The model:** if none answers yet, Spiri72 starts `llama-server` for you. The first time, it asks you to drag `llama-server.exe` and then your model file (`.gguf`) into its window, and remembers both in `spiri72.ini` beside the program. The model server stops when you close Spiri72; its messages go to `spiri72.model.log`.
+
    It opens the binding page in your browser (only on this computer, behind a one-time key; keep the window open while you work). The seventy-two seals sit in order, each in the metal its rank is made in: Kings in gold, Dukes in copper, Princes in tin, Marquises in silver, Presidents in quicksilver, Earls in copper and silver alike, the Knight in lead. Choose a seal to read what the witnesses record of that spirit, then bind it: its seal appears in the Triangle of Art to the East, and you ask from within the Circle. The angel's judgement stands beside each answer. Prefer questions in the window itself? Run `.\spiri72.exe --terminal`.
 
    **The seals** are traced from the plates of the 1916 printing of the Mathers/Crowley *Goetia* (Project Gutenberg 72679, public domain); see `sigilla/README.md` for each seal's figure. The Triangle and Circle follow figures 153–154 of the same printing.
