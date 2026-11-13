@@ -74,21 +74,12 @@ body.binding .triangle .seat { animation: seize 1.6s cubic-bezier(.2, .7, .2, 1)
 .circle .ring text { fill: var(--rubric); opacity: .7; font-family: var(--face); font-size: 21px; transition: opacity .8s; }
 .bound .circle .ring text { opacity: 1; }
 
-/* the figure of the seven within the circle: drawn when the page opens, turning slowly */
-.circle .figure { opacity: .28; transition: opacity 1.2s; }
+/* the Pentagram of Solomon within the circle, in white line: drawn when the page opens */
+.circle .figure { opacity: .3; transition: opacity 1.2s; }
 .bound .circle .figure { opacity: .07; }
-.circle .figure .spin { transform-box: view-box; transform-origin: 50% 50%; animation: turn 720s linear infinite; }
 .circle .figure path, .circle .figure circle { stroke-dasharray: 1; animation: draw 3.5s cubic-bezier(.45, 0, .2, 1) both; }
-.circle .figure .glyph { fill: var(--gold); font-size: 30px; text-anchor: middle; dominant-baseline: central; animation: kindle 1.2s ease-out both; }
-.circle .figure .glyph.night { fill: var(--pewter); }
-@keyframes turn { to { transform: rotate(360deg); } }
-/* the tunnel: the figure folds into itself, again and again, and the circle opens */
-.circle .tunnel use { opacity: 0; transform-box: view-box; transform-origin: 50% 50%; }
-.binding .circle .tunnel use { animation: tunnel 1.9s cubic-bezier(.55, 0, .9, .45) calc(var(--i) * .13s) both; }
-@keyframes tunnel { 0% { opacity: 0; transform: scale(.03) rotate(0deg); } 30% { opacity: .95; } 100% { opacity: 0; transform: scale(1.25) rotate(var(--turn)); } }
-body.asking .circle .tunnel use { animation: tunnel 4.2s linear calc(var(--i) * .47s) infinite; }
-body.asking .circle .tunnel { opacity: .35; }
-.binding .within { animation: emerge 1.1s cubic-bezier(.2, .7, .2, 1) 1.9s both; }
+/* the descent down the pentagram's nestings is driven by script (descend), exactly */
+.binding body.asking .binding .within { animation: emerge 1.1s cubic-bezier(.2, .7, .2, 1) 1.9s both; }
 @keyframes emerge { from { opacity: 0; transform: scale(.55); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 .stage { background: radial-gradient(circle at 50% 58%, color-mix(in srgb, var(--metal, var(--gold)) 7%, transparent), transparent 55%); transition: background 1.5s; }
 
@@ -248,7 +239,7 @@ footer #wand.real { color: var(--gold); }
       <circle class="rim r3" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="340" fill="none" stroke="var(--lapis-line)" stroke-width="1"/>
       <defs>
         <clipPath id="inner"><circle cx="400" cy="400" r="338"/></clipPath>
-        <g id="hepta-lines" fill="none" stroke="var(--gold)"></g>
+        <g id="pentalpha" fill="none" stroke="var(--ink)"></g>
       </defs>
       <g clip-path="url(#inner)">
         <g class="figure"><g class="spin" id="figure"></g></g>
@@ -447,7 +438,7 @@ function bind() {
   document.body.classList.remove("departing");
   document.body.classList.add("bound");
   fitRing(ringFor(s));
-  play("binding", 3300);
+  play("binding", 3300); descend(2100, false);
   say(el("p", { class: "said waiting bound-note" }, `${s.name} is bound through ${state.office.toLowerCase()}.`));
   setAsking(true);
   renderEntry();
@@ -508,7 +499,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
   const s = state.chosen;
   say(el("p", { class: "said operator" }, question));
   q.value = "";
-  state.busy = true; setAsking(true); document.body.classList.add("asking");
+  state.busy = true; setAsking(true); document.body.classList.add("asking"); descend(5200, true);
   const wait = say(el("p", { class: "said waiting calling" }, `${s.name} is called, and the answer examined…`));
   try {
     const r = await fetch(base + "roga", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, officium: state.office, quaestio: question, liber: state.liber || "", locus: state.sky.locus, caelum: state.sky.caelum }) });
@@ -543,7 +534,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
     wait.remove();
     say(el("p", { class: "said refused" }, "Spiri72 did not answer. Check that it is still running in its window."));
   } finally {
-    state.busy = false; setAsking(state.bound); document.body.classList.remove("asking");
+    state.busy = false; setAsking(state.bound); document.body.classList.remove("asking"); rest();
     if (state.bound) q.focus();
   }
 });
@@ -572,29 +563,55 @@ async function status() {
   } catch { node.className = "down"; node.lastChild.textContent = "Spiri72 is not running."; }
 }
 
-// The figure of the seven planets, in the Chaldean order, on a heptagram: an ornament of
-// this page (original to Spiri72), not a figure taken from a witness.
-function buildFigure() {
-  const NS = "http://www.w3.org/2000/svg", at = (r, k) => { const a = (-90 + k * 360 / 7) * Math.PI / 180; return [400 + r * Math.cos(a), 400 + r * Math.sin(a)]; };
-  const star = (r, step) => { let d = "", k = 0; for (let i = 0; i <= 7; i++) { const [x, y] = at(r, k); d += (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1); k = (k + step) % 7; } return d + "Z"; };
-  const node = (tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text) e.textContent = text; return e; };
-  const lines = document.getElementById("hepta-lines");
-  lines.append(node("circle", { cx: 400, cy: 400, r: 318, "stroke-width": 1.5 }), node("path", { d: star(300, 2), "stroke-width": 1.2 }), node("path", { d: star(300, 3), "stroke-width": 1.6 }), node("circle", { cx: 400, cy: 400, r: 132, "stroke-width": 1.2 }));
-  const fig = document.getElementById("figure");
-  const parts = [node("circle", { cx: 400, cy: 400, r: 318, fill: "none", stroke: "var(--gold)", "stroke-width": 1.5, pathLength: 1 }),
-    node("path", { d: star(300, 2), fill: "none", stroke: "var(--gold)", "stroke-width": 1.2, pathLength: 1, style: "animation-delay:.6s" }),
-    node("path", { d: star(300, 3), fill: "none", stroke: "var(--gold)", "stroke-width": 1.6, pathLength: 1, style: "animation-delay:1.2s" }),
-    node("circle", { cx: 400, cy: 400, r: 132, fill: "none", stroke: "var(--gold)", "stroke-width": 1.2, pathLength: 1, style: "animation-delay:1.8s" })];
-  for (let k = 0; k < 7; k++) {
-    const [x1, y1] = at(132, k + .5), [x2, y2] = at(52, k + .5);
-    parts.push(node("path", { d: `M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`, stroke: "var(--gold)", "stroke-width": 1, pathLength: 1, style: `animation-delay:${2 + k * .08}s` }));
-  }
-  parts.push(node("circle", { cx: 400, cy: 400, r: 52, fill: "none", stroke: "var(--gold)", "stroke-width": 1, pathLength: 1, style: "animation-delay:2.4s" }));
-  ["♄", "♃", "♂", "☉", "♀", "☿", "☽"].forEach((g, k) => { const [x, y] = at(94, k); parts.push(node("text", { x: x.toFixed(1), y: y.toFixed(1), class: `glyph${g === "☽" || g === "♄" ? " night" : ""}`, style: `animation-delay:${2.6 + k * .12}s` }, g)); });
-  fig.append(...parts);
-  const tunnel = document.getElementById("tunnel");
-  for (let i = 0; i < 9; i++) tunnel.append(node("use", { href: "#hepta-lines", style: `--i:${i};--turn:${(i % 2 ? -1 : 1) * 77}deg` }));
+// The Pentagram of Solomon (Goetia, Sloane 3825: the pentagram of the apparatus), drawn
+// bare, in white line, inscribed in its circle (Euclid IV.11). The pentagram is
+// self-similar: the pentagon at its heart holds a pentagram turned 36 degrees and smaller
+// by exactly 1/phi^2 (Euclid XIII). The figure shows three such nestings; the binding
+// travels down them. Every point is computed, none approximated by hand.
+const PHI = (1 + Math.sqrt(5)) / 2, R = 300;
+function pentagramPath(r, turn) {
+  const pt = k => { const a = (-90 + turn + k * 144) * Math.PI / 180; return `${(400 + r * Math.cos(a)).toFixed(3)} ${(400 + r * Math.sin(a)).toFixed(3)}`; };
+  return `M${pt(0)}L${pt(1)}L${pt(2)}L${pt(3)}L${pt(4)}Z`;
 }
+function buildFigure() {
+  const NS = "http://www.w3.org/2000/svg";
+  const node = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
+  const lines = document.getElementById("pentalpha");
+  lines.append(node("circle", { cx: 400, cy: 400, r: R, "stroke-width": 1.2 }), node("path", { d: pentagramPath(R, 0), "stroke-width": 1.4 }));
+  const fig = document.getElementById("figure");
+  for (let k = 0; k < 3; k++) {
+    const r = R / PHI ** (2 * k), w = Math.max(.6, 1.4 - k * .35), delay = k * 1.1;
+    fig.append(node("circle", { cx: 400, cy: 400, r: r.toFixed(3), fill: "none", stroke: "var(--ink)", "stroke-width": w * .8, pathLength: 1, style: `animation-delay:${delay}s` }),
+      node("path", { d: pentagramPath(r, 36 * k), fill: "none", stroke: "var(--ink)", "stroke-width": w, pathLength: 1, style: `animation-delay:${delay + .45}s` }));
+  }
+  const tunnel = document.getElementById("tunnel");
+  for (let i = 0; i < 9; i++) tunnel.append(node("use", { href: "#pentalpha", opacity: 0 }));
+}
+
+// The descent: layer u stands at scale phi^(2(u-3)), turned 36(u-3) degrees, so each
+// layer lies exactly on the nesting of the one before it. One unit of u is one nesting.
+let descent = null;
+function descend(ms, loop) {
+  cancelAnimationFrame(descent);
+  const uses = [...document.querySelectorAll("#tunnel use")], n = uses.length;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { uses.forEach(u => u.setAttribute("opacity", 0)); return; }
+  const start = performance.now();
+  const frame = now => {
+    const e = (now - start) / ms;
+    if (!loop && e >= 1) { uses.forEach(u => u.setAttribute("opacity", 0)); return; }
+    const p = loop ? (e % 1) * n : e * (n + 4.5);
+    uses.forEach((use, i) => {
+      let u = p - i; if (loop) u = ((u % n) + n) % n;
+      const s = PHI ** (2 * (u - 3)), deg = 36 * (u - 3);
+      const fade = u < 0 || u > 4.5 ? 0 : Math.min(1, u / 1.2) * Math.min(1, (4.5 - u) / 1.2);
+      use.setAttribute("transform", `translate(400 400) rotate(${deg.toFixed(3)}) scale(${s.toFixed(5)}) translate(-400 -400)`);
+      use.setAttribute("opacity", (fade * (loop ? .3 : .9)).toFixed(3));
+    });
+    descent = requestAnimationFrame(frame);
+  };
+  descent = requestAnimationFrame(frame);
+}
+function rest() { cancelAnimationFrame(descent); document.querySelectorAll("#tunnel use").forEach(u => u.setAttribute("opacity", 0)); }
 
 (async () => {
   buildFigure();
