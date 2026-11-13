@@ -292,3 +292,105 @@ pub fn grammar_working(
         .join("\n")
         + "\n")
 }
+
+/// The grammar for `DOCTRINA`: a lesson in `responsum`, then `testimonium`,
+/// one line for each claim the question asks. Each line is written out by
+/// the grammar up to its `=`, so the model gives only the values. A question
+/// that asks no claim gets the plain telling grammar: its lesson is held.
+pub fn grammar_doctrina(open: &[Outcome], quaestio: &str) -> Result<String, String> {
+    let asked = annulus::doctrina::asked(quaestio);
+    let plain = grammar(open, true)?;
+    if asked.is_empty() {
+        return Ok(plain);
+    }
+    let claims: Vec<String> = asked
+        .iter()
+        .map(|c| {
+            let prefix = crate::llama::quote(&format!("{}: {} = ", c.kind, c.what));
+            // The JSON string opened but not closed: the value follows.
+            format!(
+                "{} value \"\\\"\"",
+                gbnf_literal(&prefix[..prefix.len() - 1])
+            )
+        })
+        .collect();
+    let body = format!(
+        "body ::= \"\\\"responsum\\\"\" ws \":\" ws string ws \",\" ws \"\\\"testimonium\\\"\" ws \":\" ws \"[\" ws {} ws \"]\"\nvalue ::= [^\"\\\\\\x00-\\x1f]+",
+        claims.join(" ws \",\" ws ")
+    );
+    Ok(plain
+        .lines()
+        .map(|l| {
+            if l.starts_with("body ::=") {
+                body.clone()
+            } else {
+                l.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n")
+}
+
+/// Reads a lesson: the prose, then the certificate under its line, as the
+/// angel reads it. A question that asked no claim is read as plain telling.
+pub fn read_doctrina(
+    reply: &str,
+    open: &[Outcome],
+    quaestio: &str,
+) -> Result<(Outcome, Actum), String> {
+    if annulus::doctrina::asked(quaestio).is_empty() {
+        return read(reply, open, true);
+    }
+    if reply.len() > MAX_WORDS {
+        return Err("the spirit's reply is too long".into());
+    }
+    let root = json::parse(reply).map_err(|e| format!("the spirit's reply is not JSON: {e}"))?;
+    let Json::Object(fields) = &root else {
+        return Err("the spirit's reply is not an object".into());
+    };
+    if fields.len() != 3
+        || ["exitus", "responsum", "testimonium"]
+            .iter()
+            .any(|k| !fields.contains_key(*k))
+    {
+        return Err(
+            "the spirit's reply must have exactly \"exitus\", \"responsum\" and \"testimonium\""
+                .into(),
+        );
+    }
+    let declared = root
+        .get("exitus")
+        .and_then(Json::text)
+        .and_then(outcome)
+        .ok_or("the spirit declared no outcome it may declare")?;
+    if !open.contains(&declared) {
+        return Err(format!(
+            "the spirit declared {declared:?}, which is not open"
+        ));
+    }
+    if declared == Outcome::Mora {
+        return Ok((declared, Actum::Mora));
+    }
+    let lesson = root
+        .get("responsum")
+        .and_then(Json::text)
+        .ok_or("the lesson is not text")?;
+    let Some(Json::List(items)) = root.get("testimonium") else {
+        return Err("the certificate is not a list".into());
+    };
+    let claims = items
+        .iter()
+        .map(|i| i.text().map(str::to_string))
+        .collect::<Option<Vec<_>>>()
+        .ok_or("a claim that is not text")?;
+    let mut text = format!(
+        "{lesson}\n{}\n{}",
+        annulus::doctrina::TESTIMONIUM,
+        claims.join("\n")
+    );
+    if declared == Outcome::Pars {
+        text.push_str(annulus::officia::INCOMPLETE);
+    }
+    Ok((declared, Actum::Responsum(text)))
+}

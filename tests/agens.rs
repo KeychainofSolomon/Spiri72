@@ -149,3 +149,35 @@ fn unreadable_every_time_is_an_error() {
     assert!(e.contains("after 3 tries"), "{e}");
     srv.join().unwrap();
 }
+
+#[test]
+fn a_teacher_is_asked_with_the_teaching_grammar() {
+    const LESSON: &str = r#"{"exitus":"obsequium","responsum":"Attend, mortal.","testimonium":["numerus: 17*23 = 391"]}"#;
+    let (port, srv) = server(vec![LESSON]);
+    let mut agens = Agens::new(parse_url(&format!("http://127.0.0.1:{port}")).unwrap());
+    let crocell = goetia().by_number(49).unwrap();
+    let (_, a) = agens
+        .age(&Petitio {
+            spirit: crocell,
+            officium: "DOCTRINA",
+            quaestio: Some("numerus: 17*23 = ?"),
+            modus: None,
+            loci: &[],
+            legenda: Vec::new(),
+            historia: Vec::new(),
+            aperta: vec![Outcome::Obsequium, Outcome::Pars, Outcome::Mora],
+            ultra_horam: false,
+        })
+        .unwrap();
+    assert_eq!(
+        a,
+        Actum::Responsum("Attend, mortal.\nTESTIMONIUM\nnumerus: 17*23 = 391".into())
+    );
+    let request = srv.join().unwrap().remove(0);
+    assert!(request.contains("numerus: 17*23 = "), "{request}");
+    assert!(request.contains("Your arts:"), "{request}");
+    assert!(
+        request.contains("give the value of each claim asked"),
+        "{request}"
+    );
+}

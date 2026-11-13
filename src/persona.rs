@@ -135,6 +135,8 @@ pub fn user_remembering(p: &Petitio, telling: bool, seal: &str, memoria: Option<
         "\nAnswer in \"responsum\" with what is past, one claim per line, each beginning with one of: invocatus, recusatus, petitum, iudicatum, commissum, dimissus, retentus, relegatus. The angel will check every claim against the record."
     } else if p.officium == "VIRTUTES" {
         "\nGive in \"virtutes\" one entry for every place handed to you: its \"locus\", its size in \"bytes\" (UTF-8) and its number of \"lines\"; or, for a handed place that holds nothing, its \"locus\" with \"absens\": true. The angel will count them again."
+    } else if p.officium == "DOCTRINA" && !annulus::doctrina::asked(p.quaestio.unwrap_or("")).is_empty() {
+        "\nTeach in \"responsum\". In \"testimonium\" give the value of each claim asked, after its \"=\": the angel computes every one again, and one false value ruins the lesson."
     } else if telling {
         "\nGive your answer in \"responsum\"."
     } else {

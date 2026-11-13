@@ -83,3 +83,55 @@ fn a_working_grammar_allows_only_handed_places_and_their_verbs() {
         grammar(&open, false).unwrap()
     );
 }
+
+#[test]
+fn a_teacher_learns_its_arts_and_which_are_checked() {
+    let crocell = goetia().by_number(49).unwrap();
+    let f = facultates(crocell, "DOCTRINA", None, &[]);
+    assert!(
+        f.contains("Your arts: grammatica, dialectica, rhetorica, arithmetica"),
+        "{f}"
+    );
+    assert!(
+        f.contains("the angel can check arithmetica, geometria, astronomia"),
+        "{f}"
+    );
+    let ronove = goetia().by_number(27).unwrap();
+    let f = facultates(ronove, "DOCTRINA", None, &[]);
+    assert!(f.contains("can check none of them yet"), "{f}");
+}
+
+#[test]
+fn the_teaching_grammar_writes_each_claim_up_to_its_value() {
+    use spiri72::forma::{grammar_doctrina, read_doctrina};
+    let open = [Outcome::Obsequium, Outcome::Pars, Outcome::Mora];
+    let q = "numerus: 17*23 = ?; dies: pascha 2026 = ?";
+    let g = grammar_doctrina(&open, q).unwrap();
+    assert!(g.contains(r#""\"numerus: 17*23 = " value"#), "{g}");
+    assert!(g.contains(r#""\"dies: pascha 2026 = " value"#), "{g}");
+    assert!(g.contains("testimonium"), "{g}");
+    // Nothing asked: the plain telling grammar.
+    assert_eq!(
+        grammar_doctrina(&open, "teach me geometry").unwrap(),
+        grammar(&open, true).unwrap()
+    );
+    let reply = r#"{"exitus":"obsequium","responsum":"Attend.","testimonium":["numerus: 17*23 = 391","dies: pascha 2026 = 2026-04-05"]}"#;
+    let (o, a) = read_doctrina(reply, &open, q).unwrap();
+    assert_eq!(o, Outcome::Obsequium);
+    assert_eq!(
+        a,
+        annulus::lingua::exsequi::Actum::Responsum(
+            "Attend.\nTESTIMONIUM\nnumerus: 17*23 = 391\ndies: pascha 2026 = 2026-04-05".into()
+        )
+    );
+    // What Spiri72 reads is what the angel approves.
+    let annulus::lingua::exsequi::Actum::Responsum(text) = a else {
+        unreachable!()
+    };
+    let crocell = goetia().by_number(49).unwrap();
+    assert_eq!(
+        annulus::doctrina::verdict(q, &text, &crocell.artes),
+        annulus::nucleus::Verdict::Approve
+    );
+    assert!(read_doctrina(r#"{"exitus":"obsequium","responsum":"x"}"#, &open, q).is_err());
+}

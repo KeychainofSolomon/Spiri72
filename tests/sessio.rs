@@ -140,11 +140,12 @@ fn furfur_is_bound_asked_and_dismissed() {
 fn unknown_and_unbindable_spirits_are_refused_in_plain_words() {
     let dir = folder("refused");
     let (port, _requests) = model(SPEAKS);
-    let (code, out, _) = session(&dir, port, "Lucifer\n5\n1\n17\nfurfur\n\n\n");
+    let (code, out, _) = session(&dir, port, "Lucifer\n5\n2\n17\nfurfur\n\n\n");
     assert_eq!(code, Some(0));
     assert!(out.contains("No spirit of the 72 answers to \"Lucifer\""));
     assert!(out.contains("Marbas is a President"));
-    assert!(out.contains("Bael has no office of telling"));
+    // Agares holds no office of telling (Bael now teaches, through DOCTRINA).
+    assert!(out.contains("Agares has no office of telling"));
     assert!(out.contains("Botis holds more than one rank"));
     assert!(out.contains("Furfur has licence to depart."));
 }
@@ -205,13 +206,30 @@ fn every_spirit_offered_can_be_bound_in_its_hour_and_every_other_is_refused() {
             assert!(unbindable(s).is_some(), "{}", s.name);
             continue;
         };
-        let src = rite(s, &office, "quid \"novi\"\\?", &["chronica.txt".into()]);
+        // A teacher is asked a sum in an art the angel can check for it; one
+        // whose arts the angel cannot check yet is held, not approved.
+        let checked = annulus::doctrina::KINDS
+            .iter()
+            .find(|(_, art)| s.artes.iter().any(|a| a == art))
+            .map(|(kind, _)| match *kind {
+                "numerus" => "numerus: 2+2 = ?",
+                "geometria" => "geometria: hypotenusa 3 4 = ?",
+                _ => "dies: pascha 2026 = ?",
+            });
+        let (question, verdict) = match (office.as_str(), checked) {
+            ("DOCTRINA", Some(q)) => (q, "RATUM"),
+            ("DOCTRINA", None) => ("quid \"novi\"\\?", "SUSPENSUM"),
+            _ => ("quid \"novi\"\\?", "RATUM"),
+        };
+        let src = rite(s, &office, question, &["chronica.txt".into()]);
         let bound = src.is_ok_and(|src| {
             [
                 "2024-04-13T01:00:00Z",
                 "2024-04-13T07:00:00Z",
                 "2024-04-13T08:30:00Z",
                 "2024-04-13T14:30:00Z",
+                // The Knight's late afternoon (Furcas, since he teaches).
+                "2024-04-13T16:30:00Z",
             ]
             .iter()
             .any(|h| {
@@ -232,7 +250,7 @@ fn every_spirit_offered_can_be_bound_in_its_hour_and_every_other_is_refused() {
                     world.clone(),
                     &options,
                 )
-                .is_ok_and(|e| e.class == 0 && e.output[0] == "RATUM")
+                .is_ok_and(|e| e.class == 0 && e.output[0] == verdict)
             })
         });
         assert_eq!(bound, unbindable(s).is_none(), "{}", s.name);

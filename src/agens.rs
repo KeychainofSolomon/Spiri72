@@ -83,6 +83,8 @@ impl Voluntas for Agens {
             forma::grammar_virtutes(&p.aperta)?
         } else if p.officium == "PRAETERITA" {
             forma::grammar_praeterita(&p.aperta)?
+        } else if p.officium == "DOCTRINA" {
+            forma::grammar_doctrina(&p.aperta, p.quaestio.unwrap_or(""))?
         } else if telling {
             forma::grammar(&p.aperta, true)?
         } else {
@@ -140,6 +142,8 @@ impl Voluntas for Agens {
             };
             let read = if virtutes {
                 forma::read_virtutes(&reply, &p.aperta)
+            } else if p.officium == "DOCTRINA" {
+                forma::read_doctrina(&reply, &p.aperta, p.quaestio.unwrap_or(""))
             } else {
                 forma::read(&reply, &p.aperta, telling)
             };

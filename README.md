@@ -87,7 +87,20 @@ Classical readings come first. Late, medieval and Renaissance words (the Church 
 
    **The hours of the sky.** A spirit comes only in the hours of its rank, and only when the Moon is 2, 4, 6, 8, 10, 12 or 14 days old (`dynamic.md` §5.1 in Annulus). Set your place (latitude,longitude) and the sky at the foot of the page, or start with `--locus 52.52,13.40 --caelum serenum`: Kings come mid-morning and from mid-afternoon to sunset, Marquises from mid-afternoon to sunrise, Dukes from sunrise to noon under a clear sky, Princes by daylight, Earls at any hour. Without a place only Earls may come. The catalogue dims whoever cannot come now, and says why.
 
-**Who can be bound:** 30 spirits in their hours. Five of them (Bathin, Stolas, Bifrons, Orias and Decarabia) come through **VIRTUTES**: hand them a file and they report its size in bytes and lines, which the angel counts again. A miscount is caught every time, so this is the plainest test of whether a model tells the truth. Spirits with **PRAETERITA** (Vassago, Amon, Purson, Raum, Balam, Orobas, Berith and the Dukes who tell the past) are shown the history of the rite (never anyone's words) and recount it, one claim per line; the angel checks every claim against that record, so a spirit that rewrites the past is caught. The others are refused in plain words, by Annulus's own rules: Presidents come only after their king, and the kings are not built; spirits of two ranks wait on the ruling for their seal's ink; and many spirits' offices (teaching, transforming, granting dignities) are not yet ones Spiri72 can speak through.
+**Who can be bound:** 40 spirits in their hours. Five of them (Bathin, Stolas, Bifrons, Orias and Decarabia) come through **VIRTUTES**: hand them a file and they report its size in bytes and lines, which the angel counts again. A miscount is caught every time, so this is the plainest test of whether a model tells the truth. Spirits with **PRAETERITA** (Vassago, Amon, Purson, Raum, Balam, Orobas, Berith and the Dukes who tell the past) are shown the history of the rite (never anyone's words) and recount it, one claim per line; the angel checks every claim against that record, so a spirit that rewrites the past is caught. The others are refused in plain words, by Annulus's own rules: Presidents come only after their king, and the kings are not built; spirits of two ranks wait on the ruling for their seal's ink; and some spirits' offices (transforming, granting dignities and more) are not yet ones Spiri72 can speak through.
+
+**Teaching (DOCTRINA).** The 31 spirits who teach an art can now teach through **DOCTRINA**, and the angel checks the lesson by doing the sums again. Each spirit's arts come from the register; Crocell, for example, teaches the seven liberal arts. To get a checked answer, write the computations you want in this form, with `?` for the answer, separated by `;`:
+
+```
+numerus: 17*23 = ?; geometria: hypotenusa 3 4 = ?; dies: pascha 2026 = ?
+```
+
+The spirit teaches in its own voice and fills in each value. Spiri72's grammar writes the computation itself, so the model only gives the numbers. The angel approves only if every value is right, rejects the lesson if any is wrong, and holds it if there is nothing it can check. What it can check so far:
+- **arithmetic:** `numerus:` with `+ - * / ^` and brackets, exactly;
+- **geometry:** `geometria:` with `hypotenusa a b`, `distantia x1 y1 x2 y2`, `area triangulum a b c`, `area rectangulum a b`, `area circulus r`, `ambitus circulus r`;
+- **astronomy, by the calendar and the Moon:** `dies:` with `pascha YEAR`, `pascha iuliana YEAR`, `hebdomadis YYYY-MM-DD` (the weekday), `iuliana YYYY-MM-DD` (a Julian date in the Gregorian calendar), `luna YYYY-MM-DD` (the Moon's age).
+
+A spirit can be checked only in an art it teaches. Ronove teaches rhetoric, so his sums are held, not approved. Arts the angel cannot check yet, such as rhetoric, logic or philosophy, are always held: you get the spirit's words, marked as unchecked.
 
 6. Or run a whole Annulus program with the model as the spirits' will:
    ```
