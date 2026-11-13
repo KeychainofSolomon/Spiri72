@@ -73,9 +73,6 @@ body.binding .triangle .seat { animation: seize 1.6s cubic-bezier(.2, .7, .2, 1)
 .circle > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .circle .ring text { fill: var(--rubric); opacity: .7; font-family: var(--face); font-size: 21px; transition: opacity .8s; }
 .bound .circle .ring text { opacity: 1; }
-.circle .ring { transform-box: view-box; transform-origin: 50% 50%; }
-.bound .circle .ring { animation: turn 360s linear infinite; }
-@keyframes turn { to { transform: rotate(360deg); } }
 
 /* the binding */
 @property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
@@ -103,17 +100,18 @@ body.departing .circle .ring text, body.departing .triangle .seat { animation: f
 @keyframes fade-out { to { opacity: .15; filter: blur(3px); } }
 @keyframes breathe { 50% { opacity: .3; } }
 /* the dialogue lives in the inner circle (r 340 of 800): a round window whose rim dissolves */
-.within { position: absolute; inset: 8%; border-radius: 50%; display: grid; overflow: hidden;
-  -webkit-mask-image: radial-gradient(circle closest-side, #000 74%, transparent 97%);
-          mask-image: radial-gradient(circle closest-side, #000 74%, transparent 97%); }
-.dialogue { overflow-y: auto; padding: 17% 15% 19%; display: flex; flex-direction: column; gap: 1.1rem; scrollbar-width: none; }
+.within { position: absolute; inset: 7.6%; border-radius: 50%; display: grid; overflow: hidden; clip-path: circle(50%);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 70%, transparent 94%);
+          mask-image: radial-gradient(circle closest-side, #000 70%, transparent 94%); }
+.dialogue { overflow-y: auto; padding: 18% 19% 20%; display: flex; flex-direction: column; align-items: center; gap: 1.1rem; scrollbar-width: none; }
+.dialogue > .said { width: 100%; }
 .dialogue::-webkit-scrollbar { display: none; }
 .dialogue .empty { margin: auto; text-align: center; color: var(--pewter); line-height: 1.6; max-width: 22rem; }
 .dialogue > :first-child:not(.empty) { margin-top: auto; }
 .said { margin: 0; line-height: 1.55; }
-.said.operator { align-self: flex-end; text-align: right; max-width: 85%; }
+.said.operator { text-align: right; }
 .said.operator::before { content: "You ask"; display: block; color: var(--pewter); font-size: .8rem; }
-.said.spirit { font-style: italic; border-left: 2px solid var(--metal, var(--ink)); padding-left: .85rem; max-width: 92%; white-space: pre-wrap; }
+.said.spirit { font-style: italic; border-left: 2px solid var(--metal, var(--ink)); padding-left: .85rem; white-space: pre-wrap; }
 .said.spirit .who { display: block; font-style: normal; color: var(--pewter); font-size: .8rem; margin-bottom: .15rem; }
 .said .verdict { font-style: normal; letter-spacing: .12em; font-size: .78rem; margin-left: .4rem; }
 .verdict.ratum { color: var(--ink); }
@@ -122,7 +120,7 @@ body.departing .circle .ring text, body.departing .triangle .seat { animation: f
 .said.refused { font-style: normal; border-left: 2px solid var(--rubric); padding-left: .85rem; }
 .said .recipe { display: block; margin-top: .4rem; font-style: normal; font-size: .8rem; background: none; border: 1px solid var(--lapis-line); color: var(--ink); border-radius: 2px; cursor: pointer; padding: .15rem .5rem; }
 .said .recipe[disabled] { cursor: default; color: var(--pewter); }
-.said.waiting { color: var(--pewter); font-style: italic; align-self: center; text-align: center; max-width: 90%; }
+.said.waiting { color: var(--pewter); font-style: italic; text-align: center; }
 .said.waiting.calling { background: linear-gradient(90deg, var(--pewter) 0 40%, var(--gold) 50%, var(--pewter) 60% 100%) 0 0 / 250% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 2.4s linear infinite; }
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
@@ -268,7 +266,7 @@ footer #wand.real { color: var(--gold); }
 <script>
 const base = location.pathname.replace(/[^/]*$/, "");
 const METAL = { king: "gold", duke: "copper", prince: "tin", marquis: "silver", president: "mercury", earl: "copper silver", knight: "lead" };
-const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false, now: {}, sky: { locus: "", caelum: "" } };
+const state = { spirits: [], seals: [], chosen: null, bound: false, office: null, busy: false, now: {}, sky: { locus: "", caelum: "" }, logs: {} };
 const closedOf = s => s.closed || state.now[s.n] || null;
 try { Object.assign(state.sky, JSON.parse(localStorage.getItem("spiri72-sky") || "{}")); } catch {}
 
@@ -348,6 +346,7 @@ async function refreshTempus() {
 function choose(s) {
   if (state.busy) return;
   if (state.bound && state.chosen && state.chosen.n !== s.n) depart(true);
+  showLog(state.chosen, s);
   state.chosen = s;
   state.office = s.telling[0] || null;
   document.querySelectorAll(".seals button").forEach(b => b.setAttribute("aria-pressed", Number(b.dataset.n) === s.n ? "true" : "false"));
@@ -389,6 +388,17 @@ function renderEntry() {
       el("button", { type: "button", class: "quiet", onclick: () => depart(false) }, "Give licence to depart")));
   }
   entry.replaceChildren(...parts);
+}
+
+// Each spirit keeps its own dialogue: put the last one's away, bring this one's back.
+function showLog(from, to) {
+  const d = document.getElementById("dialogue");
+  if (from && from.n === to.n) return;
+  if (from) state.logs[from.n] = [...d.children].filter(c => c.id !== "empty");
+  const kept = state.logs[to.n];
+  if (kept && kept.length) { kept.forEach(k => k.style.animation = "none"); d.replaceChildren(...kept); }
+  else d.replaceChildren(el("p", { class: "empty", id: "empty" }, `Nothing has passed between you and ${to.name}. Bind ${to.name} to speak with it from within the circle.`));
+  d.scrollTop = d.scrollHeight;
 }
 
 function say(node) {
@@ -454,9 +464,14 @@ function fitRing(text) {
   text = text.repeat(times); letters = [...text].length; probe.textContent = text;
   let len = probe.getComputedTextLength();
   if (len > around * .9) { size = size * around * .9 / len; probe.style.fontSize = size + "px"; len = probe.getComputedTextLength(); }
+  const spacing = Math.max(0, (around - len) / letters);
   line.style.fontSize = size + "px";
-  line.style.letterSpacing = Math.max(0, (around - len) / letters) + "px";
+  line.style.letterSpacing = spacing + "px";
   path.textContent = text;
+  // the line begins with ALPHA: turn the ring so ALPHA stands centred at the top
+  probe.textContent = "ALPHA"; probe.style.fontSize = size + "px";
+  const half = (probe.getComputedTextLength() + 5 * spacing) / 2;
+  document.querySelector(".circle .ring").setAttribute("transform", `rotate(${-half / around * 360} 400 400)`);
 }
 
 document.getElementById("ask").addEventListener("submit", async e => {
