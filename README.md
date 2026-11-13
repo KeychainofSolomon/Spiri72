@@ -57,7 +57,7 @@ Classical readings come first. Late, medieval and Renaissance words (the Church 
 
 ## Limits for now
 
-- **Test wand only.** Annulus now records each of the model's turns as its own declaration, never as a known fact, so whether it lied or meant harm is never presumed. A model still runs only with `--virga-probationis` until Annulus has a real wand (its step 2d).
+- **The wand.** The binding page uses the test wand unless started with the real one: `spiri72.exe --virga E:\` (your stick's drive). With the real wand each question asks the master and rite words in the wand's window, and the rites are kept in their own house (`annulus.domus.virga`), because a real wand refuses a house the test wand set up. Annulus records each of the model's turns as its own declaration, never as a known fact.
 - **This computer only.** The model's address must be `127.0.0.1`, `localhost` or `[::1]`.
 - **Telling offices are where the model is free.** A working office (building, copying, moving) passes only with exactly the work its office describes.
 

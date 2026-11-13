@@ -15,6 +15,19 @@ use crate::persona::entry;
 
 pub const RITES: &str = "spiri72.ritus";
 pub const HOUSE: &str = "annulus.domus";
+
+/// The house a real wand keeps. A real wand refuses a house the test wand set up, so the
+/// two are kept apart in the Operator's folder.
+pub const HOUSE_VERA: &str = "annulus.domus.virga";
+
+/// The drive of the real wand named in the session's flags (`--virga E:\`), if any.
+pub fn virga_of(flags: &[String]) -> Option<&str> {
+    flags
+        .chunks(2)
+        .find(|c| c[0] == "--virga")
+        .and_then(|c| c.get(1))
+        .map(String::as_str)
+}
 const MAX_QUESTION: usize = 2000;
 
 /// The sky for one sitting of a spirit. A held spirit (called at `held`, an
@@ -384,18 +397,24 @@ fn perform(
         );
         return Err(1);
     };
-    let args: Vec<String> = [
-        path.to_string_lossy().as_ref(),
-        "--virga-probationis",
-        "--mundus",
-        &dir.to_string_lossy(),
-        "--domus",
-        &dir.join(HOUSE).to_string_lossy(),
-    ]
-    .iter()
-    .map(|s| s.to_string())
-    .chain(sky.iter().cloned())
-    .collect();
+    // With a real wand its `--virga` flag rides in `sky`; otherwise the test wand.
+    let (wand, house): (&[&str], &str) = if virga_of(sky).is_some() {
+        (&[], HOUSE_VERA)
+    } else {
+        (&["--virga-probationis"], HOUSE)
+    };
+    let args: Vec<String> = [path.to_string_lossy().as_ref()]
+        .into_iter()
+        .chain(wand.iter().copied())
+        .chain([
+            "--mundus",
+            &dir.to_string_lossy(),
+            "--domus",
+            &dir.join(house).to_string_lossy(),
+        ])
+        .map(|s| s.to_string())
+        .chain(sky.iter().cloned())
+        .collect();
     let mut said = Tee {
         out,
         kept: Vec::new(),
@@ -495,6 +514,19 @@ impl Write for Tee<'_> {
     }
 }
 
+/// What the Operator is told of the wand in use.
+pub fn wand_words(sky: &[String]) -> String {
+    match virga_of(sky) {
+        Some(d) => {
+            format!("The real wand at {d}: each question asks its words in the wand's window.")
+        }
+        None => {
+            "This session uses the test wand: nothing done here is valid for a real installation."
+                .into()
+        }
+    }
+}
+
 pub fn sessio(
     input: &mut dyn BufRead,
     out: &mut dyn Write,
@@ -503,11 +535,7 @@ pub fn sessio(
     dir: &Path,
     sky: &[String],
 ) -> u8 {
-    let _ = writeln!(
-        out,
-        "Spiri72, with {}.\nThis session uses the test wand: nothing done here is valid for a real installation.",
-        will.nomen()
-    );
+    let _ = writeln!(out, "Spiri72, with {}.\n{}", will.nomen(), wand_words(sky));
     let Some((spirit, office)) = choose_spirit(input, out) else {
         return 0;
     };

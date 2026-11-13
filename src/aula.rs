@@ -517,9 +517,12 @@ impl Aula<'_> {
                 "200 OK",
                 "application/json",
                 format!(
-                    "{{\"exemplar\":{},\"paratus\":{}}}",
+                    "{{\"exemplar\":{},\"paratus\":{},\"virga\":{}}}",
                     quote(&self.exemplar),
-                    (self.reachable)()
+                    (self.reachable)(),
+                    crate::sessio::virga_of(&self.sky)
+                        .map(quote)
+                        .unwrap_or_else(|| "null".into())
                 ),
             ),
             ("POST", "roga") => {

@@ -11,7 +11,8 @@ use spiri72::sessio::sessio;
 const DEFAULT_MODEL: &str = "http://127.0.0.1:8080";
 
 const USAGE: &str =
-    "usage: spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
+    "usage: spiri72 [--virga-probationis | --virga E:\\] [--exemplar http://127.0.0.1:8080]   (the binding page)
+       spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
                [--max-tokens N] [any other flag of annulus ritus]
        spiri72 --latina <Latin words>
        spiri72 --liber <spirit>            (read a spirit's book)
@@ -59,7 +60,7 @@ fn main() -> ExitCode {
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
         match a.as_str() {
-            "--hora" | "--locus" | "--caelum" => {
+            "--hora" | "--locus" | "--caelum" | "--virga" => {
                 let Some(v) = it.next() else {
                     let _ = writeln!(err, "error: {a} needs a value\n{USAGE}");
                     return ExitCode::from(EXIT_USAGE);
@@ -123,6 +124,13 @@ fn main() -> ExitCode {
     let no_browser = rest.iter().any(|a| a == "--no-browser");
     rest.retain(|a| a != "--terminal" && a != "--no-browser");
     if rest.iter().all(|a| a == "--virga-probationis") {
+        if spiri72::sessio::virga_of(&sky).is_some() && !rest.is_empty() {
+            let _ = writeln!(
+                err,
+                "error: --virga and --virga-probationis exclude each other"
+            );
+            return ExitCode::from(EXIT_USAGE);
+        }
         let dir = match env::current_dir() {
             Ok(d) => d,
             Err(e) => {
