@@ -140,11 +140,13 @@ fn furfur_is_bound_asked_and_dismissed() {
 fn unknown_and_unbindable_spirits_are_refused_in_plain_words() {
     let dir = folder("refused");
     let (port, _requests) = model(SPEAKS);
-    let (code, out, _) = session(&dir, port, "Lucifer\n5\n1\n17\nfurfur\n\n\n");
+    let (code, out, _) = session(&dir, port, "Lucifer\n5\n6\n17\nfurfur\n\n\n");
     assert_eq!(code, Some(0));
     assert!(out.contains("No spirit of the 72 answers to \"Lucifer\""));
     assert!(out.contains("Marbas is a President"));
-    assert!(out.contains("Bael has no office of telling"));
+    // Valefor's only office is FAMILIARES, which Spiri72 cannot speak through yet
+    // (Bael now teaches through DOCTRINA, so he is no longer refused).
+    assert!(out.contains("Valefor has no office of telling"));
     assert!(out.contains("Botis holds more than one rank"));
     assert!(out.contains("Furfur has licence to depart."));
 }
@@ -207,33 +209,35 @@ fn every_spirit_offered_can_be_bound_in_its_hour_and_every_other_is_refused() {
         };
         let src = rite(s, &office, "quid \"novi\"\\?", &["chronica.txt".into()]);
         let bound = src.is_ok_and(|src| {
-            [
-                "2024-04-13T01:00:00Z",
-                "2024-04-13T07:00:00Z",
-                "2024-04-13T08:30:00Z",
-                "2024-04-13T14:30:00Z",
-            ]
-            .iter()
-            .any(|h| {
-                let options = Optiones {
-                    sors: Some(Outcome::Obsequium),
-                    caelum: annulus::horae::Caelum {
-                        hora: annulus::horae::parse_hora(h),
-                        locus: Some((41.9, 12.5)),
-                        serenum: Some(true),
-                        tentus: None,
-                    },
-                    ..Default::default()
-                };
-                run_source(
-                    &src,
-                    test_wand(),
-                    Stores::install(&test_wand()),
-                    world.clone(),
-                    &options,
-                )
-                .is_ok_and(|e| e.class == 0 && e.output[0] == "RATUM")
-            })
+            // Sweep the whole day so every rank's binding window is covered (the
+            // lone Knight, Furcas, comes only dawn-to-sunrise or vespers-to-sunset).
+            (0..24)
+                .map(|h| format!("2024-04-13T{h:02}:00:00Z"))
+                .any(|h| {
+                    let options = Optiones {
+                        sors: Some(Outcome::Obsequium),
+                        caelum: annulus::horae::Caelum {
+                            hora: annulus::horae::parse_hora(&h),
+                            locus: Some((41.9, 12.5)),
+                            serenum: Some(true),
+                            tentus: None,
+                        },
+                        ..Default::default()
+                    };
+                    run_source(
+                        &src,
+                        test_wand(),
+                        Stores::install(&test_wand()),
+                        world.clone(),
+                        &options,
+                    )
+                    // A computing office (DOCTRINA) is bound and answers, but its
+                    // answer is held (SUSPENSUM), never approved, until a certificate
+                    // library exists; both count as bound.
+                    .is_ok_and(|e| {
+                        e.class == 0 && (e.output[0] == "RATUM" || e.output[0] == "SUSPENSUM")
+                    })
+                })
         });
         assert_eq!(bound, unbindable(s).is_none(), "{}", s.name);
         offered += bound as u32;
