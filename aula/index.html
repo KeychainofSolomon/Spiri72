@@ -74,6 +74,24 @@ body.binding .triangle .seat { animation: seize 1.6s cubic-bezier(.2, .7, .2, 1)
 .circle .ring text { fill: var(--rubric); opacity: .7; font-family: var(--face); font-size: 21px; transition: opacity .8s; }
 .bound .circle .ring text { opacity: 1; }
 
+/* the figure of the seven within the circle: drawn when the page opens, turning slowly */
+.circle .figure { opacity: .28; transition: opacity 1.2s; }
+.bound .circle .figure { opacity: .07; }
+.circle .figure .spin { transform-box: view-box; transform-origin: 50% 50%; animation: turn 720s linear infinite; }
+.circle .figure path, .circle .figure circle { stroke-dasharray: 1; animation: draw 3.5s cubic-bezier(.45, 0, .2, 1) both; }
+.circle .figure .glyph { fill: var(--gold); font-size: 30px; text-anchor: middle; dominant-baseline: central; animation: kindle 1.2s ease-out both; }
+.circle .figure .glyph.night { fill: var(--pewter); }
+@keyframes turn { to { transform: rotate(360deg); } }
+/* the tunnel: the figure folds into itself, again and again, and the circle opens */
+.circle .tunnel use { opacity: 0; transform-box: view-box; transform-origin: 50% 50%; }
+.binding .circle .tunnel use { animation: tunnel 1.9s cubic-bezier(.55, 0, .9, .45) calc(var(--i) * .13s) both; }
+@keyframes tunnel { 0% { opacity: 0; transform: scale(.03) rotate(0deg); } 30% { opacity: .95; } 100% { opacity: 0; transform: scale(1.25) rotate(var(--turn)); } }
+body.asking .circle .tunnel use { animation: tunnel 4.2s linear calc(var(--i) * .47s) infinite; }
+body.asking .circle .tunnel { opacity: .35; }
+.binding .within { animation: emerge 1.1s cubic-bezier(.2, .7, .2, 1) 1.9s both; }
+@keyframes emerge { from { opacity: 0; transform: scale(.55); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+.stage { background: radial-gradient(circle at 50% 58%, color-mix(in srgb, var(--metal, var(--gold)) 7%, transparent), transparent 55%); transition: background 1.5s; }
+
 /* the binding */
 @property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 .circle::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0;
@@ -228,6 +246,14 @@ footer #wand.real { color: var(--gold); }
       <circle class="rim r1" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="392" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
       <circle class="rim r2" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="352" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
       <circle class="rim r3" pathLength="1" transform="rotate(-90 400 400)" cx="400" cy="400" r="340" fill="none" stroke="var(--lapis-line)" stroke-width="1"/>
+      <defs>
+        <clipPath id="inner"><circle cx="400" cy="400" r="338"/></clipPath>
+        <g id="hepta-lines" fill="none" stroke="var(--gold)"></g>
+      </defs>
+      <g clip-path="url(#inner)">
+        <g class="figure"><g class="spin" id="figure"></g></g>
+        <g class="tunnel" id="tunnel"></g>
+      </g>
       <circle class="wave" cx="400" cy="400" r="370"/>
       <circle class="wave w2" cx="400" cy="400" r="370"/>
       <path id="ring" d="M400 30 a370 370 0 1 1 -0.1 0" fill="none"/>
@@ -421,7 +447,7 @@ function bind() {
   document.body.classList.remove("departing");
   document.body.classList.add("bound");
   fitRing(ringFor(s));
-  play("binding", 3000);
+  play("binding", 3300);
   say(el("p", { class: "said waiting bound-note" }, `${s.name} is bound through ${state.office.toLowerCase()}.`));
   setAsking(true);
   renderEntry();
@@ -482,7 +508,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
   const s = state.chosen;
   say(el("p", { class: "said operator" }, question));
   q.value = "";
-  state.busy = true; setAsking(true);
+  state.busy = true; setAsking(true); document.body.classList.add("asking");
   const wait = say(el("p", { class: "said waiting calling" }, `${s.name} is called, and the answer examined…`));
   try {
     const r = await fetch(base + "roga", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, officium: state.office, quaestio: question, liber: state.liber || "", locus: state.sky.locus, caelum: state.sky.caelum }) });
@@ -517,7 +543,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
     wait.remove();
     say(el("p", { class: "said refused" }, "Spiri72 did not answer. Check that it is still running in its window."));
   } finally {
-    state.busy = false; setAsking(state.bound);
+    state.busy = false; setAsking(state.bound); document.body.classList.remove("asking");
     if (state.bound) q.focus();
   }
 });
@@ -546,7 +572,32 @@ async function status() {
   } catch { node.className = "down"; node.lastChild.textContent = "Spiri72 is not running."; }
 }
 
+// The figure of the seven planets, in the Chaldean order, on a heptagram: an ornament of
+// this page (original to Spiri72), not a figure taken from a witness.
+function buildFigure() {
+  const NS = "http://www.w3.org/2000/svg", at = (r, k) => { const a = (-90 + k * 360 / 7) * Math.PI / 180; return [400 + r * Math.cos(a), 400 + r * Math.sin(a)]; };
+  const star = (r, step) => { let d = "", k = 0; for (let i = 0; i <= 7; i++) { const [x, y] = at(r, k); d += (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1); k = (k + step) % 7; } return d + "Z"; };
+  const node = (tag, attrs, text) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text) e.textContent = text; return e; };
+  const lines = document.getElementById("hepta-lines");
+  lines.append(node("circle", { cx: 400, cy: 400, r: 318, "stroke-width": 1.5 }), node("path", { d: star(300, 2), "stroke-width": 1.2 }), node("path", { d: star(300, 3), "stroke-width": 1.6 }), node("circle", { cx: 400, cy: 400, r: 132, "stroke-width": 1.2 }));
+  const fig = document.getElementById("figure");
+  const parts = [node("circle", { cx: 400, cy: 400, r: 318, fill: "none", stroke: "var(--gold)", "stroke-width": 1.5, pathLength: 1 }),
+    node("path", { d: star(300, 2), fill: "none", stroke: "var(--gold)", "stroke-width": 1.2, pathLength: 1, style: "animation-delay:.6s" }),
+    node("path", { d: star(300, 3), fill: "none", stroke: "var(--gold)", "stroke-width": 1.6, pathLength: 1, style: "animation-delay:1.2s" }),
+    node("circle", { cx: 400, cy: 400, r: 132, fill: "none", stroke: "var(--gold)", "stroke-width": 1.2, pathLength: 1, style: "animation-delay:1.8s" })];
+  for (let k = 0; k < 7; k++) {
+    const [x1, y1] = at(132, k + .5), [x2, y2] = at(52, k + .5);
+    parts.push(node("path", { d: `M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`, stroke: "var(--gold)", "stroke-width": 1, pathLength: 1, style: `animation-delay:${2 + k * .08}s` }));
+  }
+  parts.push(node("circle", { cx: 400, cy: 400, r: 52, fill: "none", stroke: "var(--gold)", "stroke-width": 1, pathLength: 1, style: "animation-delay:2.4s" }));
+  ["♄", "♃", "♂", "☉", "♀", "☿", "☽"].forEach((g, k) => { const [x, y] = at(94, k); parts.push(node("text", { x: x.toFixed(1), y: y.toFixed(1), class: `glyph${g === "☽" || g === "♄" ? " night" : ""}`, style: `animation-delay:${2.6 + k * .12}s` }, g)); });
+  fig.append(...parts);
+  const tunnel = document.getElementById("tunnel");
+  for (let i = 0; i < 9; i++) tunnel.append(node("use", { href: "#hepta-lines", style: `--i:${i};--turn:${(i % 2 ? -1 : 1) * 77}deg` }));
+}
+
 (async () => {
+  buildFigure();
   fitRing(ringFor(null));
   document.fonts?.ready.then(() => fitRing(ringFor(state.bound ? state.chosen : null)));
   const [spirits, seals] = await Promise.all([fetch(base + "spiritus").then(r => r.json()), fetch(base + "sigilla").then(r => r.json())]);
