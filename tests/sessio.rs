@@ -123,6 +123,17 @@ fn furfur_is_bound_asked_and_dismissed() {
     assert!(dir.join(RITES).join("furfur-1.annulus").exists());
     assert!(dir.join(RITES).join("furfur-2.acta").exists());
     assert!(dir.join(HOUSE).join("annulus.radices").exists());
+    let rite =
+        |k: u32| fs::read_to_string(dir.join(RITES).join(format!("furfur-{k}.annulus"))).unwrap();
+    assert!(rite(1).contains("MANE v;") && rite(2).contains("MANE v;"));
+    assert!(rite(3).contains("VADE IN PACE v;") && !rite(3).contains("PETE"));
+    assert!(dir.join(RITES).join("furfur-3.acta").exists());
+    assert!(
+        requests
+            .recv_timeout(std::time::Duration::from_millis(200))
+            .is_err(),
+        "the licence asks nothing of the model"
+    );
 }
 
 #[test]
@@ -210,6 +221,7 @@ fn every_spirit_offered_can_be_bound_in_its_hour_and_every_other_is_refused() {
                         hora: annulus::horae::parse_hora(h),
                         locus: Some((41.9, 12.5)),
                         serenum: Some(true),
+                        tentus: None,
                     },
                     ..Default::default()
                 };
@@ -295,4 +307,27 @@ fn a_sound_answer_is_taken_into_the_book_and_comes_back() {
         .unwrap();
     let book = spiri72::memoria::read(&dir, furfur).unwrap();
     assert_eq!(book.len(), 3, "two rites noted and one answer received");
+}
+
+#[test]
+fn a_held_spirit_is_asked_in_the_hours_of_its_calling() {
+    use spiri72::sessio::held_sky;
+    let furfur = annulus::lingua::registra::goetia()
+        .spirits
+        .iter()
+        .find(|s| s.n == 34)
+        .unwrap();
+    let sky: Vec<String> = ["--locus", "41.9,12.5"].map(String::from).to_vec();
+    let (first, t0) = held_sky(furfur, &sky, None);
+    assert_eq!(first[2], "--hora");
+    assert_eq!(annulus::horae::parse_hora(&first[3]), Some(t0));
+    let (later, same) = held_sky(furfur, &sky, Some(t0));
+    assert_eq!(same, t0);
+    assert_eq!(
+        later[2..],
+        [
+            "--tentus".to_string(),
+            format!("34@{}", annulus::horae::iso(t0))
+        ]
+    );
 }
