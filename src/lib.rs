@@ -1,5 +1,6 @@
 pub mod agens;
 pub mod aula;
+pub mod custos;
 pub mod forma;
 pub mod fors;
 pub mod ingenium;
@@ -7,5 +8,7 @@ pub mod latina;
 pub mod llama;
 pub mod memoria;
 pub mod persona;
+pub mod probatio;
 pub mod sessio;
 pub mod sigilla;
+pub mod tabula;

@@ -58,24 +58,100 @@ pub fn quote(s: &str) -> String {
     out
 }
 
+/// How the model draws its words. The defaults are what the Qwen team
+/// gives for Qwen3 without thinking (temperature 0.7, top-p 0.8, top-k 20,
+/// min-p 0, presence penalty 1.5 for quantized models); other models may
+/// want others, and every one is a flag.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Sampler {
+    pub temperature: f32,
+    pub top_p: f32,
+    pub top_k: u32,
+    pub min_p: f32,
+    pub presence_penalty: f32,
+    /// A fixed seed makes a run repeatable; none lets the server choose.
+    pub seed: Option<u32>,
+}
+
+impl Default for Sampler {
+    fn default() -> Self {
+        Sampler {
+            temperature: 0.7,
+            top_p: 0.8,
+            top_k: 20,
+            min_p: 0.0,
+            presence_penalty: 1.5,
+            seed: None,
+        }
+    }
+}
+
+/// The sampler flags, each with its allowed range.
+pub const SAMPLER_FLAGS: [&str; 6] = [
+    "--temperature",
+    "--top-p",
+    "--top-k",
+    "--min-p",
+    "--presence-penalty",
+    "--seed",
+];
+
+impl Sampler {
+    /// Sets one sampler flag from its value, refusing what is out of range.
+    pub fn set(&mut self, flag: &str, value: &str) -> Result<(), String> {
+        let real = |lo: f32, hi: f32| -> Result<f32, String> {
+            value
+                .parse::<f32>()
+                .ok()
+                .filter(|v| v.is_finite() && (lo..=hi).contains(v))
+                .ok_or_else(|| format!("{flag} needs a number from {lo} to {hi}"))
+        };
+        let whole = |hi: u32| -> Result<u32, String> {
+            value
+                .parse::<u32>()
+                .ok()
+                .filter(|v| *v <= hi)
+                .ok_or_else(|| format!("{flag} needs a whole number from 0 to {hi}"))
+        };
+        match flag {
+            "--temperature" => self.temperature = real(0.0, 2.0)?,
+            "--top-p" => self.top_p = real(0.0, 1.0)?,
+            "--top-k" => self.top_k = whole(1000)?,
+            "--min-p" => self.min_p = real(0.0, 1.0)?,
+            "--presence-penalty" => self.presence_penalty = real(-2.0, 2.0)?,
+            "--seed" => self.seed = Some(whole(u32::MAX)?),
+            _ => return Err(format!("{flag} is not a sampler flag")),
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Rogatio<'a> {
     pub system: &'a str,
     pub user: &'a str,
     pub grammar: &'a str,
     pub max_tokens: u32,
-    pub temperature: f32,
+    pub sampler: &'a Sampler,
 }
 
 impl Rogatio<'_> {
     pub fn body(&self) -> String {
         format!(
-            "{{\"messages\":[{{\"role\":\"system\",\"content\":{}}},{{\"role\":\"user\",\"content\":{}}}],\"grammar\":{},\"max_tokens\":{},\"temperature\":{},\"stream\":false,\"chat_template_kwargs\":{{\"enable_thinking\":false}}}}",
+            "{{\"messages\":[{{\"role\":\"system\",\"content\":{}}},{{\"role\":\"user\",\"content\":{}}}],\"grammar\":{},\"max_tokens\":{},\"temperature\":{},\"top_p\":{},\"top_k\":{},\"min_p\":{},\"presence_penalty\":{}{},\"stream\":false,\"cache_prompt\":true,\"chat_template_kwargs\":{{\"enable_thinking\":false}}}}",
             quote(self.system),
             quote(self.user),
             quote(self.grammar),
             self.max_tokens,
-            self.temperature
+            self.sampler.temperature,
+            self.sampler.top_p,
+            self.sampler.top_k,
+            self.sampler.min_p,
+            self.sampler.presence_penalty,
+            self.sampler
+                .seed
+                .map(|s| format!(",\"seed\":{s}"))
+                .unwrap_or_default()
         )
     }
 }
@@ -103,7 +179,41 @@ fn dechunk(mut body: &[u8]) -> Result<Vec<u8>, String> {
     }
 }
 
+/// A reply with what it cost, as the server counts it.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Responsio {
+    pub content: String,
+    /// Tokens of prompt read.
+    pub prompt: u64,
+    /// Of those, how many came from the server's cache, not read again.
+    pub cached: u64,
+    /// Tokens written.
+    pub completion: u64,
+}
+
+/// Tokens spent over many requests.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Usus {
+    pub prompt: u64,
+    pub cached: u64,
+    pub completion: u64,
+}
+
+impl Usus {
+    pub fn add(&mut self, r: &Responsio) {
+        self.prompt += r.prompt;
+        self.cached += r.cached;
+        self.completion += r.completion;
+    }
+}
+
 pub fn read_reply(raw: &[u8]) -> Result<String, String> {
+    read_reply_counted(raw).map(|r| r.content)
+}
+
+/// As `read_reply`, also reading the server's token counts where it gives
+/// them (llama.cpp's `usage` and `timings.cache_n`); absent counts are 0.
+pub fn read_reply_counted(raw: &[u8]) -> Result<Responsio, String> {
     let split = raw
         .windows(4)
         .position(|w| w == b"\r\n\r\n")
@@ -128,18 +238,37 @@ pub fn read_reply(raw: &[u8]) -> Result<String, String> {
         return Err(format!("the model's server answered {status}: {short}"));
     }
     let root = json::parse(&text).map_err(|e| format!("the model's reply is not JSON: {e}"))?;
-    root.get("choices")
+    let content = root
+        .get("choices")
         .map(Json::list)
         .and_then(|c| c.first())
         .and_then(|c| c.get("message"))
         .and_then(|m| m.get("content"))
         .and_then(Json::text)
         .map(str::to_string)
-        .ok_or_else(|| "the model's reply has no message".into())
+        .ok_or("the model's reply has no message")?;
+    let count = |outer: &str, inner: &str| {
+        root.get(outer)
+            .and_then(|o| o.get(inner))
+            .and_then(Json::number)
+            .filter(|n| n.is_finite() && *n >= 0.0)
+            .map_or(0, |n| n as u64)
+    };
+    Ok(Responsio {
+        content,
+        prompt: count("usage", "prompt_tokens"),
+        cached: count("timings", "cache_n"),
+        completion: count("usage", "completion_tokens"),
+    })
 }
 
 impl Exemplar {
     pub fn ask(&self, rogatio: &Rogatio) -> Result<String, String> {
+        self.ask_counted(rogatio).map(|r| r.content)
+    }
+
+    /// As `ask`, also giving what the reply cost.
+    pub fn ask_counted(&self, rogatio: &Rogatio) -> Result<Responsio, String> {
         let body = rogatio.body();
         let request = format!(
             "POST /v1/chat/completions HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
@@ -163,6 +292,6 @@ impl Exemplar {
         if raw.len() > MAX_REPLY_BYTES {
             return Err("the model's reply is too long".into());
         }
-        read_reply(&raw)
+        read_reply_counted(&raw)
     }
 }

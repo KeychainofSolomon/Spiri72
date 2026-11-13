@@ -95,6 +95,32 @@ Classical readings come first. Late, medieval and Renaissance words (the Church 
    ```
    Every flag of `annulus ritus` works here too (`--domus`, `--mundus`, `--acta`, …). `--exemplar http://127.0.0.1:8080` chooses another port; `--max-tokens N` limits the reply.
 
+## The fixed frame around the model
+
+Spiri72 works with any model llama.cpp can serve, small or large. Everything that can be decided by code is decided by code, and the model is left only the words. The smaller its job, the less it can get wrong.
+
+- **The tables** (`src/tabula.rs`). Each spirit's name, rank, legions and offices come from the Annulus register and nowhere else. The prompt gives them as fixed, the page and the terminal show them, and the model is never asked to know them.
+- **The spirit's powers.** The prompt tells the spirit exactly what it can do. It learns which of its offices Annulus can carry out and what each one does, which are only recorded of it, and, for this rite, every place handed to it with what it may do there (read, create, write, delete) and which verbs it may use.
+- **The grammar.** The model can only answer in the allowed form. For a working office it can name only the places handed to it, with only the verbs each place permits, so it can't propose a work the angel would refuse.
+- **The custos** (`src/custos.rs`). This is a plain check in code of what the spirit says of itself: its name, its rank and its legions. If the reply gets them wrong, or comes back cut short, the model is asked again (2 more tries by default). It never changes or withholds a word. If every try is faulted, the last reply is passed on unchanged and a note goes to the terminal. What a spirit says of anything else, deceit included, is its own and is left to the angel.
+- **Fixed sampling.** By default Spiri72 sends what the Qwen team recommends for Qwen3 without thinking: temperature 0.7, top-p 0.8, top-k 20, min-p 0, presence penalty 1.5. Every value can be changed with a flag: `--temperature`, `--top-p`, `--top-k`, `--min-p`, `--presence-penalty`. Add `--seed N` for repeatable runs, `--iterum N` to set how many retries (0 to 5), and `--sine-custode` to switch the check off.
+- **Fewer tokens.** The prompt puts everything fixed about the spirit first, and the parts that change from rite to rite (its powers in this rite, then the bearing drawn for it) last. llama.cpp keeps a prompt's opening it has already read, so it only reads the end again, and a retry costs almost nothing to read.
+
+### Testing a model (the bench)
+
+```
+target\release\spiri72.exe --probatio
+```
+
+This asks every spirit that holds a telling office who it is, its rank and its legions, and counts the answers that are:
+- right the first time,
+- right only after a retry,
+- still wrong after every try.
+
+It also gives the tokens used per request and how many came from the cache. Add a number to run several rounds (`--probatio 5`). It uses seed 72 unless you give `--seed`, so two runs can be compared. It writes nothing to your folder and touches no spirit's records.
+
+Run it before and after any change: a new model or quantization (Q6_K or Q8_0 instead of Q4_K_M), a sampler setting, or a LoRA. **The first-try figure measures the model.** The others show what the custos catches.
+
 ## Spirit natures in the model itself (control vectors)
 
 The binding lives in Annulus; the *nature* of a bound spirit can also be put into the model's own activations, with llama.cpp's `llama-cvector-generator`. Three natures are prepared in `vires/`, each as 360 matched pairs of prompts that differ only in the spirit's nature:

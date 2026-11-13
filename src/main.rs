@@ -12,7 +12,10 @@ const DEFAULT_MODEL: &str = "http://127.0.0.1:8080";
 
 const USAGE: &str =
     "usage: spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
-               [--max-tokens N] [any other flag of annulus ritus]
+               [--max-tokens N] [--temperature T] [--top-p P] [--top-k K] [--min-p M]
+               [--presence-penalty X] [--seed N] [--iterum N] [--sine-custode]
+               [any other flag of annulus ritus]
+       spiri72 --probatio [rounds] [--exemplar URL] [--seed N]   (test the model on all 72)
        spiri72 --latina <Latin words>
        spiri72 --liber <spirit>            (read a spirit's book)
        spiri72 --dele <spirit> <entry>     (strike an entry from it)
@@ -56,7 +59,11 @@ fn main() -> ExitCode {
     let mut rest: Vec<String> = Vec::new();
     let mut sky: Vec<String> = Vec::new();
     let mut vires = Vec::new();
-    let mut it = args.into_iter();
+    let mut sampler = spiri72::llama::Sampler::default();
+    let mut iterum = 2;
+    let mut custos = true;
+    let mut probatio: Option<u32> = None;
+    let mut it = args.into_iter().peekable();
     while let Some(a) = it.next() {
         match a.as_str() {
             "--hora" | "--locus" | "--caelum" => {
@@ -98,6 +105,38 @@ fn main() -> ExitCode {
                     }
                 }
             }
+            f if spiri72::llama::SAMPLER_FLAGS.contains(&f) => {
+                let set = it
+                    .next()
+                    .ok_or_else(|| format!("{f} needs a value"))
+                    .and_then(|v| sampler.set(f, &v));
+                if let Err(e) = set {
+                    let _ = writeln!(err, "error: {e}\n{USAGE}");
+                    return ExitCode::from(EXIT_USAGE);
+                }
+            }
+            "--iterum" => match it.next().and_then(|v| v.parse::<u32>().ok()) {
+                Some(n) if n <= 5 => iterum = n,
+                _ => {
+                    let _ = writeln!(
+                        err,
+                        "error: --iterum needs a whole number from 0 to 5\n{USAGE}"
+                    );
+                    return ExitCode::from(EXIT_USAGE);
+                }
+            },
+            "--sine-custode" => custos = false,
+            "--probatio" => {
+                probatio = Some(1);
+                if let Some(n) = it.peek().and_then(|v| v.parse::<u32>().ok()) {
+                    if !(1..=100).contains(&n) {
+                        let _ = writeln!(err, "error: --probatio takes 1 to 100 rounds\n{USAGE}");
+                        return ExitCode::from(EXIT_USAGE);
+                    }
+                    probatio = Some(n);
+                    it.next();
+                }
+            }
             "--help" | "-h" => {
                 println!("{USAGE}");
                 return ExitCode::SUCCESS;
@@ -114,6 +153,20 @@ fn main() -> ExitCode {
     };
     let mut agens = Agens::new(exemplar);
     agens.vires = vires;
+    agens.iterum = iterum;
+    agens.custos = custos;
+    if let Some(rounds) = probatio {
+        // The bench repeats by default, so runs can be compared.
+        sampler.seed = sampler.seed.or(Some(72));
+        agens.sampler = sampler;
+        if let Some(n) = max_tokens {
+            agens.max_tokens = n;
+        }
+        let mut out = io::stdout().lock();
+        let summa = spiri72::probatio::run(&mut agens, rounds, &mut out);
+        return ExitCode::from(u8::from(summa.errores > 0));
+    }
+    agens.sampler = sampler;
     agens.status = env::current_dir().ok();
     if let Some(n) = max_tokens {
         agens.max_tokens = n;
