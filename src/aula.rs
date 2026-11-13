@@ -14,7 +14,7 @@ use crate::fors;
 use crate::llama::quote;
 use crate::persona::entry;
 use crate::sessio::{
-    ask_once_judged, held_sky, kept_sound, still_held, telling_offices, unbindable,
+    ask_once_judged, give_licence, held_sky, kept_sound, still_held, telling_offices, unbindable,
 };
 use crate::sigilla::SIGILLA;
 
@@ -281,7 +281,7 @@ pub fn caelum_of(flags: &[String]) -> horae::Caelum {
     c
 }
 
-pub fn tempus(body: &[u8], base: &[String], tenti: &BTreeMap<u32, i64>) -> Answer {
+pub fn tempus(body: &[u8], base: &[String], tenti: &BTreeMap<u32, (i64, String)>) -> Answer {
     let root = std::str::from_utf8(body)
         .ok()
         .and_then(|t| json::parse(t).ok())
@@ -303,7 +303,7 @@ pub fn tempus(body: &[u8], base: &[String], tenti: &BTreeMap<u32, i64>) -> Answe
         .iter()
         .map(|s| {
             let held = horae::Caelum {
-                tentus: tenti.get(&s.n).map(|t0| (s.n as i64, *t0)),
+                tentus: tenti.get(&s.n).map(|(t0, _)| (s.n as i64, *t0)),
                 ..c
             };
             let why =
@@ -336,7 +336,7 @@ pub fn roga(
     body: &[u8],
     dir: &Path,
     sky: &[String],
-    tenti: &RefCell<BTreeMap<u32, i64>>,
+    tenti: &RefCell<BTreeMap<u32, (i64, String)>>,
     will: &mut dyn Voluntas,
 ) -> Answer {
     let bad = |why: &str| {
@@ -382,14 +382,14 @@ pub fn roga(
     };
     let mut out = Vec::new();
     let mut err = Vec::new();
-    let held = tenti.borrow().get(&spirit.n).copied();
+    let held = tenti.borrow().get(&spirit.n).map(|(t0, _)| *t0);
     let (sitting, t0) = held_sky(spirit, &sky, held);
     let (code, ritus, verdict) = ask_once_judged(
         spirit, &office, &question, &handed, dir, &sitting, will, &mut out, &mut err,
     );
     let tentus = still_held(verdict.as_deref());
     if tentus {
-        tenti.borrow_mut().insert(spirit.n, t0);
+        tenti.borrow_mut().insert(spirit.n, (t0, office.clone()));
     } else {
         tenti.borrow_mut().remove(&spirit.n);
     }
@@ -419,11 +419,18 @@ pub fn roga(
 }
 
 /// Gives a held spirit licence to depart, at the Operator's word.
-pub fn dimitte(body: &[u8], tenti: &RefCell<BTreeMap<u32, i64>>) -> Answer {
-    let n = std::str::from_utf8(body)
+pub fn dimitte(
+    body: &[u8],
+    dir: &Path,
+    sky: &[String],
+    tenti: &RefCell<BTreeMap<u32, (i64, String)>>,
+    will: &mut dyn Voluntas,
+) -> Answer {
+    let root = std::str::from_utf8(body)
         .ok()
         .and_then(|t| json::parse(t).ok())
-        .and_then(|r| r.get("n").and_then(Json::number));
+        .unwrap_or(Json::Null);
+    let n = root.get("n").and_then(Json::number);
     let Some(spirit) = n.and_then(|n| goetia().spirits.iter().find(|s| s.n as f64 == n)) else {
         return answer(
             "400 Bad Request",
@@ -431,11 +438,21 @@ pub fn dimitte(body: &[u8], tenti: &RefCell<BTreeMap<u32, i64>>) -> Answer {
             "{\"error\":\"no spirit of the 72 has that number\"}",
         );
     };
-    let was = tenti.borrow_mut().remove(&spirit.n).is_some();
+    let was = tenti.borrow_mut().remove(&spirit.n);
+    let mut exitus = 0;
+    if let Some((t0, office)) = &was {
+        let sky = sky_of(&root, sky).unwrap_or_else(|_| sky.to_vec());
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        exitus = give_licence(spirit, office, *t0, dir, &sky, will, &mut out, &mut err);
+    }
+    let was = was.is_some();
     answer(
         "200 OK",
         "application/json",
-        format!("{{\"dimissus\":{was},\"nomen\":{}}}", quote(&spirit.name)),
+        format!(
+            "{{\"dimissus\":{was},\"exitus\":{exitus},\"nomen\":{}}}",
+            quote(&spirit.name)
+        ),
     )
 }
 
@@ -474,7 +491,7 @@ pub struct Aula<'a> {
     pub reachable: Box<dyn Fn() -> bool + 'a>,
     /// The spirits held until the Operator gives licence to depart, each
     /// with the hour of its calling.
-    pub tenti: RefCell<BTreeMap<u32, i64>>,
+    pub tenti: RefCell<BTreeMap<u32, (i64, String)>>,
 }
 
 impl Aula<'_> {
@@ -527,7 +544,7 @@ impl Aula<'_> {
                 if req.header("content-type") != Some("application/json") {
                     return refused("wrong content type");
                 }
-                dimitte(&req.body, &self.tenti)
+                dimitte(&req.body, self.dir, &self.sky, &self.tenti, will)
             }
             _ => answer("404 Not Found", "text/plain; charset=utf-8", "not found"),
         }

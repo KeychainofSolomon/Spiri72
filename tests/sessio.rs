@@ -123,6 +123,17 @@ fn furfur_is_bound_asked_and_dismissed() {
     assert!(dir.join(RITES).join("furfur-1.annulus").exists());
     assert!(dir.join(RITES).join("furfur-2.acta").exists());
     assert!(dir.join(HOUSE).join("annulus.radices").exists());
+    let rite =
+        |k: u32| fs::read_to_string(dir.join(RITES).join(format!("furfur-{k}.annulus"))).unwrap();
+    assert!(rite(1).contains("MANE v;") && rite(2).contains("MANE v;"));
+    assert!(rite(3).contains("VADE IN PACE v;") && !rite(3).contains("PETE"));
+    assert!(dir.join(RITES).join("furfur-3.acta").exists());
+    assert!(
+        requests
+            .recv_timeout(std::time::Duration::from_millis(200))
+            .is_err(),
+        "the licence asks nothing of the model"
+    );
 }
 
 #[test]

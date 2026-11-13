@@ -350,7 +350,15 @@ fn a_spirit_is_held_past_its_hours_until_licence_is_given() {
         "the spirit is told it is held past its hour"
     );
     let gone = post(&later, "dimitte", r#"{"n":34}"#, &mut will);
-    assert!(gone.contains("\"dimissus\":true"), "{gone}");
+    assert!(
+        gone.contains("\"dimissus\":true") && gone.contains("\"exitus\":0"),
+        "{gone}"
+    );
+    assert_eq!(will.0.len(), 2, "the licence asks nothing of the spirit");
+    let rites = d.join(spiri72::sessio::RITES);
+    let read = |k: u32| std::fs::read_to_string(rites.join(format!("furfur-{k}.annulus"))).unwrap();
+    assert!(read(1).contains("MANE v;") && read(2).contains("MANE v;"));
+    assert!(read(3).contains("VADE IN PACE v;") && !read(3).contains("PETE"));
     let body = post(&later, "roga", ask, &mut will);
     assert!(body.contains("Moon is 5 days old"), "{body}");
     assert!(body.contains("\"tentus\":false"), "{body}");

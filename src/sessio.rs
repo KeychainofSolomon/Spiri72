@@ -150,7 +150,7 @@ pub fn rite(s: &Spirit, office: &str, question: &str, handed: &[String]) -> Resu
         .collect::<Vec<_>>()
         .join(", ");
     Ok(format!(
-        "FACULTAS {{\n{grants}    atramentum {ink} 2;\n}}\nCIRCULUS RITU goetia {{\n    INTENTIO {intent};\n    GERE ANULUM;\n{before}    SIT s = INSCRIBE SIGILLUM {label} ATRAMENTO CONSECRA ATRAMENTUM {ink};\n    SIT v = INVOCA SPIRITUM {n} AD OFFICIUM {office};\n{after}    SIT p = PETE v({args});\n    SIT iudicium = EXAMINA p;\n    MANIFESTA iudicium;\n    SI iudicium == RATUM {{\n        MANIFESTA RESPONSUM p;\n        VADE IN PACE v;\n    }} ALITER {{\n        RELEGA v;\n    }}\n}}\n",
+        "FACULTAS {{\n{grants}    atramentum {ink} 2;\n}}\nCIRCULUS RITU goetia {{\n    INTENTIO {intent};\n    GERE ANULUM;\n{before}    SIT s = INSCRIBE SIGILLUM {label} ATRAMENTO CONSECRA ATRAMENTUM {ink};\n    SIT v = INVOCA SPIRITUM {n} AD OFFICIUM {office};\n{after}    SIT p = PETE v({args});\n    SIT iudicium = EXAMINA p;\n    MANIFESTA iudicium;\n    SI iudicium == RATUM {{\n        MANIFESTA RESPONSUM p;\n        MANE v;\n    }} ALITER {{\n        RELEGA v;\n    }}\n}}\n",
         ink = literal(ink),
         intent = literal(question),
         before = r.before,
@@ -168,6 +168,51 @@ fn texts(e: &Json, key: &str) -> Vec<String> {
         .iter()
         .filter_map(|x| x.get("text").and_then(Json::text).map(str::to_string))
         .collect()
+}
+
+/// The licence to depart for a held spirit: it is called once more, in the
+/// hours of its calling, and sent away in peace, so its record ends with
+/// `dimissus`.
+pub fn licence(s: &Spirit, office: &str) -> Result<String, String> {
+    let ink = s
+        .ink_class()
+        .ok_or_else(|| format!("{} holds more than one rank", s.name))?;
+    let r = restraints(s.n);
+    Ok(format!(
+        "FACULTAS {{\n    atramentum {ink} 2;\n}}\nCIRCULUS RITU goetia {{\n    INTENTIO \"licentia discedendi\";\n    GERE ANULUM;\n{before}    SIT s = INSCRIBE SIGILLUM {label} ATRAMENTO CONSECRA ATRAMENTUM {ink};\n    SIT v = INVOCA SPIRITUM {n} AD OFFICIUM {office};\n{after}    VADE IN PACE v;\n}}\n",
+        ink = literal(ink),
+        before = r.before,
+        after = r.after,
+        label = s.label,
+        n = s.n,
+        office = office.to_lowercase(),
+    ))
+}
+
+/// Gives a held spirit licence to depart, as its own short rite.
+#[allow(clippy::too_many_arguments)]
+pub fn give_licence(
+    spirit: &Spirit,
+    office: &str,
+    held: i64,
+    dir: &Path,
+    sky: &[String],
+    will: &mut dyn Voluntas,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> u8 {
+    let program = match licence(spirit, office) {
+        Ok(p) => p,
+        Err(e) => {
+            let _ = writeln!(err, "{e}");
+            return 2;
+        }
+    };
+    let (sky, _) = held_sky(spirit, sky, Some(held));
+    match perform(spirit, &program, dir, &sky, will, out, err) {
+        Ok((code, _, _)) => code,
+        Err(code) => code,
+    }
 }
 
 pub fn describe(s: &Spirit) -> String {
@@ -296,31 +341,22 @@ pub fn ask_once_named(
     (code, name)
 }
 
-/// As `ask_once_named`, also giving the angel's judgement, when there was one.
-#[allow(clippy::too_many_arguments)]
-pub fn ask_once_judged(
+/// Writes a rite into the Operator's folder and runs it through Annulus,
+/// giving its exit code, its path, and what it said.
+fn perform(
     spirit: &Spirit,
-    office: &str,
-    question: &str,
-    handed: &[String],
+    program: &str,
     dir: &Path,
     sky: &[String],
     will: &mut dyn Voluntas,
     out: &mut dyn Write,
     err: &mut dyn Write,
-) -> (u8, Option<String>, Option<String>) {
+) -> Result<(u8, std::path::PathBuf, Vec<u8>), u8> {
     let rites = dir.join(RITES);
     if let Err(e) = fs::create_dir_all(&rites) {
         let _ = writeln!(err, "error: cannot make {}: {e}", rites.display());
-        return (1, None, None);
+        return Err(1);
     }
-    let program = match rite(spirit, office, question, handed) {
-        Ok(p) => p,
-        Err(e) => {
-            let _ = writeln!(err, "{e}");
-            return (2, None, None);
-        }
-    };
     let mut written = None;
     for k in 1u32..=100_000 {
         let p = rites.join(format!("{}-{k}.annulus", spirit.label));
@@ -328,7 +364,7 @@ pub fn ask_once_judged(
             Ok(mut f) => {
                 if let Err(e) = f.write_all(program.as_bytes()).and_then(|_| f.sync_all()) {
                     let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
-                    return (1, None, None);
+                    return Err(1);
                 }
                 written = Some(p);
                 break;
@@ -336,7 +372,7 @@ pub fn ask_once_judged(
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
             Err(e) => {
                 let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
-                return (1, None, None);
+                return Err(1);
             }
         }
     }
@@ -346,7 +382,7 @@ pub fn ask_once_judged(
             "error: no free name for the rite in {}",
             rites.display()
         );
-        return (1, None, None);
+        return Err(1);
     };
     let args: Vec<String> = [
         path.to_string_lossy().as_ref(),
@@ -368,11 +404,39 @@ pub fn ask_once_judged(
         Ok(code) => code,
         Err(usage) => {
             let _ = writeln!(err, "error: {}", usage.0);
+            return Err(2);
+        }
+    };
+    Ok((code, path, said.kept))
+}
+
+/// As `ask_once_named`, also giving the angel's judgement, when there was one.
+#[allow(clippy::too_many_arguments)]
+pub fn ask_once_judged(
+    spirit: &Spirit,
+    office: &str,
+    question: &str,
+    handed: &[String],
+    dir: &Path,
+    sky: &[String],
+    will: &mut dyn Voluntas,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> (u8, Option<String>, Option<String>) {
+    let program = match rite(spirit, office, question, handed) {
+        Ok(p) => p,
+        Err(e) => {
+            let _ = writeln!(err, "{e}");
             return (2, None, None);
         }
     };
+    let (code, path, kept) = match perform(spirit, &program, dir, sky, will, out, err) {
+        Ok(r) => r,
+        Err(code) => return (code, None, None),
+    };
+    let rites = dir.join(RITES);
     // The rite's first line is the angel's judgement (MANIFESTA iudicium).
-    let first = String::from_utf8_lossy(&said.kept)
+    let first = String::from_utf8_lossy(&kept)
         .lines()
         .map(str::trim)
         .find(|l| !l.is_empty())
@@ -387,7 +451,7 @@ pub fn ask_once_judged(
                 .file_stem()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_default();
-            let words = crate::aula::read_output(spirit, &String::from_utf8_lossy(&said.kept))
+            let words = crate::aula::read_output(spirit, &String::from_utf8_lossy(&kept))
                 .verba
                 .unwrap_or_default();
             let kept = format!(
@@ -529,6 +593,11 @@ pub fn sessio(
             );
             break;
         }
+    }
+    if let Some(t0) = held {
+        let mut quiet = Vec::new();
+        let code = give_licence(spirit, &office, t0, dir, sky, will, &mut quiet, err);
+        worst = worst.max(code);
     }
     let _ = writeln!(out, "\n{} has licence to depart.", spirit.name);
     worst
