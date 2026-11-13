@@ -439,11 +439,10 @@ function smokeWords(text) {
 
 // They surface from the centre of the circle: a breath of smoke there, the answer drawn
 // out of it to its place, and each word condensing out of the haze in turn.
-// How long it takes is the spirit's own: about one answer in four stands at once, the rest
-// come at a tempo drawn afresh each time, from quick to slow.
+// How long it takes is the spirit's own: never at once, at a tempo drawn afresh each time,
+// from quick to slow.
 function surface(node) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (Math.random() < .25) return;
   const k = .45 + Math.random() ** 1.6 * 1.9;
   const circle = document.querySelector(".circle");
   const puff = el("div", { class: "puff" });
