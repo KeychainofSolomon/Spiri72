@@ -192,6 +192,7 @@ footer .sky input, footer .sky select { background: var(--lapis-band); border: 1
 footer .sky input { width: 9.5rem; }
 footer #tempus { color: var(--ink); }
 footer #wand.real { color: var(--gold); }
+footer #pulsus { color: var(--ink); flex-basis: 100%; }
 footer .sound { background: none; border: 1px solid var(--lapis-line); border-radius: 2px; color: var(--pewter); padding: 0 .55rem; cursor: pointer; font-size: .82rem; }
 footer .sound[aria-pressed="true"] { color: var(--ink); }
 
@@ -301,6 +302,7 @@ footer .sound[aria-pressed="true"] { color: var(--ink); }
   <span id="model"><span class="dot"></span>Checking the model…</span>
   <button type="button" id="sound" class="sound" aria-pressed="true">Sound on</button>
   <span id="wand">Test wand: nothing done here is valid for a real installation.</span>
+  <span id="pulsus" role="status" aria-live="polite"></span>
 </footer>
 
 <script>
@@ -705,6 +707,16 @@ for (const id of ["locus", "caelum"]) {
 
 document.getElementById("only-open").addEventListener("change", e => document.querySelector(".catalogue").classList.toggle("hide-closed", e.target.checked));
 
+// The heartbeat: Spiri72 measures, and says something only when it changed (at most one
+// message per 30 seconds or more, decided by Spiri72, not by this page).
+let pulseSeen = 0;
+async function pulse() {
+  try {
+    const r = await (await fetch(base + "pulsus", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state.sky) })).json();
+    if (r.seq > pulseSeen && r.nuntius) { pulseSeen = r.seq; document.getElementById("pulsus").textContent = r.nuntius; }
+  } catch {}
+}
+
 async function status() {
   const node = document.getElementById("model");
   try {
@@ -713,7 +725,7 @@ async function status() {
     node.lastChild.textContent = r.paratus ? `The spirits are ready${r.visus ? ", and can see" : ""}` : `No model answers at ${r.exemplar}. Start llama-server, then try again.`;
     const w = document.getElementById("wand");
     w.classList.toggle("real", !!r.virga);
-    w.textContent = r.virga ? `The real wand at ${r.virga}: each question asks its words in the wand's window.` : "Test wand: nothing done here is valid for a real installation.";
+    w.textContent = r.virga ? `The real wand at ${r.virga}: its words are asked at the calling and for every work; a held spirit is asked again under the binding.` : "Test wand: nothing done here is valid for a real installation.";
   } catch { node.className = "down"; node.lastChild.textContent = "Spiri72 is not running."; }
 }
 
@@ -776,6 +788,7 @@ function rest() { cancelAnimationFrame(descent); document.querySelectorAll("#tun
   renderCatalogue();
   await refreshTempus(); setInterval(refreshTempus, 60000);
   status(); setInterval(status, 15000);
+  pulse(); setInterval(pulse, 10000);
 })();
 </script>
 </body>

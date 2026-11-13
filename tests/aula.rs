@@ -37,6 +37,8 @@ fn aula(d: &std::path::Path) -> Aula<'_> {
             .to_vec(),
         reachable: Box::new(|| true),
         tenti: Default::default(),
+        pulsus: std::cell::RefCell::new(spiri72::pulsus::Pulsus::new(30)),
+        eyes_seen: Default::default(),
         eyes: None,
     }
 }
@@ -399,4 +401,20 @@ fn a_spirits_words_cannot_release_it_or_hold_another() {
         assert!(body.contains("\"tentus\":true"), "{body}");
     }
     assert_eq!(a.tenti.borrow().keys().copied().collect::<Vec<_>>(), [34]);
+}
+
+#[test]
+fn the_heartbeat_tells_what_it_measures_once_and_then_keeps_quiet() {
+    let d = dir("pulsus");
+    let a = Aula {
+        reachable: Box::new(|| false),
+        ..aula(&d)
+    };
+    a.tenti.borrow_mut().insert(34, (1713018600, String::new()));
+    let first = post(&a, "pulsus", "{}", &mut Speaks);
+    assert!(first.contains("\"seq\":1"), "{first}");
+    assert!(first.contains("The model does not answer."), "{first}");
+    assert!(first.contains("Furfur has been held"), "{first}");
+    let again = post(&a, "pulsus", "{}", &mut Speaks);
+    assert!(again.contains("\"seq\":1"), "nothing new is told: {again}");
 }

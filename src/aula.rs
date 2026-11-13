@@ -500,9 +500,79 @@ pub struct Aula<'a> {
     /// The spirits held until the Operator gives licence to depart, each
     /// with the hour of its calling.
     pub tenti: RefCell<BTreeMap<u32, (i64, String)>>,
+    /// The heartbeat: measured facts, at most one message per gap.
+    pub pulsus: RefCell<crate::pulsus::Pulsus>,
+    /// Whether the eyes have answered once, so their loss is told and their absence is not.
+    pub eyes_seen: std::cell::Cell<bool>,
 }
 
 impl Aula<'_> {
+    /// One beat of the heart: what is measured now, and a message if it is due.
+    fn pulse(&self, body: &[u8]) -> Answer {
+        use crate::pulsus::{held_for, wand_present};
+        let root = std::str::from_utf8(body)
+            .ok()
+            .and_then(|t| json::parse(t).ok())
+            .unwrap_or(Json::Null);
+        let flags = sky_of(&root, &self.sky).unwrap_or_else(|_| self.sky.clone());
+        let c = caelum_of(&flags);
+        let now = c.hora.unwrap_or_else(horae::now);
+        let mut facts = Vec::new();
+        if !(self.reachable)() {
+            facts.push("The model does not answer.".to_string());
+        }
+        let eyes_up = self.eyes.as_ref().is_some_and(|e| {
+            TcpStream::connect_timeout(&e.address, Duration::from_millis(300)).is_ok()
+        });
+        if eyes_up {
+            self.eyes_seen.set(true);
+        } else if self.eyes_seen.get() {
+            facts.push("The eyes no longer answer.".to_string());
+        }
+        if let Some(stick) = crate::sessio::virga_of(&self.sky) {
+            if !wand_present(Path::new(stick)) {
+                crate::sessio::lay_down_binding();
+                facts.push(
+                    "The wand's stick has been taken out: the binding is laid down.".to_string(),
+                );
+            }
+        }
+        for (n, (t0, _)) in self.tenti.borrow().iter() {
+            let Some(s) = goetia().by_number(*n as i64) else {
+                continue;
+            };
+            facts.push(format!("{} has been held {}.", s.name, held_for(now - t0)));
+            let held = horae::Caelum {
+                tentus: Some((*n as i64, *t0)),
+                ..c
+            };
+            if horae::ultra_horam(*n as i64, &s.ranks, &held) {
+                facts.push(format!("{}'s hour has passed; it grows restless.", s.name));
+            }
+        }
+        if crate::sessio::binding_left().is_some_and(|l| l < Duration::from_secs(300)) {
+            facts.push(
+                "The binding is laid down within five minutes unless a question is asked."
+                    .to_string(),
+            );
+        }
+        let mut p = self.pulsus.borrow_mut();
+        p.beat(std::time::Instant::now(), facts);
+        answer(
+            "200 OK",
+            "application/json",
+            format!(
+                "{{\"seq\":{},\"nuntius\":{},\"intervallum\":{}}}",
+                p.seq,
+                p.message
+                    .as_deref()
+                    .map(quote)
+                    .unwrap_or_else(|| "null".into()),
+                p.gap().as_secs()
+            ),
+        )
+    }
+
     pub fn handle(&self, req: &Request, will: &mut dyn Voluntas) -> Answer {
         let host = format!("127.0.0.1:{}", self.port);
         if req.header("host") != Some(host.as_str()) {
@@ -576,6 +646,12 @@ impl Aula<'_> {
                 }
                 tempus(&req.body, &self.sky, &self.tenti.borrow())
             }
+            ("POST", "pulsus") => {
+                if req.header("content-type") != Some("application/json") {
+                    return refused("wrong content type");
+                }
+                self.pulse(&req.body)
+            }
             ("POST", "dimitte") => {
                 if req.header("content-type") != Some("application/json") {
                     return refused("wrong content type");
@@ -644,6 +720,15 @@ pub fn serve(
             TcpStream::connect_timeout(&exemplar, Duration::from_millis(400)).is_ok()
         }),
         tenti: RefCell::default(),
+        pulsus: RefCell::new(crate::pulsus::Pulsus::new(
+            std::env::current_exe()
+                .ok()
+                .and_then(|p| p.parent().map(|d| d.join(crate::initium::INI)))
+                .and_then(|p| std::fs::read_to_string(p).ok())
+                .and_then(|t| crate::initium::read_ini(&t).heartbeat)
+                .unwrap_or(30),
+        )),
+        eyes_seen: std::cell::Cell::new(false),
         eyes: crate::llama::parse_url(exemplar_url)
             .ok()
             .and_then(|e| crate::visus::eyes_of(&e)),

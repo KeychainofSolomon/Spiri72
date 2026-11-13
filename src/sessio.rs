@@ -2,10 +2,49 @@ use std::fs;
 use std::io::{BufRead, Write};
 use std::path::Path;
 
+use annulus::baculum::Baculum;
 use annulus::lingua::exsequi::Voluntas;
 use annulus::lingua::json::Json;
 use annulus::lingua::registra::{goetia, Spirit};
-use annulus::mandata::ritus_with;
+use annulus::mandata::ritus_ligata;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
+/// The binding (Annulus `operator.md` §8.8), kept between questions while a spirit is
+/// held: a question that only reads asks no words. With the time it was last used.
+static LIGATIO: Mutex<Option<(Baculum, Instant)>> = Mutex::new(None);
+/// A binding left unused this long is laid down; the next question asks the words again.
+pub const LIGATIO_OTIUM: Duration = Duration::from_secs(15 * 60);
+
+/// Lays the binding down at once (the wand's stick was taken out, or the session ends).
+pub fn lay_down_binding() {
+    *LIGATIO.lock().unwrap_or_else(|e| e.into_inner()) = None;
+}
+
+/// How long the binding has left before it is laid down for idleness, if one is held.
+pub fn binding_left() -> Option<Duration> {
+    LIGATIO
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .as_ref()
+        .map(|(_, t)| LIGATIO_OTIUM.saturating_sub(t.elapsed()))
+}
+
+fn ritus_bound(
+    args: &[String],
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+    will: &mut dyn annulus::lingua::exsequi::Voluntas,
+) -> Result<u8, annulus::mandata::Usage> {
+    let mut slot = LIGATIO.lock().unwrap_or_else(|e| e.into_inner());
+    let mut held = slot
+        .take()
+        .filter(|(_, t)| t.elapsed() < LIGATIO_OTIUM)
+        .map(|(b, _)| b);
+    let r = ritus_ligata(args, out, err, Some(will), &mut held);
+    *slot = held.map(|b| (b, Instant::now()));
+    r
+}
 use annulus::officia::{signature, Class};
 
 use crate::ingenium::record_verdict;
@@ -419,7 +458,7 @@ fn perform(
         out,
         kept: Vec::new(),
     };
-    let code = match ritus_with(&args, &mut said, err, Some(will)) {
+    let code = match ritus_bound(&args, &mut said, err, will) {
         Ok(code) => code,
         Err(usage) => {
             let _ = writeln!(err, "error: {}", usage.0);

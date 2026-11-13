@@ -50,6 +50,8 @@ pub struct Ini {
     pub eyes_mmproj: Option<PathBuf>,
     /// The Operator chose to go without sight.
     pub blind: bool,
+    /// Seconds between the heartbeat's messages at least (`heartbeat = 60`); never under 30.
+    pub heartbeat: Option<u64>,
 }
 
 pub fn read_ini(text: &str) -> Ini {
@@ -65,6 +67,7 @@ pub fn read_ini(text: &str) -> Ini {
             "eyes" => ini.eyes = Some(v),
             "eyes-mmproj" => ini.eyes_mmproj = Some(v),
             "sight" => ini.blind = v.as_os_str() == "none",
+            "heartbeat" => ini.heartbeat = v.to_str().and_then(|s| s.trim().parse().ok()),
             _ => {}
         }
     }
@@ -88,6 +91,9 @@ pub fn write_ini(ini: &Ini) -> String {
     }
     if ini.blind {
         s.push_str("sight = none\n");
+    }
+    if let Some(n) = ini.heartbeat {
+        s.push_str(&format!("heartbeat = {n}\n"));
     }
     s
 }
