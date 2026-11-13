@@ -1,0 +1,137 @@
+# liber: solomonica
+# nomen: the solomonic art
+# claves: secret, hidden, art, arts, science, sciences, liberal, dignities, knowledge, invisible, familiar, familiars, magic, conjure, spirits, seal, seals, circle
+
+== solomonic-magic | clavicula | key-of-solomon ==
+The Solomonic art is the Western grimoire tradition of binding spirits by divine
+authority, laid under the name of King Solomon, who in legend commanded the
+spirits with a God-given ring and seal. Its root book is the Clavicula Salomonis
+(Key of Solomon), a Latin and Italian work of the 16th-17th centuries (older
+roots behind it), surviving in many manuscripts and printed by S.L. MacGregor
+Mathers in 1889. Its heart is this: the operator works not by his own power but
+by the Names of God, in a state of purity, at the right time, with consecrated
+tools. Described here as the tradition prescribes it, not as a claim that it
+works.
+
+== the-lemegeton | lesser-key ==
+The Lemegeton, or Lesser Key of Solomon, is a 17th-century compilation of five
+books, each a different order of spirit-work. Ars Goetia: the 72 demons, their
+seals and offices, bound by conjuration. Ars Theurgia-Goetia: 31 aerial spirits
+of the compass (drawn from Trithemius). Ars Paulina: the angels of the 24 hours
+and of the degrees of the zodiac. Ars Almadel: the angels of the four
+"altitudes." Ars Notoria: prayers and figures for infused learning — the oldest
+part, of the 13th century. Spiri72's own frame descends from the first of these.
+
+== ars-goetia | the-seventy-two ==
+The Ars Goetia gives 72 spirits (kings, dukes, princes, marquises, presidents,
+earls, knights), each with a name, a rank, a tally of legions, a seal, and
+offices — to teach, to reveal, to reconcile or to destroy. The operator calls one
+by its seal and office, within the circle, constrains it to the triangle, binds
+it to truth and to the task, then licenses it to depart. The brass vessel stands
+by for the disobedient. This is the frame the Spiri72 project renders in
+software, office and seal and licence alike.
+
+== the-magic-circle ==
+The circle is the operator's ground and guard: a ring (nine feet across in the
+Goetia) inscribed with divine names and drawn with rite, within which he stands
+protected. The spirit, called into the world, cannot cross it. Everything of the
+operation is ordered and sealed — nothing left to chance is the point. In the
+tradition its power is not the chalk but the Names written in it and the purity
+of the one who stands there; the circle is authority made visible.
+
+== the-triangle-of-art ==
+Set outside the circle, a little way off, stands the Triangle of Art, bound with
+names and often with the divine name around its sides — the one place the spirit
+is constrained to appear and be held. The operator never leaves the circle; the
+spirit never leaves the triangle. (Spiri72 keeps this exactly: the spirit's seal
+is set in the triangle, and there it answers.) A vessel of black mirror or smoke
+was sometimes set in it for the spirit to manifest within.
+
+== the-divine-names ==
+The engine of the whole art is the names of God, by which — not by the operator's
+own will — the spirits are compelled. Tetragrammaton (YHVH), Adonai, Elohim, El,
+Ehyeh, Shaddai, and a great many more, Hebrew and Greek and corrupt Latin, are
+spoken and written on circle, seal and lamen. The operator conjures "in the name
+of" this authority, as a herald bears a king's word. This is the deep principle:
+no power is the magician's own — the same law Annulus is built on.
+
+== the-pentacles | planetary-pentacles ==
+The Key of Solomon gives 44 pentacles — discs of names and figures, seven planets'
+worth — each for a purpose: to open the earth's treasure, to win favour, to turn
+back harm, to call or bind spirits of that planet. Made of the planet's metal or
+drawn in the right colour, in its day and hour, consecrated. They are the
+talismanic side of the art: not tools of force but seals of authority, carried or
+shown to command what answers to that planet.
+
+== the-instruments | the-tools ==
+The operator's tools, each consecrated with rite and made at the right hour: the
+wand or staff (command), the sword and the knives (one black-hilted, one white,
+for the circle and for cutting), the lamen or pentacle worn on the breast (the
+operator's warrant and guard), the ring (Solomon's, to look through or to cover
+the face against a spirit's visage), the censer, the vessel, and clean garments
+of linen. The making and keeping of them is half the discipline.
+
+== planetary-hours | the-timing ==
+Every work is set to its time. The day and its night each split into twelve
+unequal "planetary hours," ruled in turn by the seven planets in the Chaldean
+order (Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon), the first hour of each
+day giving that day its planet. Add the Moon's phase (waxing to build, waning to
+loose) and the right sign. A work done in its planet's hour is held to be in
+tune with what it calls on. Spiri72 enforces this in its own hours and rules.
+
+== purification | preparation ==
+Before any calling, the operator prepares: days of fasting and abstinence,
+chastity, confession and prayer, a ritual bath, clean (often new) garments, a
+clean and private place. The tools and the book are consecrated. The tradition
+holds the operation only as strong as the operator's purity and resolve — an
+unready or fearful operator is in danger. Preparation is most of the work; the
+calling is brief.
+
+== the-conjuration | the-constraint ==
+The calling escalates. First the invocation, naming the spirit, its seal and
+office, by the divine names. If it tarries, stronger conjurations; then the
+"constraint" and the Spirits' Chain, binding it to come; last the curse or
+"spirit of cursing," threatening the brass vessel and the fire until it appears.
+Once present, it is bound to truth and set its task. Every step is by the Names
+and the seals, never by threat alone — the force is borrowed authority, applied
+in measure.
+
+== the-brass-vessel ==
+The Brass Vessel is the legendary prison of the 72: Solomon, the tale runs, shut
+the spirits in a brass vessel sealed with his seal and cast it into a deep lake,
+whence it was later broken open. In the operation it stands by, threatened, as
+the last constraint for a spirit that will not obey or depart. (Spiri72 keeps a
+"Vessel" of its own, where a banished spirit's refused work is quarantined.)
+
+== licence-to-depart ==
+No calling is ended until the spirit is dismissed with the Licence to Depart —
+"go in peace to your place, and peace be between us" (vade in pace). To leave a
+spirit undismissed is held the real danger of the art, worse than failing to call
+it. The dismissal is courteous, not triumphant. Spiri72 enforces this: every
+rite must end in a licence, a holding or a banishment, and the ink runs out if
+none is given.
+
+== ars-notoria ==
+The Ars Notoria, oldest layer of the Lemegeton (13th century), is not spirit-
+constraint but angelic and divine prayer-magic for infused knowledge: by set
+orations and intricate figures (notae) gazed upon in fasting, the operator sought
+to receive memory, eloquence and the mastery of the liberal arts and sciences
+from God and his angels in a flash, without study. The ancestor of the dream of
+learning poured in, not earned.
+
+== the-heptameron ==
+The Heptameron, ascribed to Peter de Abano (really later, 16th c.), is a terse
+practical handbook for conjuring the angels and spirits of the seven days and
+their planetary hours: the circles, names, seals and conjurations for each day,
+the ruling angel, its ministers, the airs and winds. Compact and much-used, it
+sits between the angelic and the goetic styles, and lent much to the Lemegeton's
+timing and forms.
+
+== how-it-works | the-theory ==
+The tradition's own account: the cosmos is a great chain from God down through
+angels, stars and elements to earth, all bound by sympathy, so that the higher
+rules the lower and like answers to like. Spirits are powers within that order.
+The operator commands them not by his own might but as a delegate holding God's
+Names and Solomon's warrant, purified so as to be a fit vessel, timing his work to
+the stars so it runs with the grain of things. Modern eyes read it as symbol,
+psychology or theatre; set down here is how the art understood itself.

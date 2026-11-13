@@ -33,9 +33,16 @@ pub const DIR: &str = "spiri72.scientia";
 
 /// The starter libraries, written out on first run if none are present. The
 /// Operator may edit them and add more.
-const SEEDS: [(&str, &str); 2] = [
+const SEEDS: [(&str, &str); 9] = [
     ("flora.txt", include_str!("../scientia/flora.txt")),
     ("astronomia.txt", include_str!("../scientia/astronomia.txt")),
+    ("tarot.txt", include_str!("../scientia/tarot.txt")),
+    ("divinatio.txt", include_str!("../scientia/divinatio.txt")),
+    ("solomonica.txt", include_str!("../scientia/solomonica.txt")),
+    ("angelica.txt", include_str!("../scientia/angelica.txt")),
+    ("paedagogia.txt", include_str!("../scientia/paedagogia.txt")),
+    ("litterae.txt", include_str!("../scientia/litterae.txt")),
+    ("poetica.txt", include_str!("../scientia/poetica.txt")),
 ];
 
 /// One keyed entry of a library.
