@@ -216,6 +216,7 @@ pub fn grammar_praeterita(open: &[Outcome]) -> Result<String, String> {
         "iudicatum",
         "commissum",
         "dimissus",
+        "retentus",
         "relegatus",
     ]
     .iter()

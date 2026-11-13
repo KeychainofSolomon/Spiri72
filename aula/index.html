@@ -350,7 +350,7 @@ function bind() {
 function depart(quietly) {
   const s = state.chosen;
   if (!state.bound) return;
-  fetch(base + "dimitte", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n }) }).catch(() => {});
+  fetch(base + "dimitte", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, locus: state.sky.locus, caelum: state.sky.caelum }) }).catch(() => {});
   state.bound = false;
   document.body.classList.remove("bound");
   document.getElementById("ring-text").textContent = ringFor(null);
