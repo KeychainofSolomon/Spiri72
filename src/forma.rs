@@ -4,7 +4,7 @@ use annulus::nucleus::{Effect, Outcome, Verb};
 
 pub const MAX_WORDS: usize = 16 * 1024;
 
-const VERBS: [(&str, Verb); 8] = [
+pub const VERBS: [(&str, Verb); 8] = [
     ("scribe", Verb::Scribe),
     ("crea", Verb::Crea),
     ("dele", Verb::Dele),
@@ -232,6 +232,60 @@ pub fn grammar_praeterita(open: &[Outcome]) -> Result<String, String> {
                 body.as_str()
             } else {
                 l
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n")
+}
+
+/// A GBNF literal that matches exactly `s`.
+fn gbnf_literal(s: &str) -> String {
+    format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+/// The grammar for a working office, narrowed by Annulus's own table of
+/// what each handed place allows: a work may name only a handed place, and
+/// only a verb that place permits. This opens nothing; it only keeps the
+/// model from proposing what the angel would refuse. Where Annulus gives no
+/// table, the full grammar stands.
+pub fn grammar_working(
+    open: &[Outcome],
+    office: &str,
+    modus: Option<&str>,
+    loci: &[String],
+) -> Result<String, String> {
+    let full = grammar(open, false)?;
+    let Some(perms) = annulus::officia::places(office, modus, loci.len()) else {
+        return Ok(full);
+    };
+    let mut alternatives = Vec::new();
+    for (place, p) in loci.iter().zip(&perms) {
+        let verbs: Vec<String> = crate::tabula::verbs_for(p)
+            .iter()
+            .map(|w| gbnf_literal(&format!("\"{w}\"")))
+            .collect();
+        if verbs.is_empty() {
+            continue;
+        }
+        alternatives.push(format!(
+            "\"{{\" ws \"\\\"verbum\\\"\" ws \":\" ws ( {} ) ws \",\" ws \"\\\"locus\\\"\" ws \":\" ws {} ws \",\" ws \"\\\"data\\\"\" ws \":\" ws string ws \"}}\"",
+            verbs.join(" | "),
+            gbnf_literal(&crate::llama::quote(place))
+        ));
+    }
+    if alternatives.is_empty() {
+        return Ok(full);
+    }
+    let effect = format!("effect ::= {}", alternatives.join(" | "));
+    Ok(full
+        .lines()
+        .filter(|l| !l.starts_with("verbum ::="))
+        .map(|l| {
+            if l.starts_with("effect ::=") {
+                effect.clone()
+            } else {
+                l.to_string()
             }
         })
         .collect::<Vec<_>>()

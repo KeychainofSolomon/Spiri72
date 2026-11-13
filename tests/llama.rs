@@ -2,7 +2,7 @@ use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::thread;
 
-use spiri72::llama::{parse_url, quote, read_reply, Rogatio};
+use spiri72::llama::{parse_url, quote, read_reply, read_reply_counted, Rogatio, Sampler};
 
 #[test]
 fn only_this_computer_is_reached() {
@@ -37,10 +37,60 @@ fn text_is_quoted_for_json() {
         user: "u\"",
         grammar: "root ::= \"x\"",
         max_tokens: 5,
-        temperature: 0.5,
+        sampler: &Sampler::default(),
     }
     .body();
     assert!(annulus::lingua::json::parse(&body).is_ok(), "{body}");
+}
+
+#[test]
+fn the_whole_sampler_is_sent() {
+    let mut sampler = Sampler::default();
+    let body = |s: &Sampler| {
+        Rogatio {
+            system: "s",
+            user: "u",
+            grammar: "g",
+            max_tokens: 5,
+            sampler: s,
+        }
+        .body()
+    };
+    let plain = body(&sampler);
+    for part in [
+        "\"temperature\":0.7",
+        "\"top_p\":0.8",
+        "\"top_k\":20",
+        "\"min_p\":0",
+        "\"presence_penalty\":1.5",
+    ] {
+        assert!(plain.contains(part), "{part} in {plain}");
+    }
+    assert!(!plain.contains("seed"), "{plain}");
+    assert!(plain.contains("\"cache_prompt\":true"), "{plain}");
+    sampler.set("--seed", "72").unwrap();
+    sampler.set("--top-k", "40").unwrap();
+    let seeded = body(&sampler);
+    assert!(seeded.contains("\"seed\":72") && seeded.contains("\"top_k\":40"));
+    assert!(annulus::lingua::json::parse(&seeded).is_ok(), "{seeded}");
+}
+
+#[test]
+fn sampler_values_out_of_range_are_refused() {
+    let mut s = Sampler::default();
+    for (flag, v) in [
+        ("--temperature", "3"),
+        ("--temperature", "NaN"),
+        ("--top-p", "1.5"),
+        ("--top-k", "-1"),
+        ("--min-p", "2"),
+        ("--presence-penalty", "9"),
+        ("--seed", "x"),
+        ("--nonsense", "1"),
+    ] {
+        assert!(s.set(flag, v).is_err(), "{flag} {v}");
+    }
+    assert_eq!(s, Sampler::default());
 }
 
 const OK: &str = r#"{"choices":[{"message":{"role":"assistant","content":"{\"exitus\":\"obsequium\",\"responsum\":\"ita\"}"}}]}"#;
@@ -96,7 +146,7 @@ fn a_request_reaches_a_local_server() {
             user: "usr",
             grammar: "root ::= \"x\"",
             max_tokens: 7,
-            temperature: 0.1,
+            sampler: &Sampler::default(),
         })
         .unwrap();
     assert!(reply.contains("obsequium"));
@@ -120,8 +170,29 @@ fn an_absent_model_is_an_error() {
             user: "",
             grammar: "",
             max_tokens: 1,
-            temperature: 0.0,
+            sampler: &Sampler::default(),
         })
         .unwrap_err();
     assert!(e.contains("cannot reach"), "{e}");
+}
+
+#[test]
+fn the_cost_of_a_reply_is_read() {
+    let body = r#"{"choices":[{"message":{"content":"x"}}],"usage":{"prompt_tokens":900,"completion_tokens":40},"timings":{"cache_n":850}}"#;
+    let raw = format!(
+        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{body}",
+        body.len()
+    );
+    let r = read_reply_counted(raw.as_bytes()).unwrap();
+    assert_eq!(
+        (r.content.as_str(), r.prompt, r.cached, r.completion),
+        ("x", 900, 850, 40)
+    );
+    // A server that gives no counts still gives the reply.
+    let raw = format!(
+        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{OK}",
+        OK.len()
+    );
+    let r = read_reply_counted(raw.as_bytes()).unwrap();
+    assert_eq!((r.prompt, r.cached, r.completion), (0, 0, 0));
 }
