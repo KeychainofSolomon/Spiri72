@@ -32,7 +32,7 @@ dependencies = [
 [[package]]
 name = "annulus"
 version = "0.2.1"
-source = "git+https://github.com/KeychainofSolomon/Annulus?rev=975e960bb8151520298b27bdd19f94a15eca90b0#975e960bb8151520298b27bdd19f94a15eca90b0"
+source = "git+https://github.com/KeychainofSolomon/Annulus?rev=fa15253b34c3648444f0a4d557029271a4d83907#fa15253b34c3648444f0a4d557029271a4d83907"
 dependencies = [
  "virga",
 ]
