@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "annulus"
 version = "0.2.1"
-source = "git+https://github.com/KeychainofSolomon/Annulus?rev=13347985ffe71ba8a82b88c195b152028c0cee5a#13347985ffe71ba8a82b88c195b152028c0cee5a"
+source = "git+https://github.com/KeychainofSolomon/Annulus?rev=138552b694156f593048a855835305856d82913f#138552b694156f593048a855835305856d82913f"
 dependencies = [
  "virga",
 ]
