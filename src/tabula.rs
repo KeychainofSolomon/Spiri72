@@ -95,6 +95,10 @@ pub const OFFICES: &[(&str, &str)] = &[
         "answer questions: you read the texts handed to you and answer",
     ),
     (
+        "DOCTRINA",
+        "teach your arts: you answer, and give a certificate of the computations asked, which the angel computes again",
+    ),
+    (
         "PRAETERITA",
         "tell what is past in this run; the angel checks every claim against the record",
     ),
@@ -167,6 +171,22 @@ pub fn facultates(s: &Spirit, office: &str, modus: Option<&str>, loci: &[String]
             "Recorded of you, but with no working in Annulus, so not to be called on here: {}.\n",
             names.join(", ")
         ));
+    }
+    if !s.artes.is_empty() {
+        let checked: Vec<&str> = annulus::doctrina::KINDS
+            .iter()
+            .map(|(_, art)| *art)
+            .filter(|art| s.artes.iter().any(|a| a == art))
+            .collect();
+        out.push_str(&format!("Your arts: {}.", s.artes.join(", ")));
+        if checked.is_empty() {
+            out.push_str(" The angel can check none of them yet, so your lessons are held.\n");
+        } else {
+            out.push_str(&format!(
+                " Of these the angel can check {} by computing again.\n",
+                checked.join(", ")
+            ));
+        }
     }
     out.push_str(&format!(
         "\nIn this rite you are charged through {office} alone."
