@@ -6,13 +6,14 @@
 <title>Spiri72</title>
 <style>
 :root {
-  --lapis: #0f2b6e;
-  --lapis-band: #0b2259;
-  --lapis-line: #2c4a94;
-  --ink: #f4f2ec;
-  --pewter: #a9b7da;
-  --rubric: #e5512f;
-  --gold: #dcb862;
+  /* black ground, white text and lines (the owner's ruling); only the seals keep their metals */
+  --lapis: #000;
+  --lapis-band: #0b0b0b;
+  --lapis-line: #3d3d3d;
+  --ink: #f2f2f2;
+  --pewter: #9c9c9c;
+  --rubric: #ffffff;
+  --gold: #f2f2f2;
   --face: "Palatino Linotype", "Book Antiqua", Palatino, "URW Palladio L", P052, Georgia, serif;
   --measure: 34rem;
 }
@@ -61,7 +62,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 body.bound .triangle .seat { animation: halo 5s ease-in-out infinite; }
 body.binding .triangle .seat { animation: seize 1.6s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes halo { 0%, 100% { filter: drop-shadow(0 0 3px var(--metal, var(--gold))); } 50% { filter: drop-shadow(0 0 12px var(--metal, var(--gold))); } }
-@keyframes seize { 0% { filter: drop-shadow(0 0 0 transparent); transform: scale(1); } 35% { filter: drop-shadow(0 0 22px #fff3c8); transform: scale(1.06); } 100% { filter: drop-shadow(0 0 4px var(--metal, var(--gold))); transform: scale(1); } }
+@keyframes seize { 0% { filter: drop-shadow(0 0 0 transparent); transform: scale(1); } 35% { filter: drop-shadow(0 0 22px #fff); transform: scale(1.06); } 100% { filter: drop-shadow(0 0 4px var(--metal, var(--gold))); transform: scale(1); } }
 .seals button { transition: transform .25s, border-color .25s, background .25s; }
 .seals button:not([data-closed]):hover { transform: scale(1.08); }
 .triangle .seat { transform-origin: 300px 330px; }
@@ -86,7 +87,7 @@ body.binding .triangle .seat { animation: seize 1.6s cubic-bezier(.2, .7, .2, 1)
 /* the binding */
 @property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 .circle::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0;
-  background: conic-gradient(from var(--sweep), transparent 0 78%, rgba(243, 226, 166, .15) 86%, rgba(255, 240, 190, .95) 99%, transparent 100%);
+  background: conic-gradient(from var(--sweep), transparent 0 78%, rgba(255, 255, 255, .12) 86%, rgba(255, 255, 255, .95) 99%, transparent 100%);
   -webkit-mask-image: radial-gradient(circle closest-side, transparent 85%, #000 87.5%, #000 98.5%, transparent 100%);
           mask-image: radial-gradient(circle closest-side, transparent 85%, #000 87.5%, #000 98.5%, transparent 100%); }
 .circle::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0;
@@ -125,8 +126,9 @@ body.departing .circle .ring text, body.departing .triangle .seat { animation: f
 .said .verdict { font-style: normal; letter-spacing: .12em; font-size: .78rem; margin-left: .4rem; }
 .verdict.ratum { color: var(--ink); }
 .verdict.suspensum { color: var(--pewter); }
+.verdict.irritum { text-decoration: line-through; }
 .verdict.irritum, .said.refused { color: var(--rubric); }
-.said.refused { font-style: normal; border-left: 2px solid var(--rubric); padding-left: .85rem; }
+.said.refused { font-style: normal; border-left: 2px dashed var(--ink); padding-left: .85rem; }
 .said .recipe { display: block; margin-top: .4rem; font-style: normal; font-size: .8rem; background: none; border: 1px solid var(--lapis-line); color: var(--ink); border-radius: 2px; cursor: pointer; padding: .15rem .5rem; }
 .said .recipe[disabled] { cursor: default; color: var(--pewter); }
 .said.waiting { color: var(--pewter); font-style: italic; text-align: center; }
@@ -150,7 +152,7 @@ form.ask textarea {
 }
 form.ask textarea::placeholder { color: var(--pewter); }
 form.ask button, .entry button.primary {
-  border: 1px solid var(--gold); background: var(--gold); color: #0b2259; padding: 0 1.1rem; border-radius: 2px; cursor: pointer;
+  border: 1px solid var(--gold); background: var(--gold); color: #000; padding: 0 1.1rem; border-radius: 2px; cursor: pointer;
 }
 form.ask button:disabled, form.ask textarea:disabled { opacity: .4; cursor: not-allowed; }
 
@@ -171,7 +173,7 @@ form.ask button:disabled, form.ask textarea:disabled { opacity: .4; cursor: not-
 
 footer { grid-area: foot; border-top: 1px solid var(--lapis-line); padding: .7rem 1.4rem; font-size: .82rem; color: var(--pewter); display: flex; gap: 1.5rem; flex-wrap: wrap; }
 footer .dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: var(--pewter); margin-right: .45rem; vertical-align: middle; }
-footer .up .dot { background: #7fb38a; }
+footer .up .dot { background: var(--ink); }
 footer .down { color: var(--rubric); }
 footer .down .dot { background: var(--rubric); }
 footer .sky { display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; }
