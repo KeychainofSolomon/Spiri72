@@ -186,6 +186,8 @@ footer .sky input, footer .sky select { background: var(--lapis-band); border: 1
 footer .sky input { width: 9.5rem; }
 footer #tempus { color: var(--ink); }
 footer #wand.real { color: var(--gold); }
+footer .sound { background: none; border: 1px solid var(--lapis-line); border-radius: 2px; color: var(--pewter); padding: 0 .55rem; cursor: pointer; font-size: .82rem; }
+footer .sound[aria-pressed="true"] { color: var(--ink); }
 
 @media (max-width: 1100px) {
   body { height: auto; overflow: auto; grid-template-columns: minmax(15rem, 18rem) 1fr; grid-template-areas: "catalogue stage" "catalogue entry" "foot foot"; grid-template-rows: auto auto auto; }
@@ -291,6 +293,7 @@ footer #wand.real { color: var(--gold); }
     <span id="tempus"></span>
   </span>
   <span id="model"><span class="dot"></span>Checking the model…</span>
+  <button type="button" id="sound" class="sound" aria-pressed="true">Sound on</button>
   <span id="wand">Test wand: nothing done here is valid for a real installation.</span>
 </footer>
 
@@ -460,6 +463,64 @@ function surface(node) {
     { duration: 1300 * k, delay: (600 + Math.min(i * 38 * (.5 + Math.random()), 2200)) * k, easing: "cubic-bezier(.2, .7, .2, 1)", fill: "backwards" }));
 }
 
+// Sound, made in the page (no recordings): tones tuned in Pythagorean ratios (the fifth 3:2,
+// the fourth 4:3, the tone 9:8, the octave 2:1) through a small hall of echoes.
+const sound = { on: (() => { try { return localStorage.getItem("spiri72-sound") !== "off"; } catch { return true; } })(), ctx: null, out: null };
+function hall() {
+  if (!sound.on) return null;
+  if (!sound.ctx) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const out = ctx.createGain(); out.gain.value = .55;
+    const dry = ctx.createGain(), wet = ctx.createGain(); wet.gain.value = .5;
+    out.connect(dry).connect(ctx.destination);
+    [.137, .211, .293].forEach((t, i) => {  // three echoing paths, darkened as they return
+      const d = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter();
+      d.delayTime.value = t; fb.gain.value = .42 - i * .06; lp.type = "lowpass"; lp.frequency.value = 2400 - i * 500;
+      out.connect(d).connect(lp).connect(fb).connect(d); lp.connect(wet);
+    });
+    wet.connect(ctx.destination);
+    sound.ctx = ctx; sound.out = out;
+  }
+  if (sound.ctx.state === "suspended") sound.ctx.resume();
+  return sound.ctx;
+}
+function tone(f, at, dur, peak, type = "sine", rise = .008) {
+  const ctx = sound.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(peak, at + rise); g.gain.exponentialRampToValueAtTime(.0001, at + dur);
+  o.connect(g).connect(sound.out); o.start(at); o.stop(at + dur + .05);
+  return o;
+}
+// An answer arrives: a struck bell and its fifth and octave, on a degree drawn afresh each time.
+function chime() {
+  const ctx = hall(); if (!ctx) return;
+  const t = ctx.currentTime + .02, f = 392 * [1, 9 / 8, 4 / 3, 3 / 2][Math.floor(Math.random() * 4)];
+  tone(f, t, 1.1, .16); tone(f * 3 / 2, t + .07, .95, .09); tone(f * 2, t + .14, .8, .06);
+  tone(f * 2.76, t, .35, .025);  // the bell's own bright, inharmonic partial
+}
+// The summoning: a low drone on a root, its fifth and octave, opening as the descent falls,
+// a breath of smoke, and a deep bell when the spirit is held.
+function summon() {
+  const ctx = hall(); if (!ctx) return;
+  const t = ctx.currentTime + .02, root = 73.42;  // D
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 6;
+  lp.frequency.setValueAtTime(180, t); lp.frequency.exponentialRampToValueAtTime(1600, t + 1.3); lp.frequency.exponentialRampToValueAtTime(260, t + 2.6);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.2, t + 1.1); g.gain.exponentialRampToValueAtTime(.0001, t + 2.8);
+  lp.connect(g).connect(sound.out);
+  [[1, -6], [3 / 2, 5], [2, -3], [3, 7]].forEach(([r, cents]) => {
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = root * r; o.detune.value = cents;
+    o.connect(lp); o.start(t); o.stop(t + 2.9);
+  });
+  const n = ctx.createBufferSource(), buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  n.buffer = buf;
+  const bp = ctx.createBiquadFilter(), ng = ctx.createGain(); bp.type = "bandpass"; bp.Q.value = 1.4;
+  bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(2400, t + 1.6);
+  ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(.05, t + .9); ng.gain.exponentialRampToValueAtTime(.0001, t + 2);
+  n.connect(bp).connect(ng).connect(sound.out); n.start(t); n.stop(t + 2);
+  tone(root * 2, t + 2.05, 2.2, .2); tone(root * 3, t + 2.08, 1.8, .1); tone(root * 4, t + 2.1, 1.4, .06);
+}
+
 function say(node) {
   const d = document.getElementById("dialogue");
   document.getElementById("empty")?.remove();
@@ -480,7 +541,7 @@ function bind() {
   document.body.classList.remove("departing");
   document.body.classList.add("bound");
   fitRing(ringFor(s));
-  play("binding", 3300); descend(2100, false);
+  play("binding", 3300); descend(2100, false); summon();
   say(el("p", { class: "said waiting bound-note" }, `${s.name} is bound through ${state.office.toLowerCase()}.`));
   setAsking(true);
   renderEntry();
@@ -568,6 +629,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
       node.classList.add(`verdict-${a.iudicium.toLowerCase()}`);
       say(node);
       if (a.verba) surface(node);
+      chime();
     } else {
       say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
     }
@@ -589,6 +651,17 @@ for (const id of ["locus", "caelum"]) {
     state.sky[id] = input.value.trim();
     try { localStorage.setItem("spiri72-sky", JSON.stringify(state.sky)); } catch {}
     refreshTempus();
+  });
+}
+
+{
+  const b = document.getElementById("sound");
+  const show = () => { b.setAttribute("aria-pressed", String(sound.on)); b.textContent = sound.on ? "Sound on" : "Sound off"; };
+  show();
+  b.addEventListener("click", () => {
+    sound.on = !sound.on; show();
+    try { localStorage.setItem("spiri72-sound", sound.on ? "on" : "off"); } catch {}
+    if (!sound.on && sound.ctx) sound.ctx.suspend();
   });
 }
 
