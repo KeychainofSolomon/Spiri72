@@ -204,3 +204,18 @@ fn what_the_spirit_is_handed_says_nothing_of_how_it_was_found() {
         assert!(!text.contains(leak), "{leak:?} in {text}");
     }
 }
+
+#[test]
+fn an_overlong_line_is_refused_before_it_is_held() {
+    // outside review, 2026-11-13: the book is read one bounded line at a time
+    let d = folder("overlong");
+    let f = spirit("Furfur");
+    note_rite(&d, f, "furfur-1", "RESPONSA", "a question", "RATUM").unwrap();
+    let path = memoria::path_of(&d, f).unwrap();
+    let mut text = fs::read_to_string(&path).unwrap();
+    text.push_str(&"x".repeat(memoria::MAX_LINE + 10));
+    text.push('\n');
+    fs::write(&path, text).unwrap();
+    let e = read(&d, f).unwrap_err();
+    assert!(e.contains("longer"), "{e}");
+}
