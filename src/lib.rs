@@ -5,6 +5,7 @@ pub mod fors;
 pub mod ingenium;
 pub mod initium;
 pub mod latina;
+pub mod liber;
 pub mod llama;
 pub mod memoria;
 pub mod persona;
