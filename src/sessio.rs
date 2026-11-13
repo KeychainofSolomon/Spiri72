@@ -17,6 +17,38 @@ pub const RITES: &str = "spiri72.ritus";
 pub const HOUSE: &str = "annulus.domus";
 const MAX_QUESTION: usize = 2000;
 
+/// The sky for one sitting of a spirit. A held spirit (called at `held`, an
+/// open hour, and not yet given licence to depart) is declared with
+/// `--tentus`, so its hours are those of its calling. A spirit not yet held
+/// is called at a fixed hour, which becomes the hour of its calling.
+pub fn held_sky(spirit: &Spirit, sky: &[String], held: Option<i64>) -> (Vec<String>, i64) {
+    let mut flags: Vec<String> = sky.to_vec();
+    let t0 = match held {
+        Some(t0) => {
+            flags.push("--tentus".into());
+            flags.push(format!("{}@{}", spirit.n, annulus::horae::iso(t0)));
+            t0
+        }
+        None => {
+            let t0 = crate::aula::caelum_of(sky)
+                .hora
+                .unwrap_or_else(annulus::horae::now);
+            if !sky.iter().any(|f| f == "--hora") {
+                flags.push("--hora".into());
+                flags.push(annulus::horae::iso(t0));
+            }
+            t0
+        }
+    };
+    (flags, t0)
+}
+
+/// A spirit stays held only while its answers stand: any other judgement
+/// banishes it (`RELEGA`), and a refused or broken rite ends the hold.
+pub fn still_held(verdict: Option<&str>) -> bool {
+    verdict == Some("RATUM")
+}
+
 pub struct Restraints {
     pub before: &'static str,
     pub after: &'static str,
@@ -259,16 +291,34 @@ pub fn ask_once_named(
     out: &mut dyn Write,
     err: &mut dyn Write,
 ) -> (u8, Option<String>) {
+    let (code, name, _) =
+        ask_once_judged(spirit, office, question, handed, dir, sky, will, out, err);
+    (code, name)
+}
+
+/// As `ask_once_named`, also giving the angel's judgement, when there was one.
+#[allow(clippy::too_many_arguments)]
+pub fn ask_once_judged(
+    spirit: &Spirit,
+    office: &str,
+    question: &str,
+    handed: &[String],
+    dir: &Path,
+    sky: &[String],
+    will: &mut dyn Voluntas,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> (u8, Option<String>, Option<String>) {
     let rites = dir.join(RITES);
     if let Err(e) = fs::create_dir_all(&rites) {
         let _ = writeln!(err, "error: cannot make {}: {e}", rites.display());
-        return (1, None);
+        return (1, None, None);
     }
     let program = match rite(spirit, office, question, handed) {
         Ok(p) => p,
         Err(e) => {
             let _ = writeln!(err, "{e}");
-            return (2, None);
+            return (2, None, None);
         }
     };
     let mut written = None;
@@ -278,7 +328,7 @@ pub fn ask_once_named(
             Ok(mut f) => {
                 if let Err(e) = f.write_all(program.as_bytes()).and_then(|_| f.sync_all()) {
                     let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
-                    return (1, None);
+                    return (1, None, None);
                 }
                 written = Some(p);
                 break;
@@ -286,7 +336,7 @@ pub fn ask_once_named(
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
             Err(e) => {
                 let _ = writeln!(err, "error: cannot write {}: {e}", p.display());
-                return (1, None);
+                return (1, None, None);
             }
         }
     }
@@ -296,7 +346,7 @@ pub fn ask_once_named(
             "error: no free name for the rite in {}",
             rites.display()
         );
-        return (1, None);
+        return (1, None, None);
     };
     let args: Vec<String> = [
         path.to_string_lossy().as_ref(),
@@ -318,7 +368,7 @@ pub fn ask_once_named(
         Ok(code) => code,
         Err(usage) => {
             let _ = writeln!(err, "error: {}", usage.0);
-            return (2, None);
+            return (2, None, None);
         }
     };
     // The rite's first line is the angel's judgement (MANIFESTA iudicium).
@@ -331,7 +381,7 @@ pub fn ask_once_named(
         Some(v @ ("RATUM" | "SUSPENSUM" | "IRRITUM")) => {
             if let Err(e) = record_verdict(dir, spirit, v) {
                 let _ = writeln!(err, "error: the judgement was not recorded: {e}");
-                return (code.max(1), None);
+                return (code.max(1), None, Some(v.to_string()));
             }
             let name = path
                 .file_stem()
@@ -350,15 +400,15 @@ pub fn ask_once_named(
             );
             if let Err(e) = fs::write(rites.join(format!("{name}.verba")), kept) {
                 let _ = writeln!(err, "error: the answer was not kept: {e}");
-                return (code.max(1), None);
+                return (code.max(1), None, Some(v.to_string()));
             }
             if let Err(e) = memoria::note_rite(dir, spirit, &name, office, question, v) {
                 let _ = writeln!(err, "error: the rite was not written in the book: {e}");
-                return (code.max(1), None);
+                return (code.max(1), None, Some(v.to_string()));
             }
-            (code, Some(name))
+            (code, Some(name), Some(v.to_string()))
         }
-        _ => (code, None),
+        _ => (code, None, None),
     }
 }
 
@@ -411,10 +461,11 @@ pub fn sessio(
     };
     let _ = writeln!(
         out,
-        "\n{} is bound through {office}. Each question is its own rite: the spirit is called, examined and dismissed.",
+        "\n{} is bound through {office}, and held until you give licence to depart. Each question is examined by the angel; while held, its hours are those of its calling.",
         spirit.name
     );
     let mut worst = 0u8;
+    let mut held: Option<i64> = None;
     let mut last: Option<String> = None;
     while let Some(question) = ask(
         input,
@@ -448,10 +499,20 @@ pub fn sessio(
             continue;
         }
         let _ = writeln!(out);
-        let (code, ritus) = ask_once_named(
-            spirit, &office, &question, &handed, dir, sky, will, out, err,
+        let (sitting, t0) = held_sky(spirit, sky, held);
+        let (code, ritus, verdict) = ask_once_judged(
+            spirit, &office, &question, &handed, dir, &sitting, will, out, err,
         );
         worst = worst.max(code);
+        let was_held = held.is_some();
+        held = still_held(verdict.as_deref()).then_some(t0);
+        if was_held && held.is_none() && code != 2 {
+            let _ = writeln!(
+                out,
+                "{} is banished and no longer held; another question calls it anew, in its own hours.",
+                spirit.name
+            );
+        }
         last = ritus.filter(|r| kept_sound(dir, r));
         if last.is_some() {
             let _ = writeln!(

@@ -321,7 +321,7 @@ function renderEntry() {
     parts.push(actions);
   } else {
     parts.push(el("div", { class: "actions" },
-      el("p", { class: "hint", style: "margin:0" }, `${s.name} is bound through ${state.office.toLowerCase()}${state.liber ? `, and holds ${state.liber}` : ""}. Each question is its own rite: the spirit is called, its answer examined, and it is dismissed.`),
+      el("p", { class: "hint", style: "margin:0" }, `${s.name} is bound through ${state.office.toLowerCase()}${state.liber ? `, and holds ${state.liber}` : ""}. It is held until you give licence to depart, and while held its hours are those of its calling. Each answer is examined by the angel.`),
       el("button", { type: "button", class: "quiet", onclick: () => depart(false) }, "Give licence to depart")));
   }
   entry.replaceChildren(...parts);
@@ -350,6 +350,7 @@ function bind() {
 function depart(quietly) {
   const s = state.chosen;
   if (!state.bound) return;
+  fetch(base + "dimitte", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n }) }).catch(() => {});
   state.bound = false;
   document.body.classList.remove("bound");
   document.getElementById("ring-text").textContent = ringFor(null);
@@ -408,6 +409,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
     } else {
       say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
     }
+    if (a.dimissus && a.exitus !== 2) say(el("p", { class: "said waiting" }, `${s.name} is banished and no longer held; another question calls it anew, in its own hours.`));
     if (a.exitus === 2) depart(false);
   } catch (err) {
     wait.remove();

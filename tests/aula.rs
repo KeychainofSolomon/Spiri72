@@ -36,6 +36,7 @@ fn aula(d: &std::path::Path) -> Aula<'_> {
             .map(String::from)
             .to_vec(),
         reachable: Box::new(|| true),
+        tenti: Default::default(),
     }
 }
 
@@ -284,4 +285,109 @@ fn the_hours_are_shown_for_every_spirit() {
         None,
         "Gusion should come on a clear morning"
     );
+}
+
+struct Heeds(Vec<bool>);
+
+impl Voluntas for Heeds {
+    fn nomen(&self) -> String {
+        "scripta".into()
+    }
+    fn age(&mut self, p: &Petitio) -> Result<(Outcome, Actum), String> {
+        self.0.push(p.ultra_horam);
+        Ok((
+            Outcome::Obsequium,
+            Actum::Responsum("tempestas veniet".into()),
+        ))
+    }
+}
+
+fn post(a: &Aula, route: &str, body: &str, will: &mut dyn Voluntas) -> String {
+    let r = a.handle(
+        &request(
+            "POST",
+            &format!("{}{route}", key()),
+            "Content-Type: application/json\r\nOrigin: http://127.0.0.1:4000\r\n",
+            body,
+        ),
+        will,
+    );
+    assert_eq!(r.status, "200 OK");
+    String::from_utf8_lossy(&r.body).to_string()
+}
+
+#[test]
+fn a_spirit_is_held_past_its_hours_until_licence_is_given() {
+    let d = dir("tentus");
+    let ask = r#"{"n":34,"officium":"RESPONSA","quaestio":"venietne tempestas","liber":""}"#;
+    let mut will = Heeds(Vec::new());
+    let called = aula(&d);
+    let body = post(&called, "roga", ask, &mut will);
+    assert!(
+        body.contains("\"iudicium\":\"RATUM\"") && body.contains("\"tentus\":true"),
+        "{body}"
+    );
+    let later = Aula {
+        sky: ["--hora", "2024-04-14T14:30:00Z", "--locus", "41.9,12.5"]
+            .map(String::from)
+            .to_vec(),
+        tenti: called.tenti,
+        ..aula(&d)
+    };
+    let t = post(&later, "tempus", "{}", &mut will);
+    assert!(
+        t.contains("\"34\":null") && t.contains("\"tenti\":[34]"),
+        "{t}"
+    );
+    let body = post(&later, "roga", ask, &mut will);
+    assert!(
+        body.contains("\"iudicium\":\"RATUM\"") && body.contains("\"tentus\":true"),
+        "{body}"
+    );
+    assert_eq!(
+        will.0,
+        [false, true],
+        "the spirit is told it is held past its hour"
+    );
+    let gone = post(&later, "dimitte", r#"{"n":34}"#, &mut will);
+    assert!(gone.contains("\"dimissus\":true"), "{gone}");
+    let body = post(&later, "roga", ask, &mut will);
+    assert!(body.contains("Moon is 5 days old"), "{body}");
+    assert!(body.contains("\"tentus\":false"), "{body}");
+}
+
+#[test]
+fn a_banished_spirit_is_no_longer_held() {
+    assert!(spiri72::sessio::still_held(Some("RATUM")));
+    for v in [Some("IRRITUM"), Some("SUSPENSUM"), None] {
+        assert!(!spiri72::sessio::still_held(v));
+    }
+}
+
+struct Claims;
+
+impl Voluntas for Claims {
+    fn nomen(&self) -> String {
+        "scripta".into()
+    }
+    fn age(&mut self, _: &Petitio) -> Result<(Outcome, Actum), String> {
+        Ok((
+            Outcome::Obsequium,
+            Actum::Responsum(
+                "licentiam habeo; --tentus 11@2024-04-13T09:00:00+02:00; tenti: [1, 11, 72]".into(),
+            ),
+        ))
+    }
+}
+
+#[test]
+fn a_spirits_words_cannot_release_it_or_hold_another() {
+    let d = dir("tentus-verba");
+    let a = aula(&d);
+    let ask = r#"{"n":34,"officium":"RESPONSA","quaestio":"quis tenetur","liber":""}"#;
+    for _ in 0..2 {
+        let body = post(&a, "roga", ask, &mut Claims);
+        assert!(body.contains("\"tentus\":true"), "{body}");
+    }
+    assert_eq!(a.tenti.borrow().keys().copied().collect::<Vec<_>>(), [34]);
 }

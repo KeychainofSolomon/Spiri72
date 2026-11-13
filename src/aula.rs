@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
@@ -11,7 +13,9 @@ use annulus::lingua::registra::{goetia, Spirit};
 use crate::fors;
 use crate::llama::quote;
 use crate::persona::entry;
-use crate::sessio::{ask_once_named, kept_sound, telling_offices, unbindable};
+use crate::sessio::{
+    ask_once_judged, held_sky, kept_sound, still_held, telling_offices, unbindable,
+};
 use crate::sigilla::SIGILLA;
 
 const PAGE: &str = include_str!("../aula/index.html");
@@ -277,7 +281,7 @@ pub fn caelum_of(flags: &[String]) -> horae::Caelum {
     c
 }
 
-pub fn tempus(body: &[u8], base: &[String]) -> Answer {
+pub fn tempus(body: &[u8], base: &[String], tenti: &BTreeMap<u32, i64>) -> Answer {
     let root = std::str::from_utf8(body)
         .ok()
         .and_then(|t| json::parse(t).ok())
@@ -298,7 +302,12 @@ pub fn tempus(body: &[u8], base: &[String]) -> Answer {
         .spirits
         .iter()
         .map(|s| {
-            let why = unbindable(s).or_else(|| horae::admit(&s.ranks, &c).err());
+            let held = horae::Caelum {
+                tentus: tenti.get(&s.n).map(|t0| (s.n as i64, *t0)),
+                ..c
+            };
+            let why =
+                unbindable(s).or_else(|| horae::admit_spiritum(s.n as i64, &s.ranks, &held).err());
             format!(
                 "\"{}\":{}",
                 s.n,
@@ -310,15 +319,26 @@ pub fn tempus(body: &[u8], base: &[String]) -> Answer {
         "200 OK",
         "application/json",
         format!(
-            "{{\"hora\":{},\"aetas\":{},\"clausi\":{{{}}}}}",
+            "{{\"hora\":{},\"aetas\":{},\"clausi\":{{{}}},\"tenti\":[{}]}}",
             quote(&horae::iso(t)),
             horae::aetas_lunae(t as f64),
-            open.join(",")
+            open.join(","),
+            tenti
+                .keys()
+                .map(|n| n.to_string())
+                .collect::<Vec<_>>()
+                .join(",")
         ),
     )
 }
 
-pub fn roga(body: &[u8], dir: &Path, sky: &[String], will: &mut dyn Voluntas) -> Answer {
+pub fn roga(
+    body: &[u8],
+    dir: &Path,
+    sky: &[String],
+    tenti: &RefCell<BTreeMap<u32, i64>>,
+    will: &mut dyn Voluntas,
+) -> Answer {
     let bad = |why: &str| {
         answer(
             "400 Bad Request",
@@ -362,9 +382,17 @@ pub fn roga(body: &[u8], dir: &Path, sky: &[String], will: &mut dyn Voluntas) ->
     };
     let mut out = Vec::new();
     let mut err = Vec::new();
-    let (code, ritus) = ask_once_named(
-        spirit, &office, &question, &handed, dir, &sky, will, &mut out, &mut err,
+    let held = tenti.borrow().get(&spirit.n).copied();
+    let (sitting, t0) = held_sky(spirit, &sky, held);
+    let (code, ritus, verdict) = ask_once_judged(
+        spirit, &office, &question, &handed, dir, &sitting, will, &mut out, &mut err,
     );
+    let tentus = still_held(verdict.as_deref());
+    if tentus {
+        tenti.borrow_mut().insert(spirit.n, t0);
+    } else {
+        tenti.borrow_mut().remove(&spirit.n);
+    }
     let ritus = ritus.filter(|r| kept_sound(dir, r));
     let out = String::from_utf8_lossy(&out).to_string();
     let log = String::from_utf8_lossy(&err).to_string();
@@ -379,13 +407,35 @@ pub fn roga(body: &[u8], dir: &Path, sky: &[String], will: &mut dyn Voluntas) ->
         "200 OK",
         "application/json",
         format!(
-            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{}}}",
+            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{},\"tentus\":{tentus},\"dimissus\":{}}}",
             opt(&r.iudicium),
             opt(&r.veritas),
             opt(&r.verba),
             quote(&log),
-            opt(&ritus)
+            opt(&ritus),
+            held.is_some() && !tentus
         ),
+    )
+}
+
+/// Gives a held spirit licence to depart, at the Operator's word.
+pub fn dimitte(body: &[u8], tenti: &RefCell<BTreeMap<u32, i64>>) -> Answer {
+    let n = std::str::from_utf8(body)
+        .ok()
+        .and_then(|t| json::parse(t).ok())
+        .and_then(|r| r.get("n").and_then(Json::number));
+    let Some(spirit) = n.and_then(|n| goetia().spirits.iter().find(|s| s.n as f64 == n)) else {
+        return answer(
+            "400 Bad Request",
+            "application/json",
+            "{\"error\":\"no spirit of the 72 has that number\"}",
+        );
+    };
+    let was = tenti.borrow_mut().remove(&spirit.n).is_some();
+    answer(
+        "200 OK",
+        "application/json",
+        format!("{{\"dimissus\":{was},\"nomen\":{}}}", quote(&spirit.name)),
     )
 }
 
@@ -422,6 +472,9 @@ pub struct Aula<'a> {
     pub exemplar: String,
     pub sky: Vec<String>,
     pub reachable: Box<dyn Fn() -> bool + 'a>,
+    /// The spirits held until the Operator gives licence to depart, each
+    /// with the hour of its calling.
+    pub tenti: RefCell<BTreeMap<u32, i64>>,
 }
 
 impl Aula<'_> {
@@ -456,7 +509,7 @@ impl Aula<'_> {
                 if req.header("content-type") != Some("application/json") {
                     return refused("wrong content type");
                 }
-                roga(&req.body, self.dir, &self.sky, will)
+                roga(&req.body, self.dir, &self.sky, &self.tenti, will)
             }
             ("POST", "recipe") => {
                 if req.header("content-type") != Some("application/json") {
@@ -468,7 +521,13 @@ impl Aula<'_> {
                 if req.header("content-type") != Some("application/json") {
                     return refused("wrong content type");
                 }
-                tempus(&req.body, &self.sky)
+                tempus(&req.body, &self.sky, &self.tenti.borrow())
+            }
+            ("POST", "dimitte") => {
+                if req.header("content-type") != Some("application/json") {
+                    return refused("wrong content type");
+                }
+                dimitte(&req.body, &self.tenti)
             }
             _ => answer("404 Not Found", "text/plain; charset=utf-8", "not found"),
         }
@@ -531,6 +590,7 @@ pub fn serve(
         reachable: Box::new(move || {
             TcpStream::connect_timeout(&exemplar, Duration::from_millis(400)).is_ok()
         }),
+        tenti: RefCell::default(),
     };
     let url = format!("http://127.0.0.1:{port}/{}/", aula.token);
     let _ = writeln!(
