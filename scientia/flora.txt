@@ -1,0 +1,50 @@
+# liber: flora
+# nomen: the herbal
+# claves: herb, herbs, plant, plants, tree, trees, root, roots, seed, grain, flower, leaf, wort, medicinal, simples
+
+== barley | hordeum | bere ==
+Barley (Hordeum vulgare), a grass sown for grain. Cold and dry in the first
+degree by the old reckoning. A water of boiled barley (ptisan) was given to
+cool fevers and ease the chest and the bladder; the whole grain, parched and
+ground, thickened pottage and small-beer. Steeped and sprouted, it is malt, the
+ground of ale. Of little virtue against cold humours, being itself cold.
+
+== betony | betonica | stachys | bishopwort ==
+Betony (Betonica officinalis). Hot and dry in the second degree. Long held a
+master-wort against head-ache, and against frightful dreams and the falling of
+the mind; carried as a ward against ill spirits. The dried leaf was taken as a
+powder, or steeped as a tea, for the head and the stomach.
+
+== rue | ruta | herb-of-grace ==
+Rue (Ruta graveolens). Hot and dry in the third degree. Bitter and strong; a
+little sharpens the sight and was reckoned to quicken the wit and cool unchaste
+heat. Taken too freely it burns and harms, and it is forbidden to women with
+child. Set near other plants it was thought to guard them.
+
+== mandrake | mandragora ==
+Mandrake (Mandragora officinarum). Cold in the third degree, and narcotic. The
+forked root was likened to a man and hedged with tales of its scream when drawn.
+Used in small measure as a sleep-bringer and against pain before the knife; in
+any excess a poison that stupefies. Handle as a strong simple, never as a food.
+
+== vervain | verbena | holy-herb ==
+Vervain (Verbena officinalis). Temperate, leaning hot and dry. A herb of
+cleansing and of oaths, strewn and carried for protection and used in washes for
+sores of the mouth and skin. More esteemed in rite and ward than in the pot.
+
+== fennel | foeniculum | marathron ==
+Fennel (Foeniculum vulgare). Hot and dry in the second degree. Seed and root
+open stoppages, ease wind in the belly, and were chewed to stay hunger on fast
+days; a water of it was dropped to clear the eyes. Mild and kindly in use.
+
+== wormwood | artemisia | absinthium ==
+Wormwood (Artemisia absinthium). Hot in the first degree, dry in the third, and
+bitter above most herbs. It strengthens a weak stomach, stirs the appetite, and
+was steeped in wine against worms and low spirits. Bitter enough that a little
+serves; too much offends the head.
+
+== mugwort | artemisia-vulgaris | motherwort ==
+Mugwort (Artemisia vulgaris). Hot and dry. A traveller's herb, laid in the shoe
+against weariness, and a woman's herb for the courses. Hung in the house and
+burned as a smoke it was held to drive off what is unclean, and to bring on
+clear and telling dreams.

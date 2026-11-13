@@ -1,0 +1,49 @@
+# liber: astronomia
+# nomen: the book of the spheres
+# claves: astronomy, astronomie, astrology, astrologie, star, stars, planet, planets, sphere, spheres, celestial, zodiac, heaven, heavens, comet
+
+== saturn | saturnus | cronos ==
+Saturn, the highest and slowest of the seven wandering stars, cold and dry,
+greatest in reach and least in haste. Reckoned the greater malefic: of lead,
+of age, of boundaries, bone and stone, of long patience and of melancholy. Its
+day is Saturday, its metal lead, its course near thirty years through the twelve
+signs. Rules Capricorn and Aquarius in the old scheme.
+
+== jupiter | iuppiter | jove | zeus ==
+Jupiter, beneath Saturn, temperate and warm, the greater benefic. Of tin, of
+law and increase, of mercy, princes and right religion. Its day is Thursday, its
+metal tin, its course near twelve years. Rules Sagittarius and Pisces.
+
+== mars | mars-planet | ares ==
+Mars, hot and dry, the lesser malefic: of iron, of war, fire, fever, the knife
+and sudden anger. Red in the sky. Its day is Tuesday, its metal iron, its course
+near two years. Rules Aries and Scorpio.
+
+== sun | sol | helios ==
+The Sun, the heart of the seven, hot and dry yet life-giving, the fount of day.
+Of gold, of kings, the heart, honour and the single rule. Its day is Sunday, its
+metal gold, its course the year through the zodiac, the measure of all the rest.
+Rules Leo.
+
+== venus | venus-planet | aphrodite ==
+Venus, temperate and moist, the lesser benefic: of copper, of love, music,
+concord, pleasure and fair things. Seen as morning and evening star. Its day is
+Friday, its metal copper. Rules Taurus and Libra.
+
+== mercury | mercurius | hermes ==
+Mercury, swift and changeable, taking the nature of what it joins: of
+quicksilver, of speech, trade, letters, cunning and the wit. Never far from the
+Sun. Its day is Wednesday, its metal quicksilver. Rules Gemini and Virgo.
+
+== moon | luna | selene ==
+The Moon, nearest and swiftest, cold and moist, ruler of tides, waters, growth
+and the common folk. Her light is borrowed from the Sun; she waxes and wanes
+through near thirty days and is reckoned by her age in the choosing of hours. Of
+silver. Her day is Monday. Rules Cancer.
+
+== zodiac | zodiacus | the-twelve-signs ==
+The zodiac, the belt of twelve signs through which the Sun and wandering stars
+pass: Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius,
+Capricorn, Aquarius, Pisces. Four of fire, four of earth, four of air, four of
+water; each the house of one or more of the seven, and each ruling a part of the
+body from head (Aries) to feet (Pisces).

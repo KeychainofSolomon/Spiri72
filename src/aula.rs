@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use annulus::horae;
@@ -13,6 +14,7 @@ use annulus::lingua::registra::{goetia, Spirit};
 use crate::fors;
 use crate::llama::quote;
 use crate::persona::entry;
+use crate::scientia::Consultatio;
 use crate::sessio::{
     ask_once_judged, give_licence, held_sky, kept_sound, still_held, telling_offices, unbindable,
 };
@@ -344,6 +346,7 @@ pub fn roga(
     sky: &[String],
     tenti: &RefCell<BTreeMap<u32, (i64, String)>>,
     will: &mut dyn Voluntas,
+    consulta: &Arc<Mutex<Option<Consultatio>>>,
 ) -> Answer {
     let bad = |why: &str| {
         answer(
@@ -393,6 +396,16 @@ pub fn roga(
     let (code, ritus, verdict) = ask_once_judged(
         spirit, &office, &question, &handed, dir, &sitting, will, &mut out, &mut err,
     );
+    let read = consulta.lock().ok().and_then(|mut g| g.take());
+    let scientia = match &read {
+        Some(c) => format!(
+            "{{\"liber\":{},\"terminus\":{},\"textus\":{}}}",
+            quote(&c.liber),
+            quote(&c.terminus),
+            quote(&c.textus)
+        ),
+        None => "null".to_string(),
+    };
     let tentus = still_held(verdict.as_deref());
     if tentus {
         tenti.borrow_mut().insert(spirit.n, (t0, office.clone()));
@@ -413,7 +426,7 @@ pub fn roga(
         "200 OK",
         "application/json",
         format!(
-            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{},\"tentus\":{tentus},\"dimissus\":{}}}",
+            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{},\"tentus\":{tentus},\"dimissus\":{},\"scientia\":{scientia}}}",
             opt(&r.iudicium),
             opt(&r.veritas),
             opt(&r.verba),
@@ -502,6 +515,8 @@ pub struct Aula<'a> {
     pub tenti: RefCell<BTreeMap<u32, (i64, String)>>,
     /// The heartbeat: measured facts, at most one message per gap.
     pub pulsus: RefCell<crate::pulsus::Pulsus>,
+    /// Where the will sets down the last library reading, for the page to show.
+    pub consulta: Arc<Mutex<Option<Consultatio>>>,
     /// Whether the eyes have answered once, so their loss is told and their absence is not.
     pub eyes_seen: std::cell::Cell<bool>,
 }
@@ -610,7 +625,14 @@ impl Aula<'_> {
                 if req.header("content-type") != Some("application/json") {
                     return refused("wrong content type");
                 }
-                roga(&req.body, self.dir, &self.sky, &self.tenti, will)
+                roga(
+                    &req.body,
+                    self.dir,
+                    &self.sky,
+                    &self.tenti,
+                    will,
+                    &self.consulta,
+                )
             }
             ("POST", "affer") => {
                 if req.header("content-type") != Some("application/octet-stream") {
@@ -694,6 +716,7 @@ pub fn serve(
     sky: &[String],
     out: &mut dyn Write,
     open: bool,
+    consulta: Arc<Mutex<Option<Consultatio>>>,
 ) -> u8 {
     let listener = match TcpListener::bind("127.0.0.1:0") {
         Ok(l) => l,
@@ -732,6 +755,7 @@ pub fn serve(
         eyes: crate::llama::parse_url(exemplar_url)
             .ok()
             .and_then(|e| crate::visus::eyes_of(&e)),
+        consulta,
     };
     let url = format!("http://127.0.0.1:{port}/{}/", aula.token);
     let _ = writeln!(

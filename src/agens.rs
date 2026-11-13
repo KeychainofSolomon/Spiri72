@@ -3,6 +3,7 @@ use annulus::nucleus::Outcome;
 use annulus::officia::{signature, Class};
 
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 use crate::forma;
 use crate::fors;
@@ -10,6 +11,7 @@ use crate::ingenium::{self, Status};
 use crate::llama::{Exemplar, Rogatio};
 use crate::memoria;
 use crate::persona;
+use crate::scientia::{self, Consultatio, Liber};
 
 pub struct Agens {
     pub exemplar: Exemplar,
@@ -21,6 +23,11 @@ pub struct Agens {
     pub status: Option<PathBuf>,
     /// The rites are Spiri72's own, where every COACTUS condition is met.
     pub own_rite: bool,
+    /// The knowledge libraries a spirit may consult, loaded once at the start.
+    pub scientia: Vec<Liber>,
+    /// Where the last library reading is set down for the page to show, if the
+    /// page is watching. Cleared each speaking rite; set when something is read.
+    pub consulta: Option<Arc<Mutex<Option<Consultatio>>>>,
 }
 
 impl Agens {
@@ -32,6 +39,8 @@ impl Agens {
             vires: Vec::new(),
             status: None,
             own_rite: false,
+            scientia: Vec::new(),
+            consulta: None,
         }
     }
 }
@@ -76,7 +85,29 @@ impl Voluntas for Agens {
             Some(dir) => memoria::for_rite(dir, p.spirit, p.quaestio.unwrap_or(""))?,
             None => None,
         };
-        let user = persona::user_remembering(p, telling, &fors::hex::<8>()?, memoria.as_deref());
+        // A speaking office (not the counting or the recounting of the past) may
+        // draw on a knowledge library the spirit's inclination opens to it.
+        let speaking = telling && !virtutes && p.officium != "PRAETERITA";
+        let consulta = speaking
+            .then(|| scientia::consult(&self.scientia, p.spirit.n, p.quaestio.unwrap_or("")))
+            .flatten();
+        if let Some(slot) = &self.consulta {
+            *slot.lock().unwrap() = consulta.clone();
+        }
+        let heading = consulta
+            .as_ref()
+            .map(|c| format!("the {} library, on \u{201c}{}\u{201d}", c.liber, c.terminus));
+        let scientia_arg = match (&heading, &consulta) {
+            (Some(h), Some(c)) => Some((h.as_str(), c.textus.as_str())),
+            _ => None,
+        };
+        let user = persona::user_remembering(
+            p,
+            telling,
+            &fors::hex::<8>()?,
+            memoria.as_deref(),
+            scientia_arg,
+        );
         let reply = self.exemplar.ask(&Rogatio {
             system: &system,
             user: &user,
