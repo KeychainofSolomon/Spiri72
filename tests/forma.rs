@@ -1,6 +1,6 @@
 use annulus::lingua::exsequi::Actum;
 use annulus::nucleus::{Outcome, Verb};
-use spiri72::forma::{grammar, read};
+use spiri72::forma::{grammar, grammar_praeterita, read, MAX_CLAIM, MAX_CLAIMS};
 
 const ALL: [Outcome; 3] = [Outcome::Obsequium, Outcome::Pars, Outcome::Mora];
 
@@ -145,4 +145,12 @@ fn virtues_are_read_into_the_exact_account() {
     assert!(grammar_virtutes(&ALL)
         .unwrap()
         .contains("\"\\\"absens\\\"\""));
+}
+
+#[test]
+fn an_account_of_the_past_is_bounded_so_it_always_closes() {
+    let g = grammar_praeterita(&[Outcome::Obsequium]).unwrap();
+    assert!(g.contains(&format!("{{0,{}}}", MAX_CLAIMS - 1)), "{g}");
+    assert!(g.contains(&format!("{{1,{MAX_CLAIM}}}")), "{g}");
+    assert!(!g.contains("]+"), "{g}");
 }

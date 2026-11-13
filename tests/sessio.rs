@@ -331,3 +331,16 @@ fn a_held_spirit_is_asked_in_the_hours_of_its_calling() {
         ]
     );
 }
+
+#[test]
+fn the_real_wand_is_named_by_its_flag_and_keeps_its_own_house() {
+    let sky: Vec<String> = ["--locus", "51.9225,4.4792", "--virga", "E:\\"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    assert_eq!(spiri72::sessio::virga_of(&sky), Some("E:\\"));
+    assert!(spiri72::sessio::wand_words(&sky).contains("The real wand at E:\\"));
+    assert_eq!(spiri72::sessio::virga_of(&sky[..2]), None);
+    assert!(spiri72::sessio::wand_words(&[]).contains("test wand"));
+    assert_ne!(spiri72::sessio::HOUSE, spiri72::sessio::HOUSE_VERA);
+}

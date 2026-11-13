@@ -11,7 +11,8 @@ use spiri72::sessio::sessio;
 const DEFAULT_MODEL: &str = "http://127.0.0.1:8080";
 
 const USAGE: &str =
-    "usage: spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
+    "usage: spiri72 [--virga-probationis | --virga E:\\] [--exemplar http://127.0.0.1:8080]   (the binding page)
+       spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
                [--max-tokens N] [any other flag of annulus ritus]
        spiri72 --latina <Latin words>
        spiri72 --liber <spirit>            (read a spirit's book)
@@ -53,13 +54,14 @@ fn main() -> ExitCode {
     }
     let mut url = DEFAULT_MODEL.to_string();
     let mut max_tokens = None;
+    let mut named_model = false;
     let mut rest: Vec<String> = Vec::new();
     let mut sky: Vec<String> = Vec::new();
     let mut vires = Vec::new();
     let mut it = args.into_iter();
     while let Some(a) = it.next() {
         match a.as_str() {
-            "--hora" | "--locus" | "--caelum" => {
+            "--hora" | "--locus" | "--caelum" | "--virga" => {
                 let Some(v) = it.next() else {
                     let _ = writeln!(err, "error: {a} needs a value\n{USAGE}");
                     return ExitCode::from(EXIT_USAGE);
@@ -86,6 +88,7 @@ fn main() -> ExitCode {
                     return ExitCode::from(EXIT_USAGE);
                 };
                 if a == "--exemplar" {
+                    named_model = true;
                     url = v;
                 } else {
                     match v.parse::<u32>() {
@@ -123,6 +126,13 @@ fn main() -> ExitCode {
     let no_browser = rest.iter().any(|a| a == "--no-browser");
     rest.retain(|a| a != "--terminal" && a != "--no-browser");
     if rest.iter().all(|a| a == "--virga-probationis") {
+        if spiri72::sessio::virga_of(&sky).is_some() && !rest.is_empty() {
+            let _ = writeln!(
+                err,
+                "error: --virga and --virga-probationis exclude each other"
+            );
+            return ExitCode::from(EXIT_USAGE);
+        }
         let dir = match env::current_dir() {
             Ok(d) => d,
             Err(e) => {
@@ -131,23 +141,67 @@ fn main() -> ExitCode {
             }
         };
         agens.own_rite = true;
+        // Nothing to type: a plugged-in wand is taken up by itself, unless the test wand
+        // was asked for; a model that does not answer yet is woken.
+        let mut sky = sky;
+        if rest.is_empty() && spiri72::sessio::virga_of(&sky).is_none() {
+            match spiri72::initium::wands().as_slice() {
+                [] => {}
+                [one] => {
+                    let _ = writeln!(out, "The wand is found at {}.", one.display());
+                    sky.push("--virga".into());
+                    sky.push(one.to_string_lossy().into_owned());
+                }
+                _ => {
+                    let _ = writeln!(out, "More than one wand is plugged in: unplug the spare, or name the one you mean with --virga. Going on with the test wand.");
+                }
+            }
+        }
+        let ini = env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.join(spiri72::initium::INI)))
+            .unwrap_or_else(|| dir.join(spiri72::initium::INI));
+        // A model named with --exemplar is the Operator's own: only the default one is woken.
+        let mut model = if named_model {
+            None
+        } else {
+            spiri72::initium::wake_model(
+                agens.exemplar.address,
+                &ini,
+                &mut io::stdin().lock(),
+                &mut out,
+            )
+        };
+        // the eyes wake only beside a model Spiri72 looks after itself
+        let mut eyes = if named_model {
+            None
+        } else {
+            spiri72::initium::wake_eyes(
+                agens.exemplar.address,
+                &ini,
+                &mut io::stdin().lock(),
+                &mut out,
+            )
+        };
+        let stop = |model: &mut Option<std::process::Child>| {
+            if let Some(c) = model.as_mut() {
+                let _ = c.kill();
+                let _ = c.wait();
+            }
+        };
         if terminal {
             let mut input = io::stdin().lock();
-            return ExitCode::from(sessio(
-                &mut input, &mut out, &mut err, &mut agens, &dir, &sky,
-            ));
+            let code = sessio(&mut input, &mut out, &mut err, &mut agens, &dir, &sky);
+            stop(&mut model);
+            stop(&mut eyes);
+            return ExitCode::from(code);
         }
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();
-        return ExitCode::from(serve(
-            &mut agens,
-            address,
-            &url,
-            &dir,
-            &sky,
-            &mut out,
-            !no_browser,
-        ));
+        let code = serve(&mut agens, address, &url, &dir, &sky, &mut out, !no_browser);
+        stop(&mut model);
+        stop(&mut eyes);
+        return ExitCode::from(code);
     }
     rest.extend(sky);
     match ritus_with(&rest, &mut out, &mut err, Some(&mut agens)) {

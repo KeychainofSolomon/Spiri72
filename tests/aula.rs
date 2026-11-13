@@ -37,6 +37,7 @@ fn aula(d: &std::path::Path) -> Aula<'_> {
             .to_vec(),
         reachable: Box::new(|| true),
         tenti: Default::default(),
+        eyes: None,
     }
 }
 

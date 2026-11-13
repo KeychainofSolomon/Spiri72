@@ -140,7 +140,11 @@ pub fn read_reply(raw: &[u8]) -> Result<String, String> {
 
 impl Exemplar {
     pub fn ask(&self, rogatio: &Rogatio) -> Result<String, String> {
-        let body = rogatio.body();
+        self.ask_body(&rogatio.body())
+    }
+
+    /// Sends a ready chat request body and reads the message of its reply.
+    pub fn ask_body(&self, body: &str) -> Result<String, String> {
         let request = format!(
             "POST /v1/chat/completions HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
             self.address,

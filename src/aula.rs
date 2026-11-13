@@ -85,7 +85,13 @@ pub fn read_request(stream: &mut dyn Read) -> Result<Request, String> {
         [one] => one.parse().map_err(|_| "a bad length".to_string())?,
         _ => return Err("the length is missing or given twice".into()),
     };
-    if length > MAX_BODY {
+    // a file handed from the page may be large; every other request stays small
+    let limit = if path.ends_with("/affer") {
+        crate::visus::MAX_FILE
+    } else {
+        MAX_BODY
+    };
+    if length > limit {
         return Err("body too long".into());
     }
     let mut body = raw[split + 4..].to_vec();
@@ -489,6 +495,8 @@ pub struct Aula<'a> {
     pub exemplar: String,
     pub sky: Vec<String>,
     pub reachable: Box<dyn Fn() -> bool + 'a>,
+    /// The spirits' eyes (a vision model one port above), if they answer.
+    pub eyes: Option<crate::llama::Exemplar>,
     /// The spirits held until the Operator gives licence to depart, each
     /// with the hour of its calling.
     pub tenti: RefCell<BTreeMap<u32, (i64, String)>>,
@@ -517,9 +525,15 @@ impl Aula<'_> {
                 "200 OK",
                 "application/json",
                 format!(
-                    "{{\"exemplar\":{},\"paratus\":{}}}",
+                    "{{\"exemplar\":{},\"paratus\":{},\"visus\":{},\"virga\":{}}}",
                     quote(&self.exemplar),
-                    (self.reachable)()
+                    (self.reachable)(),
+                    self.eyes.as_ref().is_some_and(|e| {
+                        TcpStream::connect_timeout(&e.address, Duration::from_millis(300)).is_ok()
+                    }),
+                    crate::sessio::virga_of(&self.sky)
+                        .map(quote)
+                        .unwrap_or_else(|| "null".into())
                 ),
             ),
             ("POST", "roga") => {
@@ -527,6 +541,28 @@ impl Aula<'_> {
                     return refused("wrong content type");
                 }
                 roga(&req.body, self.dir, &self.sky, &self.tenti, will)
+            }
+            ("POST", "affer") => {
+                if req.header("content-type") != Some("application/octet-stream") {
+                    return refused("wrong content type");
+                }
+                let name = req
+                    .header("x-nomen")
+                    .and_then(crate::visus::unpercent)
+                    .unwrap_or_default();
+                let reply =
+                    |status: &'static str, body: String| answer(status, "application/json", body);
+                match crate::visus::affer(self.dir, &name, &req.body, self.eyes.as_ref()) {
+                    Ok((place, shown)) => reply(
+                        "200 OK",
+                        format!(
+                            "{{\"locus\":{},\"nomen\":{}}}",
+                            quote(&place),
+                            quote(&shown)
+                        ),
+                    ),
+                    Err(e) => reply("400 Bad Request", format!("{{\"error\":{}}}", quote(&e))),
+                }
             }
             ("POST", "recipe") => {
                 if req.header("content-type") != Some("application/json") {
@@ -608,6 +644,9 @@ pub fn serve(
             TcpStream::connect_timeout(&exemplar, Duration::from_millis(400)).is_ok()
         }),
         tenti: RefCell::default(),
+        eyes: crate::llama::parse_url(exemplar_url)
+            .ok()
+            .and_then(|e| crate::visus::eyes_of(&e)),
     };
     let url = format!("http://127.0.0.1:{port}/{}/", aula.token);
     let _ = writeln!(

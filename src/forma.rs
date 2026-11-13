@@ -4,6 +4,11 @@ use annulus::nucleus::{Effect, Outcome, Verb};
 
 pub const MAX_WORDS: usize = 16 * 1024;
 
+/// An account of the past holds at most this many claims, each at most `MAX_CLAIM`
+/// characters after its word, so the reply always closes before the token limit.
+pub const MAX_CLAIMS: usize = 16;
+pub const MAX_CLAIM: usize = 120;
+
 const VERBS: [(&str, Verb); 8] = [
     ("scribe", Verb::Scribe),
     ("crea", Verb::Crea),
@@ -223,7 +228,9 @@ pub fn grammar_praeterita(open: &[Outcome]) -> Result<String, String> {
     .map(|w| format!("\"{w}\""))
     .collect();
     let body = format!(
-        "body ::= \"\\\"responsum\\\"\" ws \":\" ws \"\\\"\" claim ( \"\\\\n\" claim )* \"\\\"\"\nclaim ::= word \" \" [^\"\\\\\\x00-\\x1f]+\nword ::= {}",
+        "body ::= \"\\\"responsum\\\"\" ws \":\" ws \"\\\"\" claim ( \"\\\\n\" claim ){{0,{}}} \"\\\"\"\nclaim ::= word \" \" [^\"\\\\\\x00-\\x1f]{{1,{}}}\nword ::= {}",
+        MAX_CLAIMS - 1,
+        MAX_CLAIM,
         words.join(" | ")
     );
     Ok(g.lines()
