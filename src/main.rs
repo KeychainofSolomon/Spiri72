@@ -121,11 +121,6 @@ fn main() -> ExitCode {
     if let Some(n) = max_tokens {
         agens.max_tokens = n;
     }
-    if let Some(dir) = agens.status.clone() {
-        agens.scientia = spiri72::scientia::load(&dir);
-    }
-    let consulta = std::sync::Arc::new(std::sync::Mutex::new(None));
-    agens.consulta = Some(consulta.clone());
     let mut out = io::stdout().lock();
     let terminal = rest.iter().any(|a| a == "--terminal");
     let no_browser = rest.iter().any(|a| a == "--no-browser");
@@ -201,6 +196,13 @@ fn main() -> ExitCode {
             stop(&mut eyes);
             return ExitCode::from(code);
         }
+        // Only the binding page consults libraries, so load them here, not on
+        // every run: seeding spiri72.scientia belongs to serving, not to a rite.
+        if let Some(d) = agens.status.clone() {
+            agens.scientia = spiri72::scientia::load(&d);
+        }
+        let consulta = std::sync::Arc::new(std::sync::Mutex::new(None));
+        agens.consulta = Some(consulta.clone());
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();
         let code = serve(
