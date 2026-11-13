@@ -139,23 +139,49 @@ fn main() -> ExitCode {
             }
         };
         agens.own_rite = true;
+        // Nothing to type: a plugged-in wand is taken up by itself, unless the test wand
+        // was asked for; a model that does not answer yet is woken.
+        let mut sky = sky;
+        if rest.is_empty() && spiri72::sessio::virga_of(&sky).is_none() {
+            match spiri72::initium::wands().as_slice() {
+                [] => {}
+                [one] => {
+                    let _ = writeln!(out, "The wand is found at {}.", one.display());
+                    sky.push("--virga".into());
+                    sky.push(one.to_string_lossy().into_owned());
+                }
+                _ => {
+                    let _ = writeln!(out, "More than one wand is plugged in: unplug the spare, or name the one you mean with --virga. Going on with the test wand.");
+                }
+            }
+        }
+        let ini = env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.join(spiri72::initium::INI)))
+            .unwrap_or_else(|| dir.join(spiri72::initium::INI));
+        let mut model = spiri72::initium::wake_model(
+            agens.exemplar.address,
+            &ini,
+            &mut io::stdin().lock(),
+            &mut out,
+        );
+        let stop = |model: &mut Option<std::process::Child>| {
+            if let Some(c) = model.as_mut() {
+                let _ = c.kill();
+                let _ = c.wait();
+            }
+        };
         if terminal {
             let mut input = io::stdin().lock();
-            return ExitCode::from(sessio(
-                &mut input, &mut out, &mut err, &mut agens, &dir, &sky,
-            ));
+            let code = sessio(&mut input, &mut out, &mut err, &mut agens, &dir, &sky);
+            stop(&mut model);
+            return ExitCode::from(code);
         }
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();
-        return ExitCode::from(serve(
-            &mut agens,
-            address,
-            &url,
-            &dir,
-            &sky,
-            &mut out,
-            !no_browser,
-        ));
+        let code = serve(&mut agens, address, &url, &dir, &sky, &mut out, !no_browser);
+        stop(&mut model);
+        return ExitCode::from(code);
     }
     rest.extend(sky);
     match ritus_with(&rest, &mut out, &mut err, Some(&mut agens)) {
