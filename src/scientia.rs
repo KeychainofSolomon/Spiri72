@@ -155,11 +155,9 @@ pub fn parse(liber: &str, text: &str) -> Liber {
 /// if the folder is absent. A file that cannot be read is skipped, never fatal.
 pub fn load(dir: &Path) -> Vec<Liber> {
     let home = dir.join(DIR);
-    if !home.exists() {
-        if fs::create_dir_all(&home).is_ok() {
-            for (name, body) in SEEDS {
-                let _ = fs::write(home.join(name), body);
-            }
+    if !home.exists() && fs::create_dir_all(&home).is_ok() {
+        for (name, body) in SEEDS {
+            let _ = fs::write(home.join(name), body);
         }
     }
     let mut libri = Vec::new();

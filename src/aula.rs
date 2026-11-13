@@ -708,6 +708,7 @@ pub fn open_browser(url: &str) {
     };
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn serve(
     will: &mut dyn Voluntas,
     exemplar: std::net::SocketAddr,
