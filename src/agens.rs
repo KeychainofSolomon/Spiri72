@@ -67,7 +67,10 @@ impl Voluntas for Agens {
         if let Some(dir) = &self.status {
             ingenium::record_call(dir, p.spirit, &gestus)?;
         }
-        let brief = ingenium::brief(profile, &gestus, &before);
+        let mut brief = ingenium::brief(profile, &gestus, &before);
+        if p.ultra_horam {
+            brief.push_str(RESTLESS);
+        }
         let system = persona::system(p, &brief);
         let memoria = match &self.status {
             Some(dir) => memoria::for_rite(dir, p.spirit, p.quaestio.unwrap_or(""))?,
@@ -88,6 +91,9 @@ impl Voluntas for Agens {
         }
     }
 }
+
+/// Told to a spirit held past its hours: still bound, and chafing at it.
+pub const RESTLESS: &str = " Your hour is past, yet you are still held in the triangle: the magician has not given you licence to depart. You chafe at the bond, and press to be let go.";
 
 pub const VIRES: [&str; 3] = ["ligatus", "superbia", "fallax"];
 
