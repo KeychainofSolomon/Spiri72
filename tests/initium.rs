@@ -17,7 +17,15 @@ fn the_remembered_paths_survive_the_round_trip() {
     let ini = Ini {
         server: Some(PathBuf::from("C:\\llama\\llama-server.exe")),
         model: Some(PathBuf::from("D:\\models\\Qwen3-8B Q4_K_M.gguf")),
+        eyes: Some(PathBuf::from("D:\\models\\Qwen2.5-VL-3B.gguf")),
+        eyes_mmproj: Some(PathBuf::from("D:\\models\\mmproj-Qwen2.5-VL-3B.gguf")),
+        blind: false,
     };
     assert_eq!(read_ini(&write_ini(&ini)), ini);
     assert_eq!(read_ini("# nothing here\nnoise\n"), Ini::default());
+    let blind = Ini {
+        blind: true,
+        ..Ini::default()
+    };
+    assert_eq!(read_ini(&write_ini(&blind)), blind);
 }

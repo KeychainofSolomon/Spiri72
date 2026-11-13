@@ -45,6 +45,11 @@ pub fn wands() -> Vec<PathBuf> {
 pub struct Ini {
     pub server: Option<PathBuf>,
     pub model: Option<PathBuf>,
+    /// The eyes: a vision model (Qwen2.5-VL 3B) and its vision file (mmproj).
+    pub eyes: Option<PathBuf>,
+    pub eyes_mmproj: Option<PathBuf>,
+    /// The Operator chose to go without sight.
+    pub blind: bool,
 }
 
 pub fn read_ini(text: &str) -> Ini {
@@ -57,6 +62,9 @@ pub fn read_ini(text: &str) -> Ini {
         match k.trim() {
             "llama-server" => ini.server = Some(v),
             "model" => ini.model = Some(v),
+            "eyes" => ini.eyes = Some(v),
+            "eyes-mmproj" => ini.eyes_mmproj = Some(v),
+            "sight" => ini.blind = v.as_os_str() == "none",
             _ => {}
         }
     }
@@ -71,6 +79,15 @@ pub fn write_ini(ini: &Ini) -> String {
     }
     if let Some(p) = &ini.model {
         s.push_str(&format!("model = {}\n", p.display()));
+    }
+    if let Some(p) = &ini.eyes {
+        s.push_str(&format!("eyes = {}\n", p.display()));
+    }
+    if let Some(p) = &ini.eyes_mmproj {
+        s.push_str(&format!("eyes-mmproj = {}\n", p.display()));
+    }
+    if ini.blind {
+        s.push_str("sight = none\n");
     }
     s
 }
@@ -177,20 +194,52 @@ pub fn wake_model(
             }
         }
     }
-    let log_path = ini_path.with_file_name("spiri72.model.log");
-    let log = fs::File::create(&log_path).ok();
+    start(
+        server,
+        &[OsArg::P(model.clone())],
+        address,
+        &ini_path.with_file_name("spiri72.model.log"),
+        "Waking the model",
+        8192,
+        out,
+    )
+}
+
+enum OsArg {
+    P(PathBuf),
+    S(&'static str),
+}
+
+/// Starts `server -m …` (with any further arguments) on `address`, logging to `log_path`,
+/// and waits until it answers.
+fn start(
+    server: &Path,
+    model: &[OsArg],
+    address: SocketAddr,
+    log_path: &Path,
+    what: &str,
+    context: u32,
+    out: &mut dyn Write,
+) -> Option<Child> {
+    let answers = || TcpStream::connect_timeout(&address, Duration::from_millis(400)).is_ok();
+    let log = fs::File::create(log_path).ok();
     let mut cmd = Command::new(server);
-    cmd.arg("-m")
-        .arg(model)
-        .args([
-            "--host",
-            "127.0.0.1",
-            "--port",
-            &address.port().to_string(),
-            "-c",
-            "8192",
-        ])
-        .stdin(Stdio::null());
+    cmd.arg("-m");
+    for a in model {
+        match a {
+            OsArg::P(p) => cmd.arg(p),
+            OsArg::S(s) => cmd.arg(s),
+        };
+    }
+    cmd.args([
+        "--host",
+        "127.0.0.1",
+        "--port",
+        &address.port().to_string(),
+        "-c",
+        &context.to_string(),
+    ])
+    .stdin(Stdio::null());
     match log.and_then(|l| l.try_clone().ok().map(|c| (l, c))) {
         Some((a, b)) => {
             cmd.stdout(a).stderr(b);
@@ -206,14 +255,14 @@ pub fn wake_model(
             return None;
         }
     };
-    let _ = write!(out, "Waking the model (this can take a minute)");
+    let _ = write!(out, "{what} (this can take a minute)");
     let _ = out.flush();
-    let start = Instant::now();
-    while start.elapsed() < Duration::from_secs(300) {
+    let begun = Instant::now();
+    while begun.elapsed() < Duration::from_secs(300) {
         if let Ok(Some(status)) = child.try_wait() {
             let _ = writeln!(
                 out,
-                "\nThe model server stopped ({status}). See {} for why.",
+                "\nIt stopped ({status}). See {} for why.",
                 log_path.display()
             );
             return None;
@@ -226,9 +275,57 @@ pub fn wake_model(
         let _ = write!(out, ".");
         let _ = out.flush();
     }
-    let _ = writeln!(
-        out,
-        "\nThe model is still loading; the page will show when it is ready."
-    );
+    let _ = writeln!(out, "\nStill loading; the page will show when it is ready.");
     Some(child)
+}
+
+/// Wakes the spirits' eyes one port above the model, from the remembered vision model and
+/// its vision file, asking once (Enter alone: go without sight, and do not ask again).
+pub fn wake_eyes(
+    model_address: SocketAddr,
+    ini_path: &Path,
+    input: &mut dyn BufRead,
+    out: &mut dyn Write,
+) -> Option<Child> {
+    let address = SocketAddr::new(model_address.ip(), model_address.port().checked_add(1)?);
+    if TcpStream::connect_timeout(&address, Duration::from_millis(400)).is_ok() {
+        return None;
+    }
+    let mut ini = fs::read_to_string(ini_path)
+        .map(|t| read_ini(&t))
+        .unwrap_or_default();
+    if ini.blind {
+        return None;
+    }
+    let server = ini.server.clone().filter(|p| p.is_file())?;
+    let mut changed = false;
+    if !ini.eyes.as_deref().is_some_and(Path::is_file) {
+        let _ = writeln!(
+            out,
+            "The spirits can be given sight, to see the images you hand them."
+        );
+        ini.eyes = ask_path(input, out, "Drag the eyes' model (Qwen2.5-VL 3B, a .gguf) into this window, then press Enter (Enter alone: no sight):", Path::is_file);
+        ini.blind = ini.eyes.is_none();
+        changed = true;
+    }
+    if ini.eyes.is_some() && !ini.eyes_mmproj.as_deref().is_some_and(Path::is_file) {
+        ini.eyes_mmproj = ask_path(input, out, "Now drag its vision file (its name begins with mmproj) into this window, then press Enter:", Path::is_file);
+        ini.blind = ini.eyes_mmproj.is_none();
+        changed = true;
+    }
+    if changed {
+        let _ = fs::write(ini_path, write_ini(&ini));
+    }
+    let (Some(eyes), Some(mmproj)) = (ini.eyes, ini.eyes_mmproj) else {
+        return None;
+    };
+    start(
+        &server,
+        &[OsArg::P(eyes), OsArg::S("--mmproj"), OsArg::P(mmproj)],
+        address,
+        &ini_path.with_file_name("spiri72.eyes.log"),
+        "Opening the spirits' eyes",
+        4096,
+        out,
+    )
 }
