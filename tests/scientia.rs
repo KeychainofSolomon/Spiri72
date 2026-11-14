@@ -85,3 +85,92 @@ fn no_named_entry_yields_nothing() {
 fn empty_libraries_yield_nothing() {
     assert_eq!(scientia::consult(&[], 10, "barley"), None);
 }
+
+#[test]
+fn a_short_key_is_not_met_by_a_common_word() {
+    // `ares` once lost its `s` and met every question holding the word `are`
+    let l = parse(
+        "astronomia",
+        "# claves: herb\n\n== mars | ares ==\nMars, the red planet.\n",
+    );
+    assert_eq!(consult(&[l], 10, "what are the virtues of this?"), None);
+}
+
+#[test]
+fn a_phrase_clave_must_stand_whole_within_one_office() {
+    let l = parse("x", "# claves: things to come\n\n== a ==\nA.\n");
+    assert_eq!(l.claves, ["things to come"]);
+    assert!(open_to(&l, &["declares things to come".to_string()]));
+    // the single word is not the phrase
+    assert!(!open_to(
+        &l,
+        &["compels the souls of the dead to come before the exorcist".to_string()]
+    ));
+    // nor may the phrase be pieced together across two offices
+    assert!(!open_to(
+        &l,
+        &[
+            "knows all things".to_string(),
+            "to come quickly".to_string()
+        ]
+    ));
+}
+
+/// The starter libraries, as shipped.
+fn starters() -> Vec<scientia::Liber> {
+    ["astronomia", "flora", "tarot"]
+        .iter()
+        .map(|n| {
+            let path = format!("{}/scientia/{n}.txt", env!("CARGO_MANIFEST_DIR"));
+            parse(n, &std::fs::read_to_string(path).expect("library file"))
+        })
+        .collect()
+}
+
+#[test]
+fn a_described_entry_is_found_without_its_name() {
+    let libri = starters();
+    // Buer reads the herbal; the question never says "barley"
+    let hit = consult(&libri, 10, "Which grain do brewers malt for ale?").expect("a finding");
+    assert_eq!(hit.terminus, "barley");
+    assert!(hit.textus.starts_with("== barley"));
+}
+
+#[test]
+fn a_closed_library_is_never_reached_by_description() {
+    let libri = starters();
+    // Furfur (34) has no office of herbs or stars: however the thing is
+    // described, nothing of the herbal or the heavens is handed to him
+    for q in [
+        "Which grain do brewers malt for ale?",
+        "What is the slow drift of the equinoxes called?",
+        "Which star's rising brings the hottest days of summer?",
+    ] {
+        let hit = consult(&libri, 34, q);
+        let from_shut = hit
+            .as_ref()
+            .is_some_and(|c| c.liber == "the herbal" || c.liber == libri[0].nomen);
+        assert!(!from_shut, "{q:?} reached a closed library: {hit:?}");
+    }
+}
+
+#[test]
+fn a_bare_number_names_nothing_without_its_matter() {
+    let libri = starters();
+    // Vassago (3) reads the cards; a day of the month is not a card
+    assert_eq!(consult(&libri, 3, "I was born on the 13 of March."), None);
+    let hit = consult(&libri, 3, "What is card 13?").expect("the card");
+    assert_eq!(hit.terminus, "13");
+}
+
+#[test]
+fn a_name_two_libraries_hold_goes_where_the_question_points() {
+    let libri = starters();
+    // Marax (21) reads both the heavens and the cards
+    let sky = consult(&libri, 21, "What is the sun?").expect("the sun");
+    assert!(sky.textus.starts_with("== sun |"));
+    let card = consult(&libri, 21, "What does the Sun card mean?").expect("the card");
+    assert!(card.textus.starts_with("== the-sun |"));
+    // Asmoday (32) reads the heavens but not the cards: the card is not his
+    assert_eq!(consult(&libri, 32, "What does the Sun card mean?"), None);
+}
