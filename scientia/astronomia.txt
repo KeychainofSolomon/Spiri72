@@ -1,0 +1,210 @@
+# liber: astronomia
+# nomen: the book of the spheres
+# claves: astronomy, astronomie, astrology, astrologie, star, stars, planet, planets, sphere, spheres, celestial, zodiac, heaven, heavens, comet, comets, eclipse, moon, sun
+
+== saturn | saturnus | cronos ==
+Saturn — in truth the sixth planet from the Sun and the farthest the eye alone
+can follow, a great ball of gas ringed with ice and stone, near ten times
+Earth's distance from the Sun, circling once in about 29.5 years. To the old
+astronomy it was the highest and slowest of the seven wandering stars. The
+tradition reads it cold and dry, the greater malefic: of lead, age, boundaries,
+bone and stone, patience and melancholy. Its day Saturday, its metal lead; ruler
+of Capricorn and Aquarius.
+
+== jupiter | iuppiter | jove | zeus ==
+Jupiter — the fifth planet and by far the largest, a gas giant that could hold
+all the others within it, girt by its four great moons (Galileo's, 1610) and the
+centuries-old storm of the Great Red Spot; it rounds the Sun in about 11.9 years.
+The tradition reads it temperate and warm, the greater benefic: of tin, law,
+increase, mercy, princes and religion. Its day Thursday, its metal tin; ruler of
+Sagittarius and Pisces.
+
+== mars | mars-planet | ares ==
+Mars — the fourth planet, red from the rust (iron oxide) in its dust, cold and
+near-airless, with two small moons (Phobos and Deimos) and the tallest volcano
+known; it circles the Sun in about 1.9 years. The tradition reads it hot and dry,
+the lesser malefic: of iron, war, fire, fever, the knife and sudden anger. Its
+day Tuesday, its metal iron; ruler of Aries and Scorpio.
+
+== sun | sol | helios ==
+The Sun — not a planet but the star at the centre, a sphere of hot gas turning
+hydrogen to helium by fusion in its core, about 93 million miles (one
+astronomical unit) off, holding the whole system in its gravity. The old
+astronomy set it among the seven and had it circle the Earth; Copernicus (1543)
+put it rightly at the centre. The tradition reads it hot and life-giving: of
+gold, kings, the heart, honour. Its day Sunday, its metal gold; ruler of Leo.
+
+== venus | venus-planet | aphrodite ==
+Venus — the second planet, nearest to us and closest to Earth in size, wrapped in
+thick cloud that makes it the brightest star-like light and, by a runaway
+greenhouse of carbon dioxide, the hottest surface of any planet. As an inner
+planet it never strays far from the Sun, showing as morning or evening star. The
+tradition reads it temperate and moist, the lesser benefic: of copper, love,
+music, concord. Its day Friday, its metal copper; ruler of Taurus and Libra.
+
+== mercury | mercurius | hermes ==
+Mercury — the first planet, smallest and swiftest, closest to the Sun, airless
+and burnt by day and frozen by night, rounding the Sun in only about 88 days.
+Like Venus it keeps near the Sun and is glimpsed low at dawn or dusk. The
+tradition reads it swift and changeable, taking the nature of what it joins: of
+quicksilver, speech, trade, letters, cunning and wit. Its day Wednesday, its
+metal quicksilver; ruler of Gemini and Virgo.
+
+== moon | luna | selene ==
+The Moon — Earth's own satellite, a quarter our width and some 384,000 km off,
+shining by borrowed sunlight; it keeps one face always toward us and raises the
+sea's tides by its pull. It waxes and wanes through its phases in about 29.5 days
+(the synodic month) and is reckoned by its "age" in days when choosing hours. The
+tradition reads it cold and moist: of silver, tides, waters, growth, the common
+folk. Its day Monday; ruler of Cancer.
+
+== the-celestial-sphere | firmament ==
+The celestial sphere is the oldest working picture of the sky: the stars taken as
+fixed to one great globe turning about the Earth once a day, with the Earth at
+its centre. It is not true — the turning is the Earth's own spin, and the stars
+lie at wildly different depths — but as a map it still serves every stargazer and
+navigator. On it are drawn the celestial poles (above the Earth's), the celestial
+equator, and the ecliptic, the Sun's yearly path.
+
+== the-ecliptic | the-suns-path ==
+The ecliptic is the line the Sun seems to trace against the stars through the
+year; the planets and Moon keep close to it, so the band around it (some eight
+degrees either side) is the zodiac. It tilts about 23.5 degrees to the celestial
+equator because the Earth's axis is tilted — and that tilt, not any nearness to
+the Sun, is the true cause of the seasons. Where ecliptic and equator cross are
+the equinoxes; their farthest parting, the solstices.
+
+== equinox-and-solstice | the-quarters ==
+The year's four hinges. At the two equinoxes (about 20 March, 23 September) the
+Sun crosses the celestial equator and day and night stand near equal the world
+over. At the summer solstice (about 21 June) the Sun rides highest and the day is
+longest in the north; at the winter solstice (about 21 December) lowest and
+shortest. They open the four seasons and, in the old reckoning, the cardinal
+signs Aries, Cancer, Libra and Capricorn.
+
+== precession | the-great-year ==
+The Earth's axis slowly wheels like a spun top, one full turn in about 25,800
+years — the precession of the equinoxes, found by Hipparchus about 130 BC. By it
+the pole star changes over ages (Thuban once, Polaris now, Vega far hence) and
+the equinox creeps backward through the signs. This is why the "tropical" signs
+of astrology (tied to the seasons) have drifted from the constellations that
+named them: the sign Aries no longer sits on the stars of Aries.
+
+== the-constellations | star-figures ==
+The constellations are figures the eye draws among the stars — the stars within
+one are mostly unrelated, lying at different depths, and the figure is a memory-
+aid, not a true group. Ptolemy listed 48 in the Almagest (about 150 AD); the
+modern sky is divided into 88 agreed regions. The twelve of the zodiac are those
+the ecliptic runs through. Each age and people drew its own figures on the same
+stars.
+
+== the-fixed-stars | behenian-stars ==
+The "fixed" stars are those that keep their figures, against the seven that
+wander — fixed only to the eye, for they too move, unseeably slow. Medieval and
+Renaissance astrology singled out fifteen Behenian stars (from Arabic bahman) as
+especially potent for talismans — among them Aldebaran, Regulus, Antares,
+Sirius, Spica, Algol — each with a planetary nature, a stone and a plant, set
+down by Agrippa after the Arabic sources. A bridge from the stars to the
+talismanic art.
+
+== sirius | dog-star | canis-major ==
+Sirius, in Canis Major, the brightest star of the night sky, a near and hot white
+sun (with a dim white-dwarf companion). To Egypt its dawn rising foretold the
+Nile's flood and opened the year; to Greece and Rome it marked the sweltering
+"dog days" of high summer. One of the Behenian stars, read as hot and Jupiter-
+Mars in nature. A fixed star woven deep into calendar and lore.
+
+== the-pleiades | seven-sisters ==
+The Pleiades, a true cluster of young blue stars in Taurus — stars really born
+together, unlike a constellation — seen as a little misty knot of six or seven.
+Their heliacal rising and setting marked the seasons of sailing and sowing across
+the ancient world, and nearly every people tells of "seven sisters." A rare case
+where the eye's figure is a real family of stars.
+
+== the-pole-star | polaris | ursa-major ==
+Polaris, the North Star, stands almost still while the sky wheels about it,
+because it sits near the north celestial pole — so it has steered travellers and
+sailors for ages. It is found by the "Pointers" of the Plough (Ursa Major, the
+Great Bear). But the pole wanders by precession: Polaris is only the present
+pole-star, not an eternal one.
+
+== the-milky-way | via-lactea ==
+The Milky Way, the pale band across the night, is the massed light of countless
+stars of our own galaxy seen edge-on from within — proven so by Galileo's glass
+in 1610, guessed before. Myth read it as spilt milk of a goddess, or a road of
+souls, or a river in the sky. The plain truth is grander than the myths: we are
+looking down the length of our own star-city.
+
+== solar-eclipse ==
+A solar eclipse falls when the new Moon passes squarely between Earth and Sun and
+its shadow touches the Earth, hiding the Sun for a few minutes along a narrow
+track — possible only because Sun and Moon chance to look the same size in our
+sky. It can happen only at new Moon, and only when that falls near a node (where
+the Moon's path crosses the ecliptic), which is why it is not monthly. Long read
+as an omen; in truth a clockwork of shadows, predictable far ahead.
+
+== lunar-eclipse ==
+A lunar eclipse falls when the full Moon passes into the Earth's shadow and
+dims, often reddening — the "blood moon," lit only by sunlight bent through
+Earth's air. It can happen only at full Moon near a node. That the Earth's shadow
+on the Moon is always round was, to the Greeks, a proof the Earth is a sphere.
+Like the solar sort, an omen to the old world, a reckonable shadow to the new.
+
+== the-lunar-nodes | dragons-head-and-tail ==
+The Moon's path is tilted to the ecliptic, and the two points where they cross
+are the nodes — the ascending node the Dragon's Head (Caput Draconis, Rahu), the
+descending the Dragon's Tail (Cauda Draconis, Ketu). Eclipses fall only near
+them, whence the myth of a dragon swallowing Sun or Moon. Astrology reads the
+Head as increasing and the Tail as diminishing. The nodes themselves slowly
+circle the zodiac in about 18.6 years.
+
+== the-moons-phases ==
+The Moon shows phases because we see its sunlit half at changing angles as it
+circles Earth: new (dark, with the Sun), waxing crescent, first quarter (half-
+lit, rising at noon), waxing gibbous, full (opposite the Sun, rising at sunset),
+then waning back through gibbous, last quarter and crescent to new. The round
+takes about 29.5 days. The old magic timed its works to them — waxing to build
+and draw, waning to banish and loose — and reckoned the Moon's "age" in days from
+the new.
+
+== comets | hairy-stars ==
+A comet is a small body of ice and dust from the system's cold edge; nearing the
+Sun it steams off a glowing head and a tail that always points away from the Sun,
+driven by its light and wind. The Greeks named them "hairy stars" (kometes). Long
+dreaded as omens of a king's death or of war, they were tamed by Halley, who in
+1705 showed one returns on a fixed round of about 76 years — turning a portent
+into a prediction.
+
+== the-four-elements | the-qualities ==
+Beneath the old astronomy and astrology lie the four elements of Empedocles and
+Aristotle — earth, water, air, fire — built from pairings of two qualities: cold
+and dry (earth), cold and moist (water), hot and moist (air), hot and dry (fire).
+The signs, planets, humours and herbs are all sorted by them, which is how this
+book and the herbal speak the same language. A model long overturned in natural
+science, but still the grammar of the esoteric tradition.
+
+== zodiac | zodiacus | the-twelve-signs ==
+The zodiac is the band of the twelve signs the Sun and planets pass through along
+the ecliptic: Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio,
+Sagittarius, Capricorn, Aquarius, Pisces — four of fire, four of earth, four of
+air, four of water, and each also cardinal, fixed or mutable. Each is the house
+of one or more of the seven planets, and each governs a part of the body, head
+(Aries) to feet (Pisces). Note the signs (even thirty-degree divisions tied to
+the seasons) are no longer the constellations that named them; precession has
+parted them.
+
+== the-decans | faces ==
+Each sign divides into three decans or "faces" of ten degrees, thirty-six in all
+around the zodiac — a scheme out of Egypt, where the decans were star-groups that
+rose through the night and told the hours. Later astrology gave each a planetary
+ruler and the talismanic art gave each an image; in the Tarot the thirty-six
+lesser cards (the twos through tens) are laid upon them. A fine grid that joins
+the signs, the planets and the diviner's cards.
+
+== the-lunar-mansions | the-twenty-eight ==
+The lunar mansions are the Moon's own zodiac: twenty-eight resting-places, one
+for each night of its round through the stars, known to Arabic (manazil), Indian
+(nakshatra) and Chinese astronomy alike, each developed on its own. Western magic
+took the Arabic twenty-eight for choosing hours and making talismans, each
+mansion with its nature, its angel and its fit works. The Moon's nightly station,
+as the signs are the Sun's monthly ones.

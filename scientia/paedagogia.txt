@@ -1,0 +1,136 @@
+# liber: paedagogia
+# nomen: the art of teaching
+# claves: teach, teacheth, teaching, taught, learn, learned, learning, instruct, instruction, science, sciences, art, arts, wise, wisdom, memory, cunning, knowledge
+
+== teaching | what-works ==
+Teaching has a core of methods that hold across subjects, ages and places — found
+by cognitive science, not folklore, and among the most-replicated results in the
+field. The strongest few: test yourself rather than reread (retrieval practice);
+spread study over time, don't cram (spacing); get prompt, specific feedback; study
+worked examples before trying alone; and chase understanding, not the warm glow of
+familiarity. Much of what feels like good studying (rereading, highlighting) feels
+productive and mostly isn't. The hardest truth under it all: what feels easy in the
+moment usually teaches least.
+
+== retrieval-practice | the-testing-effect ==
+The single best-attested finding: pulling knowledge out of memory strengthens it
+far more than putting it in again. A student who reads a passage once and then
+tries to recall it remembers far more, weeks later, than one who reads it four
+times — though the rereader feels more confident. So the test is not just a measure
+but a tool of learning. In practice: close the book and recall; use flashcards and
+quizzes; ask questions, don't just re-present. "Retrieval is the event that
+changes memory."
+
+== spacing | distributed-practice ==
+The same study time does more good spread out than massed. Review a thing today,
+then in a few days, then in a week, then a month, and it lodges deep; cram it all in
+one sitting and it fades fast after the exam. The forgetting between sessions is not
+waste — the effortful re-retrieval is what builds durability. Spaced repetition
+systems (Leitner boxes, Anki) automate the timing, widening the gap each time a
+card is recalled. Slower to feel learned, far longer to last.
+
+== interleaving | mixing-practice ==
+Practising several related kinds of problem mixed together beats doing many of one
+kind in a block — even though blocking feels smoother and more successful at the
+time. Mixing forces the learner to notice which kind of problem this is and choose
+the method, which is the very skill a blocked drill skips. Shown clearly in maths
+and in perceptual learning (telling painters' styles apart). The cost is that it
+feels harder and more error-strewn while you do it; the gain shows at the test and
+in the real world, where problems don't come pre-sorted.
+
+== worked-examples | cognitive-load ==
+For a beginner, studying a fully worked-out example teaches more, per minute, than
+struggling to solve the like problem unaided — because a novice's working memory is
+narrow (Cognitive Load Theory, Sweller), and unguided struggle spends it all on
+flailing rather than on learning the method. So: show the whole solution, step by
+step, before asking them to do one. But as skill grows this reverses (the
+"expertise-reversal effect") — the expert is slowed by examples they no longer
+need. Hence "faded" guidance: full example, then half-done, then on their own.
+
+== scaffolding | the-zone ==
+Vygotsky's Zone of Proximal Development: the fertile band between what a learner can
+do alone and what they cannot yet do at all — the things they can do only with help.
+Good teaching works that band, giving support (a hint, a frame, a part-done task, a
+worked step) that lets the learner reach just past their grasp, then removing it as
+they steady — "scaffolding," taken down as the building stands. Too easy and nothing
+is learned; too hard and they drown. Aim the help at the edge of the possible.
+
+== feedback | the-corrective-loop ==
+Learning needs a loop: attempt, find out what was right and wrong, adjust, attempt
+again. Feedback is among the most powerful levers in teaching — but only when it is
+specific, timely, and about the work rather than the person ("this step dropped the
+sign," not "good job" or "you're clever"). Praise of ability can even harm, teaching
+the learner to protect a label rather than risk a mistake. The best feedback tells
+them where they are, where they're going, and the next step to close the gap.
+
+== mastery-learning | bloom ==
+Mastery learning: don't move on until the current step is truly learned, letting
+time vary and holding the standard fixed, instead of the usual way round. Bloom's
+famous "2 sigma" finding was that one-to-one tutoring with mastery could lift an
+average student roughly two standard deviations — near the top of an ordinary class
+— setting the grand problem of how to get tutoring's gains at scale. The lasting
+lessons even without a tutor: check for real understanding before advancing, and let
+the slow step take the time it needs.
+
+== direct-instruction | explicit-teaching ==
+For knowledge and skills that are new to the learner, explicit teaching — clear
+statement, modelled example, guided practice, then independent practice, with
+frequent checks — reliably outperforms leaving novices to discover the matter for
+themselves. Discovery and open inquiry have their place, but mostly once a learner
+has the grounding to explore with; thrown at beginners they tend to teach the
+confident wrong thing. Be clear, model it, practise it, check it. Minimal guidance
+fails the novice precisely when guidance is needed most.
+
+== elaboration-and-dual-coding ==
+Two ways to deepen encoding. Elaboration: make the learner explain how and why, tie
+the new thing to what they already know, ask "how does this connect?" — knowledge
+built into a web is far better held and retrieved than a fact left bare. Dual coding:
+pair words with a fitting picture, diagram or spatial layout, so the mind stores it
+two ways at once (but a decorative image that merely distracts hurts — the picture
+must carry meaning). Self-explanation, concept maps and good diagrams all draw on
+these.
+
+== deliberate-practice ==
+Skill grows not from mere hours but from deliberate practice (Ericsson): focused
+work at the edge of your ability, on the specific weakness, with immediate feedback
+and repeated correction — not the comfortable rehearsal of what you can already do.
+The expert pianist drills the hard four bars, slowly, until they yield, rather than
+playing the whole piece through again. Push just past the current limit, isolate the
+failing part, get told at once how it went, and repeat. Pleasant practice and
+effective practice are rarely the same.
+
+== the-socratic-method ==
+Teaching by question rather than by telling: the teacher draws the learner out with
+a chain of well-aimed questions, exposing what they don't yet understand and leading
+them to build the answer themselves. Its power is that the learner does the
+cognitive work — and what you generate yourself you hold better than what you are
+handed (the "generation effect"). Its risk is that it demands the learner already
+have something to reason from; on bare ground it becomes guessing. Best for
+sharpening, examining and deepening what is partly known.
+
+== desirable-difficulties ==
+The deep paradox under all of this (Bjork): the conditions that make learning feel
+hard and slow in the moment — spacing, interleaving, testing, varying the setting —
+are often the very ones that make it last; and the conditions that make practice
+feel smooth and successful often produce learning that evaporates. So a learner's
+own sense of how well a session went is a poor and even inverted guide. Trust the
+delayed test, not the feeling of fluency. Difficulty, of the right kind and degree,
+is not the enemy of learning but its engine.
+
+== the-experts-blind-spot ==
+The curse of knowledge: once you know a thing well, you cannot easily feel what it
+is to not know it, so the expert skips the steps that are now invisible to them and
+loses the beginner. The cure is to make the hidden steps explicit, to watch where
+learners actually stumble (not where you expect), and to remember that your own
+fluency is exactly what disqualifies your intuition about what is hard. The best
+teacher keeps a live memory of being confused.
+
+== motivation | why-they-try ==
+No method teaches a learner who will not engage, so motivation is ground, not
+garnish. The durable sort is mostly intrinsic, and grows from three things
+(self-determination theory): competence (a felt sense of getting better — which
+early, well-pitched success feeds), autonomy (some real ownership of the how and
+what), and relatedness (that someone cares how they do). A "growth mindset" — taking
+ability as trainable, so effort and error are the path and not a verdict — supports
+all three. Reward and fear can drive the short sprint, but tend to crowd out the
+longer love of the thing.
