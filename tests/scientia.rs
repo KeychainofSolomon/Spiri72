@@ -174,3 +174,15 @@ fn a_name_two_libraries_hold_goes_where_the_question_points() {
     // Asmoday (32) reads the heavens but not the cards: the card is not his
     assert_eq!(consult(&libri, 32, "What does the Sun card mean?"), None);
 }
+
+#[test]
+fn a_homonym_in_an_office_opens_no_library() {
+    let libri = starters();
+    let tarot = libri.iter().find(|l| l.liber == "tarot").expect("tarot");
+    // Vassago (3) declares things to come: the cards are his
+    assert!(scientia::opens(tarot, 3));
+    // Murmur (54) compels the dead "to come" before the exorcist, and Sitri
+    // (12) discloses "the secrets of women": neither is an office of divining
+    assert!(!scientia::opens(tarot, 54));
+    assert!(!scientia::opens(tarot, 12));
+}

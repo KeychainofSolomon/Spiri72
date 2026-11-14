@@ -393,7 +393,12 @@ impl Rogatum {
     /// How many of the question's words, outside the key itself, speak of the
     /// library's own matter (its claves or its name): `card` beside `the sun`.
     fn context(&self, liber: &Liber, key: &[String]) -> usize {
-        let mut own: Vec<String> = liber.claves.iter().flat_map(|c| words(c)).collect();
+        let mut own: Vec<String> = liber
+            .claves
+            .iter()
+            .flat_map(|c| words(c))
+            .filter(|w| !VACUA.contains(&w.as_str()))
+            .collect();
         own.push(liber.liber.to_lowercase());
         let mut seen: Vec<&String> = self
             .verba

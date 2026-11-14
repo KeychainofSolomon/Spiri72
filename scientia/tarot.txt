@@ -1,6 +1,6 @@
 # liber: tarot
 # nomen: the book of thoth
-# claves: secret, hidden, come, past, present, future, prophecy, prophetess, divination, fortune, art, arts, science, sciences, card, cards
+# claves: secret things, things secret, all secrets, hidden, things to come, past, present, future, prophecy, prophetess, divination, fortune, art, arts, science, sciences, card, cards
 
 == tarot | the-structure ==
 A tarot deck is 78 cards in two parts. The Major Arcana (22 trumps, numbered 0-21,

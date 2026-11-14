@@ -1,6 +1,6 @@
 # liber: solomonica
 # nomen: the solomonic art
-# claves: secret, hidden, art, arts, science, sciences, liberal, dignities, knowledge, invisible, familiar, familiars, magic, conjure, spirits, seal, seals, circle
+# claves: secret things, things secret, all secrets, hidden, art, arts, science, sciences, liberal, dignities, knowledge, invisible, familiar, familiars, magic, conjure, spirits, seal, seals, circle
 
 == solomonic-magic | clavicula | key-of-solomon ==
 The Solomonic art is the Western grimoire tradition of binding spirits by divine
