@@ -186,3 +186,27 @@ fn a_homonym_in_an_office_opens_no_library() {
     assert!(!scientia::opens(tarot, 54));
     assert!(!scientia::opens(tarot, 12));
 }
+
+#[test]
+fn a_new_starter_reaches_an_old_folder_and_a_deleted_one_stays_deleted() {
+    let dir = std::env::temp_dir().join(format!("spiri72-sow-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    let home = dir.join(scientia::DIR);
+    // a folder made by an older build: one library, edited by the Operator
+    std::fs::create_dir_all(&home).unwrap();
+    std::fs::write(
+        home.join("flora.txt"),
+        "# claves: herb\n\n== mine ==\nMine.\n",
+    )
+    .unwrap();
+    let libri = scientia::load(&dir);
+    // the Operator's own text is kept, and the missing starters arrive
+    let flora = libri.iter().find(|l| l.liber == "flora").expect("flora");
+    assert_eq!(flora.entries.len(), 1);
+    assert!(libri.iter().any(|l| l.liber == "honorius"));
+    // a starter the Operator deletes does not come back
+    std::fs::remove_file(home.join("honorius.txt")).unwrap();
+    let libri = scientia::load(&dir);
+    assert!(!libri.iter().any(|l| l.liber == "honorius"));
+    let _ = std::fs::remove_dir_all(&dir);
+}

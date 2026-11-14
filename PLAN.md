@@ -1,7 +1,8 @@
 # Plan: systems that grow better and cheaper by their own use
 
-Status: a plan only. Built so far: the measure of library search
-(`tests/quaesitio.rs`). Everything else below is proposed, not implemented.
+Status: a plan. Built so far: the measure of library search
+(`tests/quaesitio.rs`) and the first half of Loop 1 (search without the
+model). Everything else below is proposed, not implemented.
 Figures marked "est." are estimates, not measurements.
 
 ## The pattern (every loop must have all three)
@@ -19,6 +20,18 @@ The model's weights never change here. What learns is the scaffolding.
 Ground rule unchanged: Spiri72 proposes, Annulus judges and permits.
 
 ## Loop 1: library search (in progress)
+
+Done so far (2026-11-14), all without the model:
+
+- The measure asks every question as each of the 72 spirits, over all ten
+  starter libraries: 29 plain (all must be right), 35 oblique (floor 15 right,
+  ceiling 2 wrong), 34 idle (ceiling 5 false finds).
+- Search finds an entry by what a question describes, weighed by word rarity
+  among the open libraries only; a doubtful finding hands nothing.
+- Known and measured, not yet mended: an everyday word that is also a key
+  (`history`, `character`, `death`, `the world`, `faces`, `the sun`) is still
+  taken as a naming. All five idle false finds are of this kind.
+- Still to build: the ledger and the model's search step, below.
 
 - **Ledger**: `spiri72.vestigia/<liber>.jsonl`, shared by all spirits the
   library opens to. Line: `{verba:[question words], clavis, iudicium, dies, prev}`.

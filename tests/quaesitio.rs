@@ -20,17 +20,18 @@
 use spiri72::scientia::{consult, opens, parse, Liber};
 
 /// Right finds among the oblique questions, as measured. May only rise.
-const OBLIQUE_FLOOR: usize = 14;
+const OBLIQUE_FLOOR: usize = 15;
 /// Wrong finds among the oblique questions, as measured. May only fall.
 const OBLIQUE_WRONG_CEILING: usize = 2;
 /// Idle questions that were handed an entry, as measured. May only fall.
 const IDLE_CEILING: usize = 5;
 
-const LIBRI: [&str; 9] = [
+const LIBRI: [&str; 10] = [
     "angelica",
     "astronomia",
     "divinatio",
     "flora",
+    "honorius",
     "litterae",
     "paedagogia",
     "poetica",
@@ -85,6 +86,12 @@ const PLAIN: &[Case] = &[
     ("What does the Moon mean in tarot?", "tarot", "the-moon"),
     // a bare number names a card only when cards are spoken of
     ("What is card 13?", "tarot", "death"),
+    ("What is the Liber Iuratus?", "honorius", "the-sworn-book"),
+    (
+        "What is the Theban alphabet?",
+        "honorius",
+        "honorius-of-thebes",
+    ),
     // one rare word of a key is naming enough
     ("What is a villanelle?", "poetica", "the-villanelle"),
     ("What are the Pleiades?", "astronomia", "the-pleiades"),
@@ -215,6 +222,21 @@ const OBLIQUE: &[Case] = &[
         "In what was the king said to have imprisoned the demons?",
         "solomonica",
         "the-brass-vessel",
+    ),
+    (
+        "What must a man swear before he is given the book of Honorius?",
+        "honorius",
+        "the-oath-of-honorius",
+    ),
+    (
+        "How many masters met in council, and from which cities?",
+        "honorius",
+        "the-prologue",
+    ),
+    (
+        "Which kings rule the spirits of the air?",
+        "honorius",
+        "the-kings-of-the-air",
     ),
     (
         "Which card shows a man hanging upside down?",

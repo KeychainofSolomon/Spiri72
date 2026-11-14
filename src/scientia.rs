@@ -35,7 +35,7 @@ pub const DIR: &str = "spiri72.scientia";
 
 /// The starter libraries, written out on first run if none are present. The
 /// Operator may edit them and add more.
-const SEEDS: [(&str, &str); 9] = [
+const SEEDS: [(&str, &str); 10] = [
     ("flora.txt", include_str!("../scientia/flora.txt")),
     ("astronomia.txt", include_str!("../scientia/astronomia.txt")),
     ("tarot.txt", include_str!("../scientia/tarot.txt")),
@@ -45,7 +45,11 @@ const SEEDS: [(&str, &str); 9] = [
     ("paedagogia.txt", include_str!("../scientia/paedagogia.txt")),
     ("litterae.txt", include_str!("../scientia/litterae.txt")),
     ("poetica.txt", include_str!("../scientia/poetica.txt")),
+    ("honorius.txt", include_str!("../scientia/honorius.txt")),
 ];
+
+/// The record, in the libraries' folder, of which starters have been offered.
+const SEMINA: &str = ".semina";
 
 /// One keyed entry of a library.
 #[derive(Clone, Debug)]
@@ -241,15 +245,39 @@ pub fn parse(liber: &str, text: &str) -> Liber {
     }
 }
 
-/// Loads every library under `<dir>/spiri72.scientia`, writing the starters first
-/// if the folder is absent. A file that cannot be read is skipped, never fatal.
+/// Writes each starter library once. A starter is offered only the first time
+/// this program sees it (recorded in `.semina`), and never over a file that is
+/// already there: so a new starter reaches a folder made by an older build,
+/// while a library the Operator has edited is left alone and one the Operator
+/// has deleted stays deleted.
+fn sow(home: &Path) {
+    if !home.exists() && fs::create_dir_all(home).is_err() {
+        return;
+    }
+    let record = home.join(SEMINA);
+    let offered = fs::read_to_string(&record).unwrap_or_default();
+    let mut all = offered.clone();
+    for (name, body) in SEEDS {
+        if offered.lines().any(|l| l.trim() == name) {
+            continue;
+        }
+        let path = home.join(name);
+        if !path.exists() {
+            let _ = fs::write(&path, body);
+        }
+        all.push_str(name);
+        all.push('\n');
+    }
+    if all != offered {
+        let _ = fs::write(&record, all);
+    }
+}
+
+/// Loads every library under `<dir>/spiri72.scientia`, writing the starters not
+/// yet offered there first. A file that cannot be read is skipped, never fatal.
 pub fn load(dir: &Path) -> Vec<Liber> {
     let home = dir.join(DIR);
-    if !home.exists() && fs::create_dir_all(&home).is_ok() {
-        for (name, body) in SEEDS {
-            let _ = fs::write(home.join(name), body);
-        }
-    }
+    sow(&home);
     let mut libri = Vec::new();
     let Ok(read) = fs::read_dir(&home) else {
         return libri;

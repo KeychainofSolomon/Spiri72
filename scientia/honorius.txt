@@ -1,0 +1,131 @@
+# liber: honorius
+# nomen: the sworn book
+# claves: angel, angels, divine, holy, sacred, spirits, seal, seals, circle, conjure, magic, secret things, things secret, all secrets
+
+== the-sworn-book | liber-iuratus | liber-sacer | sworn-book-of-honorius ==
+The Sworn Book of Honorius (Liber Iuratus Honorii) is one of the oldest and
+weightiest texts of medieval ritual magic. Its Latin manuscripts call it the
+Sacred or Sworn Book, and once the Book of the Angels. It is not a heap of
+separate spells but one coherent method: a devout, liturgical magic whose
+crown is the vision of God, with the same frame then turned to angels and
+spirits for lesser ends. Hedegard, who edited the Latin in 2002, dates it
+between 1100 and 1350; scholars argue between the early 13th century (if
+William of Auvergne's "Liber Sacratus," c. 1230, is this book) and the early
+14th (if its prologue answers Pope John XXII, 1316-1334). Few manuscripts
+survive and only one is complete; the oldest, Sloane 3854, is 14th-century.
+Source: Peterson's edition and translation (2016), the first complete one.
+
+== the-prologue | the-council-of-masters ==
+The book's own tale of its birth, and best read as legend. Evil spirits stir
+the Pope and cardinals to condemn magic and its masters to death. The masters,
+who say no impure man can work the art and that spirits are forced to answer
+the pure, call a general council: 89 masters from Naples, Athens and Toledo
+choose one, Honorius son of Euclid, master of Thebes, to save the art. With
+the angel Hocrohel advising, he draws on seven books of magic and distils 93
+chapters into one short book, called Sacred because it holds the hundred
+sacred names of God. Peterson notes the tale "smacks of fiction"; it is
+missing from the older form of the text kept by Berengar Ganell, and so may
+be a later addition.
+
+== the-oath-of-honorius | the-nine-oaths ==
+Why the book is called Sworn. Whoever receives it swears: that it be given to
+no one until its master is at the point of death; that no more than three
+copies be made; that it go to no woman, and to no man unless mature, upright
+and faithful, proved by a full year's watching; that it never be destroyed,
+but returned to the master or his heirs; that if no fit heir is found it be
+buried in the master's tomb or in a clean, honourable and secret place; that
+disciples be ready to die for the teaching; that they neither pry into their
+master's doings nor reveal that he knows such things; that the master bind
+his disciples as a father his sons, in concord, each bearing the others'
+suffering and keeping their secrets; and last, that each who takes the oath
+lay it on the next. This is the book's own claim, in its prologue.
+
+== honorius-of-thebes | the-theban-alphabet ==
+Honorius, "son of Euclid, master of Thebes," is held by scholars to be a
+pseudonym; the Thebes meant is probably the Greek city, not the Egyptian.
+Outside the Sworn Book the only early notice of him is Trithemius, whose
+Polygraphia (written 1508, printed 1518) gives a cipher alphabet of "Honorius
+surnamed the Theban," citing Peter of Abano for it; Peterson could not find
+the passage in Abano. The alphabet is built on the Latin letters, not the
+Greek. It reached the wider world through Agrippa (De Occulta Philosophia,
+1533), and the one Honorius manuscript that has it copied it from Agrippa.
+Its use as a "witches' alphabet" in Wicca and modern magic is modern.
+
+== the-seal-of-god-in-honorius | sigillum-dei-honorii ==
+The Seal of God (Sigillum Dei), which the Sworn Book also calls the Seal of
+Solomon, is the heart of its apparatus and far better known than the book
+itself: its making opens the first Book, and the vision of God is sought by
+it. It belongs to a tradition that spread from the Mediterranean across
+Europe; it is found on metal, in manuscripts, and in at least one printed Key
+of Solomon. Later copies drift far from the oldest (the figure in La
+Veritable Magie Noire, 1750, is barely recognisable), and John Dee's Sigillum
+Dei Aemeth descends from it. Seven divine names used in the seal appear to be
+taken more or less directly from the Jewish Book of Raziel.
+
+== the-beatific-vision | the-divine-vision ==
+The centrepiece of the Sworn Book is a rite to gain the beatific vision: to
+see God while still living. The first Book lays it out in order: the making
+of the Seal of God, the vision itself, a first and a second purification, the
+placating of the divine majesty, a separation, the names of the living God,
+and the completion of the work. Its means are those of strict Christian
+devotion bent to a magical end: set prayers, the liturgical hours,
+abstinence, a hair shirt, and the help of a priest and his masses. The book
+teaches direct knowledge of God, not through the Church, which is why it
+stood so sharply against the authorities of its day.
+
+== the-five-books-of-honorius | the-works-of-honorius ==
+How the Sworn Book is laid out in Peterson's edition. Book I: preparing the
+Seal of God and the divine vision. Book II: the angels, the natures and
+offices of the planetary angels, and the circle and rites to call and bind
+them. Book III: the spirits of the air, their nature, the raising of the
+winds, the circle, seals and bonds, and their placating. Book IV: the spirits
+of the earth and how they are called. Book V: a general exposition, with the
+consecration of the ink, the masses, and the making of a magic whistle. A
+long list of ends to be gained (to know the heavens and the angels' names,
+seals and offices, the hour of death, things past, present and future, the
+virtues of planets, herbs and beasts) stands at the front; it looks like a
+table of contents but is not one.
+
+== the-name-of-seventy-two-letters | the-great-name ==
+The first topic of the Sworn Book's first work is the composing of the great
+name of God, "which the Hebrews call Shem ha-Meforash," of 72 letters, named
+there as the beginning of the art. Honorius keeps the Jewish term but his
+details differ from the Kabbalists' (as from Abulafia, who wrote on the
+72-letter name and taught in Greece, Thebes among other places, in the
+1270s). The book is also said to hold a hundred sacred names of God, whence
+"Sacred."
+
+== the-kings-of-the-air | the-planetary-kings ==
+In the Sworn Book the spirits of the air are ranked by the seven planets,
+each band under a king, with servants below and ruling angels above who
+constrain them. The kings as Honorius names them: Maymon for Saturn, Formione
+for Jupiter, Iammax for Mars, Barthan for the Sun, Sarabocres for Venus,
+Habaa for Mercury, Harthan for the Moon. Near kin of these lists stand in the
+Heptameron ascribed to Peter of Abano, in a Byzantine manual of exorcism, in
+the 15th-century Book of Angels, and (for the Moon) in the Astromagia of
+Alfonso X, c. 1280; the spellings shift from book to book. Hedegard and
+Boudet suspect a Greek source behind the planetary chapters.
+
+== the-roots-of-honorius | honorius-and-his-sources ==
+What the Sworn Book is made of, as scholars read it. Jewish: union with God
+by magical means, the powers of the seven planets, the divine names, visions
+in sleep, the heavenly palace of the Hekhalot writings, the word Shamayim for
+heaven, and likeness to the Book of Raziel. Western Christian: the Apostles'
+and Athanasian creeds, the Roman blessing of salt, and the nine orders of
+angels, though in its own order, with Cherubim set before Seraphim and
+Principalities before Powers. Eastern: some knowledge of the Greek Orthodox
+liturgy. Honorius claims Solomon's authority, yet little of his method comes
+from the Key of Solomon or its kin; prayers from the Ars Notoria are there,
+but were added in a later revision.
+
+== the-fame-of-honorius | honorius-in-history ==
+The Sworn Book was notorious long before it was read. Notices of it, some
+only probable: William of Auvergne c. 1230; the trial of Olivier Pepin at
+Mende c. 1347; the inquisitor Eymerich in 1376; John Gower's Confessio
+Amantis in 1397; Trithemius in 1518; John Dee's secret writings in 1582.
+A. E. Waite (1898) made the English title current but described only the
+prologue; Thorndike surveyed it; Driscoll printed a partial, altered version
+in 1977 in 450 copies. Hedegard's critical Latin text came in 2002, and the
+older version quoted at length in Berengar Ganell's Summa Sacre Magice has
+since reshaped the study of it. Owen Davies ranks Honorius second only to
+Solomon in medieval notoriety.
