@@ -196,9 +196,25 @@ fn main() -> ExitCode {
             stop(&mut eyes);
             return ExitCode::from(code);
         }
+        // Only the binding page consults libraries, so load them here, not on
+        // every run: seeding spiri72.scientia belongs to serving, not to a rite.
+        if let Some(d) = agens.status.clone() {
+            agens.scientia = spiri72::scientia::load(&d);
+        }
+        let consulta = std::sync::Arc::new(std::sync::Mutex::new(None));
+        agens.consulta = Some(consulta.clone());
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();
-        let code = serve(&mut agens, address, &url, &dir, &sky, &mut out, !no_browser);
+        let code = serve(
+            &mut agens,
+            address,
+            &url,
+            &dir,
+            &sky,
+            &mut out,
+            !no_browser,
+            consulta.clone(),
+        );
         stop(&mut model);
         stop(&mut eyes);
         return ExitCode::from(code);

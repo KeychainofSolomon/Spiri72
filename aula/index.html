@@ -196,10 +196,28 @@ footer #pulsus { color: var(--ink); flex-basis: 100%; }
 footer .sound { background: none; border: 1px solid var(--lapis-line); border-radius: 2px; color: var(--pewter); padding: 0 .55rem; cursor: pointer; font-size: .82rem; }
 footer .sound[aria-pressed="true"] { color: var(--ink); }
 
+/* the library's true copy, surfacing to the right of the circle out of smoke;
+   what overruns its bound is hidden, as the circle hides what crosses its rim */
+.stage { position: relative; }
+.revelatio {
+  position: absolute; top: 3.5rem; right: .4rem; width: min(17rem, 32vw);
+  max-height: calc(100% - 7rem); overflow: hidden; z-index: 3;
+  border: 1px solid var(--lapis-line); border-radius: 2px;
+  background: var(--lapis-band); padding: .85rem .95rem 1.5rem;
+  animation: exhale 1.1s cubic-bezier(.2, .7, .2, 1) both;
+}
+.revelatio[hidden] { display: none; }
+.revelatio .rev-head { color: var(--pewter); font-style: italic; font-size: .82rem; margin: 0 0 .55rem; line-height: 1.45; }
+.revelatio .rev-head b { color: var(--ink); font-style: normal; font-weight: normal; }
+.revelatio .rev-body { font-size: .9rem; white-space: pre-wrap; margin: 0; line-height: 1.5; color: var(--ink); }
+.revelatio::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3rem; background: linear-gradient(transparent, var(--lapis-band)); pointer-events: none; }
+@keyframes exhale { from { opacity: 0; filter: blur(7px); transform: translateY(8px) scale(.98); } to { opacity: 1; filter: none; transform: none; } }
+
 @media (max-width: 1100px) {
   body { height: auto; overflow: auto; grid-template-columns: minmax(15rem, 18rem) 1fr; grid-template-areas: "catalogue stage" "catalogue entry" "foot foot"; grid-template-rows: auto auto auto; }
   .circle { width: min(40rem, 100%); }
   .entry { border-left: none; border-top: 1px solid var(--lapis-line); max-height: none; }
+  .revelatio { position: static; width: auto; max-height: 22rem; margin: 1rem auto 0; padding-bottom: 1.5rem; }
 }
 @media (max-width: 720px) {
   body { display: block; }
@@ -287,6 +305,7 @@ footer .sound[aria-pressed="true"] { color: var(--ink); }
     <textarea id="question" placeholder="Bind a spirit to ask a question" disabled maxlength="2000"></textarea>
     <button type="submit" id="ask-button" disabled>Ask</button>
   </form>
+  <aside class="revelatio" id="revelatio" aria-live="polite" hidden></aside>
 </main>
 
 <section class="entry" id="entry" aria-live="polite">
@@ -569,6 +588,19 @@ function say(node) {
   return node;
 }
 
+// The true copy a spirit drew from a library, surfacing beside the circle. What
+// overruns the box is hidden; it fades back to smoke when a rite draws nothing.
+function showRevelatio(sc) {
+  const box = document.getElementById("revelatio");
+  if (!sc) { box.hidden = true; box.replaceChildren(); return; }
+  box.replaceChildren(
+    el("p", { class: "rev-head" }, "From ", el("b", {}, sc.liber), ", on ", el("b", {}, "“" + sc.terminus + "”")),
+    el("pre", { class: "rev-body" }, sc.textus)
+  );
+  box.hidden = false;
+  box.style.animation = "none"; void box.offsetWidth; box.style.animation = "";
+}
+
 function play(cls, ms) {
   document.body.classList.remove(cls); void document.body.offsetWidth; document.body.classList.add(cls);
   clearTimeout(play[cls]); play[cls] = setTimeout(() => document.body.classList.remove(cls), ms);
@@ -578,6 +610,7 @@ function bind() {
   const s = state.chosen;
   state.liber = state.handed || "";
   state.bound = true;
+  showRevelatio(null);
   document.body.classList.remove("departing");
   document.body.classList.add("bound");
   fitRing(ringFor(s));
@@ -593,6 +626,7 @@ function depart(quietly) {
   if (!state.bound) return;
   fetch(base + "dimitte", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: s.n, locus: state.sky.locus, caelum: state.sky.caelum }) }).catch(() => {});
   state.bound = false;
+  showRevelatio(null);
   document.body.classList.remove("bound", "binding");
   play("departing", 900);
   setTimeout(() => { if (!state.bound) fitRing(ringFor(null)); }, 900);
@@ -673,6 +707,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
     } else {
       say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
     }
+    showRevelatio(a.scientia);
     if (a.dimissus && a.exitus !== 2) say(el("p", { class: "said waiting" }, `${s.name} is banished and no longer held; another question calls it anew, in its own hours.`));
     if (a.exitus === 2) depart(false);
   } catch (err) {

@@ -1,0 +1,210 @@
+# liber: tarot
+# nomen: the book of thoth
+# claves: secret, hidden, come, past, present, future, prophecy, prophetess, divination, fortune, art, arts, science, sciences, card, cards
+
+== tarot | the-structure ==
+A tarot deck is 78 cards in two parts. The Major Arcana (22 trumps, numbered 0-21,
+the Fool to the World) carry the great archetypes and weigh heaviest in a reading.
+The Minor Arcana (56) run in four suits — Wands, Cups, Swords, Pentacles (Coins) —
+each of ten numbered "pips" (Ace to Ten) and four court cards (Page, Knight,
+Queen, King). The suits answer to the four elements: Wands/fire, Cups/water,
+Swords/air, Pentacles/earth. That fourfold-plus-trumps shape is the whole engine
+the esoteric readings are built on.
+
+== history | where-it-comes-from ==
+The honest genealogy, since the myths run thick here. Tarot cards appear in
+mid-15th-century northern Italy as hand-painted trionfi for a trick-taking game
+(tarocchi); for three centuries they were chiefly a card game, and still are in
+much of Europe. The occult reading begins only in 1781, when Court de Gébelin
+declared them a lost Egyptian "Book of Thoth" — a claim with no evidence, long
+since discarded. Etteilla made the first divinatory deck; the Kabbalistic and
+astrological system is the Golden Dawn's (Mathers, 1888+), carried to the world by
+the Waite-Smith deck (1909) and Crowley's Thoth. Old cards, young occultism.
+
+== how-a-reading-works ==
+The mechanics beneath the fortune-telling: the querent frames a question, the deck
+is shuffled and cut, and cards are dealt into a spread whose positions each carry a
+fixed meaning (self, obstacle, past, outcome, and so on). The reader reads each
+card by its own sense, bent by its position, its neighbours, and whether it falls
+upright or reversed. Nothing in the cards foretells; the method is a disciplined
+way of casting a rich symbol-set against a question and reading the pattern that
+falls — a mirror for thought as much as any claim of prophecy.
+
+== the-four-suits | the-minor-arcana ==
+The 56 Minors are the texture of a reading, the daily matter under the Majors'
+great themes. Wands (fire): will, drive, work, creation. Cups (water): feeling,
+love, the inner life. Swords (air): mind, conflict, word and trouble. Pentacles
+or Coins (earth): body, money, craft, the material. The Aces are the pure root of
+each element; the numbers two through ten walk that element through its stages
+(and in the Golden Dawn each is laid on a decan of the zodiac with a planet, so
+the Minors map the whole wheel).
+
+== the-court-cards ==
+The sixteen court cards are the deck's people — and its hardest cards to read,
+standing now for persons in the querent's life, now for parts of the self, now for
+an approach to a matter. The common scheme ranks them Page (or Princess), Knight
+(or Prince), Queen, King, and crosses the four ranks with the four suits/elements,
+so each court card is an element-of-an-element (the Queen of Cups, water of water;
+the Knight of Swords, air of... fire, by one scheme). Expect disagreement between
+systems here; the courts are where decks differ most.
+
+== the-tree-of-life | the-kabbalah ==
+The esoteric spine of the deck (Golden Dawn): the Tree of Life has ten sephiroth
+(spheres) joined by 22 paths. The 22 Major Arcana are laid on the 22 paths, each
+also bearing one of the 22 Hebrew letters; the four suits answer to the four
+Kabbalistic worlds and the four letters of the divine Name (YHVH); the ten pips of
+each suit answer to the ten sephiroth. So the whole 78 is made a map of one
+cosmology. This is a 19th-century construction, elegant and deliberate — not a
+thing the 15th-century card-makers knew.
+
+== the-hebrew-letters | the-paths ==
+From the Sefer Yetzirah, the 22 Hebrew letters divide three ways, and the Golden
+Dawn hung the Majors on them so: the 3 "mother" letters to the elements (Aleph/
+Air–the Fool, Mem/Water–the Hanged Man, Shin/Fire–Judgement); the 7 "double"
+letters to the planets (as the Magician–Mercury, the Wheel–Jupiter, the Sun–Sun);
+the 12 "simple" letters to the zodiac signs (as the Emperor–Aries, the Lovers–
+Gemini, Death–Scorpio). To make the signs run in order they swapped Strength (Leo)
+and Justice (Libra) between numbers 8 and 11 — a famous and deliberate fix.
+
+== the-fool | 0 ==
+0, the Fool. Letter Aleph, element Air. The beginning before all numbers: the leap
+into the unknown, innocence, pure potential, the spirit stepping off the cliff.
+Upright, new starts, trust, freedom. Reversed, recklessness, folly, a step taken
+blind. The zero that holds all the others in seed.
+
+== the-magician | 1 ==
+1, the Magician. Letter Beth, planet Mercury. The will that shapes: "as above, so
+below," the four suit-tokens on his table, the maker who turns idea to act.
+Upright, skill, focus, power rightly used. Reversed, trickery, manipulation,
+wasted gifts.
+
+== the-high-priestess | 2 ==
+2, the High Priestess. Letter Gimel, the Moon. The veiled keeper of the hidden:
+intuition, mystery, the inner and unspoken, the book half-closed on her lap.
+Upright, secret knowledge, the unconscious, patience. Reversed, secrets kept or
+leaking, surface over depth.
+
+== the-empress | 3 ==
+3, the Empress. Letter Daleth, planet Venus. The great mother: fruitfulness,
+nature, abundance, love made flesh and field. Upright, growth, nurture, plenty,
+creation. Reversed, smothering, stagnation, barrenness.
+
+== the-emperor | 4 ==
+4, the Emperor. Letter Heh, sign Aries. The father and ruler: order, authority,
+structure, the law laid down. Upright, command, stability, protection. Reversed,
+tyranny, rigidity, or power lost.
+
+== the-hierophant | 5 ==
+5, the Hierophant. Letter Vav, sign Taurus. The teacher of the tradition: doctrine,
+institution, the bridge to the sacred by the appointed road. Upright, learning,
+orthodoxy, counsel. Reversed, dogma, rebellion, the hollow rite.
+
+== the-lovers | 6 ==
+6, the Lovers. Letter Zayin, sign Gemini. Union and the choice it demands: love,
+pairing, the fork in the road that asks the heart. Upright, harmony, bond, right
+choosing. Reversed, discord, bad bargains, division.
+
+== the-chariot | 7 ==
+7, the Chariot. Letter Cheth, sign Cancer. Victory by will: two sphinxes pulling
+opposite ways, mastered and driven straight. Upright, triumph, control, forward
+force. Reversed, loss of reins, scattered drive, defeat.
+
+== strength | 8 ==
+8, Strength (Golden Dawn's eighth; older decks number it eleven). Letter Teth, sign
+Leo. The maiden closing the lion's jaws — not force but gentle mastery, courage,
+the taming of the inner beast. Upright, fortitude, patience, calm power. Reversed,
+doubt, raw appetite, weakness.
+
+== the-hermit | 9 ==
+9, the Hermit. Letter Yod, sign Virgo. The lone lamp on the height: withdrawal,
+search, the inner light carried into the dark. Upright, wisdom, solitude, guidance.
+Reversed, isolation, refusal, a light hidden.
+
+== wheel-of-fortune | 10 ==
+10, the Wheel of Fortune. Letter Kaph, planet Jupiter. The turning of fate: rise
+and fall, luck, the cycle none stands outside. Upright, change, fortune, a turning
+tide. Reversed, downturn, bad luck, resisting the turn.
+
+== justice | 11 ==
+11, Justice (Golden Dawn's eleventh; older decks number it eight). Letter Lamed,
+sign Libra. The sword and the scales: balance, law, cause and consequence, the true
+account. Upright, fairness, truth, reckoning. Reversed, injustice, imbalance, dues
+unpaid.
+
+== the-hanged-man | 12 ==
+12, the Hanged Man. Letter Mem, element Water. The willing reversal: suspension,
+surrender, the world seen upside down and newly. Upright, letting go, new vision,
+sacrifice. Reversed, stalling, pointless martyrdom, stuck.
+
+== death | 13 ==
+13, Death. Letter Nun, sign Scorpio. Rarely a literal death: ending and the change
+it clears ground for, the scythe that makes room. Upright, transformation, closure,
+rebirth. Reversed, clinging, stagnation, the change refused.
+
+== temperance | 14 ==
+14, Temperance. Letter Samekh, sign Sagittarius. The angel mingling the cups:
+balance, patience, the middle way, opposites blended well. Upright, moderation,
+harmony, healing. Reversed, excess, discord, bad mixture.
+
+== the-devil | 15 ==
+15, the Devil. Letter Ayin, sign Capricorn. The chains worn loosely: bondage,
+appetite, the material gripping the soul — yet the captives could lift the chains
+off. Upright, temptation, dependence, the shadow. Reversed, release, breaking free,
+facing the thing.
+
+== the-tower | 16 ==
+16, the Tower. Letter Peh, planet Mars. The lightning-struck tower: sudden ruin,
+the false thing thrown down, revelation like a bolt. Upright, upheaval, shock,
+truth that shatters. Reversed, disaster feared or delayed, a slower fall.
+
+== the-star | 17 ==
+17, the Star. Letter Tzaddi, sign Aquarius. After the Tower, the quiet water-pourer
+under the stars: hope, renewal, calm and guidance regained. Upright, faith, healing,
+serenity. Reversed, despair, faith lost, the light dimmed.
+
+== the-moon | 18 ==
+18, the Moon. Letter Qoph, sign Pisces. The night road between the towers:
+illusion, dream, fear, the unclear and the unconscious astir. Upright, mystery,
+intuition, things not as they seem. Reversed, confusion clearing, or deeper into
+delusion.
+
+== the-sun | 19 ==
+19, the Sun. Letter Resh, the Sun. The child on the white horse in full day: joy,
+clarity, vitality, the plain good. Upright, happiness, success, truth seen whole.
+Reversed, a clouded joy, delay, dimmed warmth.
+
+== judgement | 20 ==
+20, Judgement. Letter Shin, element Fire. The trumpet and the rising dead:
+awakening, reckoning, the call to a new life. Upright, renewal, absolution, the
+summons answered. Reversed, self-doubt, the call refused, old guilt.
+
+== the-world | 21 ==
+21, the World. Letter Tav, planet Saturn (and the element Earth). The dancer in the
+wreath: completion, wholeness, the journey round and fulfilled — and the ground of
+the next Fool's leap. Upright, attainment, integration, closure. Reversed,
+unfinished business, a short-fall near the end.
+
+== the-spreads ==
+A spread sets the cards in named places, each lending its sense. The three-card
+line (past–present–future, or situation–action–outcome) is the plain workhorse.
+The Celtic Cross (ten cards) is the best-known larger spread: a central pair
+(matter and what crosses it), a cross of four (foundation, past, crown, near
+future), and a staff of four (self, environment, hopes-and-fears, outcome). The
+spread is just a frame of questions; the reading is in the cards that fall into
+it.
+
+== reversals ==
+A card dealt upside down is read "reversed" — by one school weakened, blocked or
+turned inward; by another simply a different shade of the same card, not its
+opposite. Many readers use no reversals at all, taking meaning from the
+surrounding cards instead. There is no settled rule: it is a choice of method the
+reader makes and keeps to, not a law of the deck.
+
+== marseille-waite-thoth ==
+Three great families of deck, worth telling apart. The Tarot de Marseille (17th-18th
+c.) is the old standard: its Minor pips are plain arrangements of suit-signs, read by
+number and suit, not by scene. The Rider-Waite-Smith (1909) gave every Minor a
+pictured scene, which made intuitive reading easy and is why it rules the modern
+world. Crowley and Harris's Thoth (1940s) rebuilt the symbolism on the Golden
+Dawn's full astrological and Kabbalistic system. Same 78 skeleton, three different
+bodies.

@@ -1,0 +1,133 @@
+# liber: poetica
+# nomen: the art of verse
+# claves: poet, poets, poetry, poem, poems, verse, rhyme, metre, meter, song, songs, muse, muses, letters, eloquent, eloquence, liberal, arts
+
+== poetry | the-art ==
+Poetry is language made to carry more than its plain sense — through sound, rhythm,
+image and compression, saying much in little and meaning more than it says. Where
+prose explains, poetry enacts: it works by the music of the line as much as by the
+meaning of the words, and by the image that shows rather than tells. Its oldest
+root is song and memory — metre and rhyme were mnemonics before they were
+ornaments. Read it aloud; a poem that is only on the page is half dead.
+
+== the-modes | kinds-of-poetry ==
+The great kinds, by what they do. Lyric: short, first-person, a single speaker's
+feeling or thought in a moment (the ode, elegy, sonnet, song) — the bulk of what we
+now call "poems." Narrative: it tells a story (the epic, the ballad, the romance).
+Dramatic: spoken by a character not the poet (the dramatic monologue, verse drama).
+Didactic: it means to teach. These blur — an epic holds lyric moments — but naming a
+poem's mode tells you what it is trying to be, and so how to read it.
+
+== metre | scansion ==
+Metre is the measured beat of a line, counted in English by stressed and unstressed
+syllables grouped into "feet." The common feet: the iamb (da-DUM, as "be-LONG"),
+the commonest in English; the trochee (DUM-da, "GAR-den"); the anapest
+(da-da-DUM, "in-ter-RUPT"); the dactyl (DUM-da-da, "TEN-der-ly"); the spondee
+(DUM-DUM, two stresses). To "scan" a line is to mark its beats and name the pattern.
+The feel follows the foot: iambs walk, trochees fall, anapests gallop.
+
+== the-line-lengths ==
+A metre is named by its foot and the count of feet per line: monometer (one),
+dimeter (two), trimeter (three), tetrameter (four), pentameter (five), hexameter
+(six), heptameter (seven). Iambic pentameter — five iambs, ten syllables — is the
+grand line of English verse, of Shakespeare and Milton, close to the natural rhythm
+of English speech. The classical epic ran in dactylic hexameter (Homer, Virgil).
+Perfect regularity deadens; the living line plays against its metre, substituting a
+foot to catch the ear.
+
+== rhyme | the-schemes ==
+Rhyme chimes the ends (or elsewhere) of lines by sound. Full rhyme matches the
+stressed vowel and all after (moon/June); slant or half rhyme glances off it
+(moon/mourn), a subtler modern favourite; eye rhyme only looks alike (love/move).
+A rhyme scheme is charted by letters — a couplet aa, alternating abab, enclosed
+abba. Rhyme can also fall inside a line (internal) or at the start (head). Its
+work is music and memory and the click of closure; overdone it jingles, which is
+why much modern verse leaves it or hides it.
+
+== poetic-devices ==
+The close-work of the art. Of sound: alliteration (repeated opening consonants),
+assonance (repeated vowels), consonance (repeated consonants), onomatopoeia (sound
+echoing sense). Of image: metaphor (one thing as another), simile (as/like),
+personification, symbol, imagery (the sensory picture). Of the line: enjambment
+(the sentence runs over the line-end, pulling the reader on), the end-stopped line
+(it rests), caesura (a pause within the line). In the sonnet and elsewhere, the
+volta — the "turn," where the poem pivots in thought.
+
+== the-sonnet ==
+Fourteen lines, usually iambic pentameter, the most enduring fixed form in English.
+Two main builds. The Petrarchan (Italian): an octave (abbaabba) that sets a
+problem, then a sestet (cde cde or so) that answers it, the volta falling at line
+nine. The Shakespearean (English): three quatrains and a closing couplet
+(abab cdcd efef gg), the argument developed through the quatrains and clinched —
+often with a twist — in the couplet. The form's tight room is its power: it forces
+the thought to turn and to land.
+
+== the-villanelle ==
+Nineteen lines on two rhymes and two refrains: five tercets (aba) and a closing
+quatrain (abaa). The first and third lines of the opening stanza return, alternately,
+as the last line of each following tercet, and both close the final quatrain
+together. The circling refrains make it an instrument for obsession, grief and the
+unshakeable — Dylan Thomas's "Do not go gentle into that good night" and Bishop's
+"One Art" are the famous proofs. Hard to write without strain; unforgettable when it
+works.
+
+== the-sestina ==
+Thirty-nine lines, unrhymed, turning on six end-words instead of rhyme. Six stanzas
+of six lines repeat those same six words as line-endings, in a fixed, spiralling
+order (each stanza's last word begins the next), and a three-line envoi uses all six
+again, two per line. The pattern (615243, rolled each time) is a machine for
+obsessive return without the chime of rhyme. Demanding, strange, and oddly hypnotic;
+the recurring words gather new weight each time they come round.
+
+== the-haiku-and-tanka ==
+Japanese short forms of great compression. The haiku: three phrases, in Japanese
+counted as five–seven–five "on" (sound-units, not quite English syllables), holding
+a single sharp image, traditionally with a season-word (kigo) and a cutting pause
+(kireji) that juxtaposes two things. English haiku keep the spirit — brevity, image,
+the turn — more than the strict count. The tanka adds two more seven-count phrases
+(5-7-5-7-7), room for a breath of feeling after the image. Show the thing; let the
+feeling arise uncaptioned.
+
+== the-ghazal ==
+An ancient form of Arabic root, perfected in Persian and Urdu (Rumi, Hafiz, Ghalib):
+five or more couplets, each a self-contained thought, so the poem is a string of
+gems rather than one argument. A refrain word (radif) ends both lines of the first
+couplet and the second line of every couplet after, often with a rhyme (qafia) just
+before it. Traditionally the poet signs a name in the last couplet. Its themes run to
+love, longing and the divine, the two often one. Each couplet can stand alone; the
+whole is bound by sound and mood, not plot.
+
+== the-ode-and-elegy ==
+Two of the great lyric occasions. The ode is a poem of praise and serious address,
+lofty in tone — Pindar's public, triumphal odes; Horace's quieter ones; the English
+Romantics' meditations on a thing or a state (Keats's "to a Nightingale," "on a
+Grecian Urn"). The elegy is a poem of mourning and lament for the dead, moving
+classically from grief through praise to some consolation (Milton's "Lycidas," Gray's
+"Elegy in a Country Churchyard"). One lifts up; the other lays to rest.
+
+== the-ballad ==
+The storytelling song of the folk tradition, made to be sung and remembered. The
+ballad stanza: four lines, alternating iambic tetrameter and trimeter, rhyming abcb
+(or abab). It tells a tale — often of love, death, betrayal or the uncanny — plainly
+and by leaps, with a refrain, repetition, and dialogue, trusting the listener to fill
+the gaps ("incremental repetition" builds dread). From "Sir Patrick Spens" to
+Coleridge's deliberate "Rime of the Ancient Mariner." Narrative, musical, memorable.
+
+== blank-verse-and-free-verse ==
+Two unrhymed modes, often confused. Blank verse is unrhymed iambic pentameter — it
+keeps the metre and drops the rhyme, and it is the staple of English verse drama and
+epic (Shakespeare's plays, Milton's "Paradise Lost"), near enough to speech to carry
+long thought. Free verse keeps neither metre nor rhyme, finding its rhythm in the
+phrase, the line-break and the cadence of natural speech (Whitman, and most modern
+poetry). Free verse is not formless — its freedom is a harder discipline, since every
+line-break must be chosen, not counted.
+
+== lesser-fixed-forms ==
+A handful more worth knowing. Terza rima: interlocking tercets, aba bcb cdc..., the
+chain Dante built the Commedia on. The pantoum (Malay root): quatrains in which the
+second and fourth line of each stanza become the first and third of the next, so the
+poem steps forward by always looking back. The limerick: five lines, aabba,
+anapestic and comic. The couplet (two rhymed lines, the heroic couplet in
+pentameter) and the quatrain (four lines) are the common building-blocks. The
+acrostic spells a word down its initial letters; concrete poetry shapes the words on
+the page into the thing they name.

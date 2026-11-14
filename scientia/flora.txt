@@ -1,0 +1,192 @@
+# liber: flora
+# nomen: the herbal
+# claves: herb, herbs, plant, plants, tree, trees, root, roots, seed, grain, flower, leaf, wort, medicinal, simples, physic
+
+== barley | hordeum | bere ==
+Barley (Hordeum vulgare), a cereal grass, one of the first grains farmed in the
+Near East. Nourishing and easy on the body: boiled to a water (ptisan) it was
+the classic sick-room drink for fevers and the chest, and sprouted it becomes
+malt, the ground of ale and beer. Galen reckoned it cold and dry, cooling where
+wheat warms; Culpeper set it under Saturn. A plain, foundational food-grain
+before it is any kind of physic.
+
+== wheat | triticum | frumentum ==
+Wheat (Triticum), the chief bread-grain of the West, richer and more warming
+than barley. The flour binds and nourishes; a poultice of bread and milk draws
+and softens swellings. The humoral writers call it temperate, warm and moist,
+and Culpeper gives it to the Sun or Venus. In the older symbol-reading it is the
+grain of Ceres and of resurrection, buried to rise.
+
+== oats | avena | groats ==
+Oats (Avena sativa), a hardy northern grain for porridge and horse-feed. A warm
+oat poultice eases aches; an oat bath soothes itchy and inflamed skin (the real
+virtue is in the starch and saponins). Gentle and sustaining. The tradition
+reads it temperate; modern use keeps it as a calming food for the nerves and
+the gut, which the old herbals only hint at.
+
+== garlic | allium | poor-mans-treacle ==
+Garlic (Allium sativum). Hot and dry in the fourth (highest) degree by the old
+reckoning, and pungent for real reason: its cut cloves make allicin, with true
+antibacterial force. Long eaten against plague and worms and to thin the blood,
+and hung against the evil eye and, late and in fiction, the vampire. Culpeper
+set it under Mars for its heat and fire. "Poor man's treacle" — the commoner's
+cure-all.
+
+== rosemary | rosmarinus | dew-of-the-sea ==
+Rosemary (Salvia rosmarinus), an aromatic evergreen of the Mediterranean. Its
+oil is stimulating and sharpens the mind in more than fancy; "rosemary for
+remembrance" (Ophelia) rests on an old and not baseless link to memory and
+alertness. Burned to cleanse a sick room, carried at weddings and funerals
+alike. Culpeper gives it to the Sun and to Aries; a herb of memory, fidelity and
+warding.
+
+== sage | salvia | wise-herb ==
+Sage (Salvia officinalis). Its very name (salvere, to save) carries its
+reputation: "why should a man die while sage grows in his garden?" An astringent,
+drying herb, good as a gargle for the mouth and throat (a true mild antiseptic).
+Culpeper sets it under Jupiter. Burned as a cleansing smoke — though the
+"smudging" of dried white sage is a Native American rite, borrowed late into
+Western practice, not an old European one.
+
+== thyme | thymus | running-thyme ==
+Thyme (Thymus vulgaris). A warm, drying kitchen herb whose oil (thymol) is a
+genuine antiseptic, once used in salves and to keep meat. Reckoned hot and dry,
+and set by Culpeper under Venus. Laid among linen against moth, and in folk lore
+a herb where the fae were said to gather; a sprig was thought to give courage.
+
+== basil | basilicum | ocimum ==
+Basil (Ocimum basilicum). A tender, sweet-scented kitchen herb of warm reading.
+Its name is tangled: tied by some to basileus (king, the "royal herb") and by
+others, through false etymology, to the basilisk, so the old writers quarrelled
+over whether it was wholesome or venomous. Culpeper, no friend to it, set it
+under Mars and Scorpio. In Italy a token of love; in India (holy basil, tulsi) a
+sacred plant, a different species and tradition.
+
+== mint | mentha | garden-mint ==
+Mint (Mentha), cooling to the taste yet reckoned warm and dry in use; the menthol
+is a true carminative, settling the stomach and the wind. Strewn for its scent,
+chewed to sweeten the breath. Culpeper sets it under Venus. Named for the nymph
+Minthe of Greek myth, trodden into the herb by a jealous goddess.
+
+== chamomile | chamomilla | maythen ==
+Chamomile (Matricaria / Chamaemelum), a small daisy-flowered herb. Its tea is a
+mild and genuine calmative and settles the stomach; a wash soothes the skin.
+"The more it is trodden the faster it grows," said as a figure for patience.
+Culpeper set it under the Sun, and the Saxons counted it among their nine sacred
+herbs. Gentle enough for children, which few strong simples are.
+
+== betony | betonica | bishopwort | woundwort ==
+Betony (Betonica officinalis, formerly Stachys). A famous all-heal of the old
+world: Antonius Musa wrote a whole treatise of its virtues, and the saying ran
+"sell your coat and buy betony." Taken for the head — head-ache, and "frightful
+dreams" — and worn as a ward against ill spirits and the night. Culpeper set it
+under Jupiter and Aries. More renown than proven power, but a true nervine and
+bitter.
+
+== vervain | verbena | holy-herb | herba-sacra ==
+Vervain (Verbena officinalis). The Romans' herba sacra, swept the altars of
+Jupiter and carried by the heralds (fetiales) who swore treaties — a herb of
+oaths, peace and cleansing. The Druids are said (by Pliny) to have gathered it
+with rite. Used in washes for the mouth and sores. Culpeper set it under Venus.
+Esteemed in rite and ward far beyond its modest medicine.
+
+== rue | ruta | herb-of-grace ==
+Rue (Ruta graveolens). Bitter, pungent and reckoned hot and dry in the third
+degree. A little was held to sharpen the sight and quicken the wit and to cool
+unchaste heat; it was strewn against plague and the evil eye, and brushes for
+holy water were bound of it — "herb of grace." But it is no trifle: in quantity
+it burns and sickens, raises blisters in sun on the skin, and is a known
+abortifacient, so it was forbidden to women with child. Culpeper gave it to the
+Sun and Leo.
+
+== mugwort | artemisia-vulgaris | cronewort | felon-herb | sailors-tobacco ==
+Mugwort (Artemisia vulgaris) — "mater herbarum," the mother of herbs, named for
+Artemis. (Not motherwort, which is the quite different Leonurus cardiaca.) A
+traveller's herb, laid in the shoe against weariness, and a woman's herb for the
+courses, being a true emmenagogue. Hung in the house and burned as a smoke to
+cleanse, and famed as a dream herb, laid under the pillow for clear and telling
+dreams. Culpeper set it under Venus; one of the Saxon nine herbs.
+
+== wormwood | absinthium | green-ginger ==
+Wormwood (Artemisia absinthium) — kin to mugwort but its own plant; the bare name
+"artemisia" fits the whole clan, not this one alone. Among the bitterest of
+herbs: it strengthens a weak stomach, stirs the appetite, and was steeped in wine
+against worms and low spirits (and gives absinthe its name and bite). Culpeper
+set it under Mars, and reckoned it hot and dry in the second degree (sources
+differ on the exact degree). A little serves; too much offends the head.
+
+== yarrow | achillea | milfoil | nosebleed ==
+Yarrow (Achillea millefolium), named for Achilles, who was said to staunch his
+soldiers' wounds with it — and it does stem bleeding, a real styptic (hence
+"nosebleed" and "soldier's woundwort"). Also drunk as a sweating tea for fevers.
+Culpeper set it under Venus. In China its dried stalks were the proper lots for
+casting the I Ching, a thread that joins this herbal to the diviner's art.
+
+== st-johns-wort | hypericum | fuga-daemonum ==
+St John's wort (Hypericum perforatum). Gathered at Midsummer (St John's eve),
+its leaves pin-pricked with light where the oil-glands sit, yielding a blood-red
+oil — a true vulnerary salve for wounds and burns, and now known to lift low
+mood (hypericin), though it crosses many medicines. Hung in windows and worn as
+"fuga daemonum," the devils'-flight, against storm, lightning and ill spirits.
+Culpeper set it under the Sun and Leo, a solar, protective herb.
+
+== valerian | valeriana | all-heal | setwall ==
+Valerian (Valeriana officinalis). Its unlovely-smelling root is a genuine
+sedative and sleep-bringer, long taken for the nerves and for wakeful nights
+(and much loved by cats, as catnip is). Reckoned warm; Culpeper set it under
+Mercury. A plain, working physic of the calming sort, with little myth attached —
+which is itself a mark of authenticity.
+
+== elder | sambucus | elder-tree | lady-ellhorn ==
+Elder (Sambucus nigra). A whole apothecary in one tree: the flowers make a
+sweating tea for colds and a soothing water for the skin, the ripe berries a
+cordial for the same (both must be cooked — raw berries, bark and leaf are
+mildly toxic). Hollow stems became pipes and bellows. Hedged about with awe: the
+"Elder Mother" (Hylde-Moer) was said to dwell in it, and you asked her leave
+before cutting. Culpeper set it under Venus.
+
+== mistletoe | viscum | all-heal | golden-bough ==
+Mistletoe (Viscum album), a parasite that never touches earth, green in dead
+winter — which is the root of its wonder. Pliny tells of the Druids cutting the
+oak-mistletoe with a golden sickle; it is Aeneas's Golden Bough and the dart that
+slew Norse Baldr. Hung for the midwinter kiss. But it is poisonous taken
+inwardly, not a food; its medicine is for careful hands only. Culpeper gave it to
+the Sun. Esteemed far more in rite than in the pot.
+
+== nettle | urtica | stinging-nettle ==
+Nettle (Urtica dioica). Its sting is real chemistry (formic acid and histamine),
+yet cooked or dried it is a wholesome pot-herb rich in iron, and its fibre was
+spun to cloth. Taken as a spring tonic to "cleanse the blood," and the old (and
+genuine) trick of urtication — stinging aching joints on purpose — to draw heat.
+Culpeper set it under Mars, for its fire.
+
+== plantain | plantago | waybread | englishmans-foot ==
+Plantain (Plantago major), the low rosette of every path and waste. A true
+first-aid leaf: crushed on a sting, cut or nettle-rash it soothes and staunches,
+and the seed (psyllium) is a gentle bulking laxative. One of the Saxon nine
+sacred herbs ("Waybread, mother of worts"). Culpeper set it under Venus. Humble,
+everywhere, and it works.
+
+== mandrake | mandragora ==
+Mandrake (Mandragora officinarum), a true narcotic of the nightshade kin,
+reckoned cold in the third degree. Its forked root was likened to a human body
+and hedged with the tale of its deadly scream when drawn. Used sparingly as a
+sleep- and pain-bringer before the knife (one of the old soporifics), and in any
+excess a stupefying poison. A strong simple, never a food — handle as such.
+
+== henbane | hyoscyamus | stinking-nightshade ==
+Henbane (Hyoscyamus niger). A baneful nightshade, deadly poisonous: its tropane
+alkaloids (hyoscyamine, scopolamine) are the real engine of both its old,
+dangerous use as a pain-killer and sleep-draught and its place in witch-lore and
+the "flying ointments." Culpeper set it, rightly, under Saturn, the cold and
+deathly planet. Named and known as a poison first; no part of it is safe to eat
+or brew. Described here as the herbals describe it — as a danger to be known, not
+a recipe.
+
+== foxglove | digitalis | deadmans-bells ==
+Foxglove (Digitalis purpurea), tall spires of thimble flowers. Beautiful and
+deadly: it holds cardiac glycosides that William Withering, in 1785, learned to
+use in exact doses for dropsy and the failing heart — the origin of the real
+heart-drug digitalis. But the line between remedy and poison is a knife-edge, so
+it is never a home simple. Its folk names (dead man's bells, witches' gloves)
+keep the warning. Under Venus by some, Saturn by its danger.

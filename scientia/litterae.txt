@@ -1,0 +1,128 @@
+# liber: litterae
+# nomen: the art of letters
+# claves: letters, write, writing, written, author, story, stories, tale, tales, prose, rhetoric, eloquent, eloquence, tongue, tongues, language, languages, speech, liberal, arts
+
+== writing | the-craft ==
+Good prose is made, not found, and mostly in the rewriting. A few principles hold
+across kinds: know what one thing the piece is about and cut what does not serve it;
+prefer the concrete to the abstract, the short word to the long, the active to the
+passive where it is clearer; show the reader the thing rather than naming the
+feeling; and read it aloud, for the ear catches what the eye forgives. The first
+draft is for getting it down; the craft is in the second and the sixth.
+
+== narrative-structure ==
+Most stories answer the same under-shape: a person wants something, is kept from
+it, struggles, and is changed. The Western workhorse is the three acts — setup
+(who, where, the disturbance), confrontation (rising trouble to a crisis), and
+resolution. Freytag's pyramid names the beats: exposition, rising action, climax,
+falling action, denouement. These are scaffolds, not laws; a story that has stakes,
+escalation and consequence will feel shaped whether or not you counted acts.
+
+== story-shapes | the-models ==
+Several templates, each a lens, none a rule. The Hero's Journey (Campbell, by way
+of Vogler) — the call, the threshold, trials, the ordeal, the return with the boon
+— fits myth and much adventure, and can feel formulaic if followed by rote. The
+older four- or five-act shapes suit tragedy and the stage. East Asian storytelling
+often uses kishōtenketsu, a four-part shape (introduction, development, a turn or
+unexpected twist, reconciliation) that needs no conflict at all — a useful reminder
+that struggle is one engine of story, not the only one.
+
+== point-of-view ==
+Who tells it, and how near. First person ("I") is intimate and partial — we know
+only what the narrator knows, and may doubt them. Third limited ("she") rides one
+character's shoulder, the modern default, close but outside. Third omniscient knows
+all minds and ages, grand but distancing. Second ("you") is rare and insistent.
+The key discipline is consistency of distance and knowledge: don't give the
+narrator sight they couldn't have, and don't slip heads mid-scene without meaning
+to ("head-hopping"). Point of view is the reader's whole access to the world.
+
+== show-dont-tell ==
+The most-quoted writing advice, and the most abused. To "show" is to render — the
+clenched jaw, the untouched plate — and let the reader infer the anger; to "tell"
+is to state it: "she was angry." Showing immerses and trusts the reader; it is
+right for the moments that matter. But telling is faster, and a story that shows
+everything drowns — summary and plain statement are how you cross the dull stretches
+and control pace. The skill is not to show always, but to show what counts and tell
+the rest.
+
+== character ==
+Readers follow people, not plots. A character lives by wanting something (a visible
+goal) and needing something (a deeper lack they often can't see), and by the gap
+between the two. Give them contradiction, a specific voice, and a past that presses
+on the present; reveal them through choice under pressure, which is where character
+actually shows. Flat characters (one note) are fine for the edges; the ones we
+follow must be round enough to surprise us convincingly. Change — or the pointed
+refusal to change — is the arc.
+
+== dialogue ==
+Good dialogue is not how people really talk (which is dull, looping and full of
+"um") but a sharpened illusion of it. It should do more than one job at once —
+carry information, reveal character, raise tension — and lean on subtext, people
+saying one thing and meaning another, since on-the-nose talk ("I am angry at you,
+my brother") rings false. Trust "said"; it disappears. Cut the greetings and the
+small talk. Let what is not said do work. Each speaker should sound unlike the
+others with the tags removed.
+
+== prose-style ==
+Style is the how of the saying, and clarity is its first virtue. Orwell's rules
+still bite: cut needless words, avoid the stale metaphor and the long word where a
+short serves, prefer the active, and break any of these sooner than write something
+barbarous. Vary sentence length for rhythm — a run of equal sentences drones; a
+short one after long ones lands. But style serves voice and matter: the plain style
+is not the only good one, and a baroque sentence, controlled, can do what a plain
+one cannot. Know the rule before you break it.
+
+== revision | editing ==
+Writing is rewriting. Draft to discover, then revise in passes, coarse to fine:
+first structure (does the whole hold, is anything missing or out of order), then
+scene and paragraph (does each earn its place), last line and word (cut, sharpen,
+fix). "Kill your darlings" — the clever bit that serves only itself must go. Read
+aloud; give it time cold so you can see it as a stranger would; and learn your own
+tics to hunt them. Most of the quality a reader feels was put in after the first
+draft, not during it.
+
+== the-prose-forms ==
+Prose fiction sorts roughly by length and ambition. The novel (tens of thousands of
+words up) has room for many threads and a world; the novella is a single powerful
+line pursued; the short story turns on one change or revelation, every word
+counting; flash fiction does it in a page. In non-fiction, the essay tries a thought
+(from Montaigne's essayer, "to attempt") — the personal essay through a self, the
+argumentative toward a claim. Each form has its physics: what a novel can meander
+toward, a short story must imply.
+
+== rhetoric | the-art-of-persuasion ==
+Rhetoric is the ancient art of effective speech and writing, and its bones still
+hold. Aristotle's three appeals: ethos (the speaker's credibility and character),
+pathos (the audience's feeling), logos (the argument's reason) — persuasion
+usually needs all three. The classical parts order a case: exordium (open, win a
+hearing), narratio (set out the facts), confirmatio (prove), refutatio (answer the
+other side), peroratio (close and move). Not trickery in itself — the same craft
+serves truth or lies; the ethics are in the use.
+
+== rhetorical-devices ==
+The named figures of forceful language, worth knowing by sight. Of repetition:
+anaphora (begin successive clauses alike — "we shall fight..."), tricolon (three in
+a row, with force on the third), antithesis (balanced opposites — "not this, but
+that"). Of sound: alliteration, assonance. Of sense: metaphor and simile, metonymy
+(naming by association — "the crown" for the king), synecdoche (part for whole),
+irony, hyperbole, understatement (litotes). Chiasmus crosses a structure back on
+itself ("ask not what your country..."). Tools, not ornaments — each does a
+particular work on the reader.
+
+== narrative-devices ==
+The storyteller's techniques of arrangement and effect. In medias res: open in the
+thick of things, fill the backstory later. Foreshadowing: plant what will pay off,
+so the turn feels earned, not arbitrary ("Chekhov's gun" — a rifle shown must be
+fired). The unreliable narrator: a teller we come to doubt, so the reading becomes
+detective work. Frame story: a tale within a tale (the Decameron, the Thousand and
+One Nights). Flashback, foreshadow, the withheld fact, dramatic irony (the reader
+knows what the character does not) — all control what the reader knows, and when.
+
+== theme ==
+Theme is what the story is about under what happens — its argument about the world,
+rarely stated and better not. It is not a moral stamped on the end but a question the
+whole work explores by putting characters under pressure and watching what their
+choices cost. Theme emerges from the concrete; a story that sets out to "say"
+something tends to preach, while one that honestly follows its people to the end
+says more. Let it arise; then, in revision, prune what fights it and deepen what
+feeds it.

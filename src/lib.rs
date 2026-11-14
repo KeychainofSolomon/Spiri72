@@ -10,6 +10,7 @@ pub mod llama;
 pub mod memoria;
 pub mod persona;
 pub mod pulsus;
+pub mod scientia;
 pub mod sessio;
 pub mod sigilla;
 pub mod visus;
