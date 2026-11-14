@@ -101,6 +101,31 @@ A spirit could work a program the way it will consult a library:
   read-only), how a struck ledger line unlearns a rote, and attack tests in
   `tests/hostis.rs` for every new door.
 
+## Volumina: whole books a spirit may read from (ruled 2026-11-14, not built)
+
+The Operator's ruling: all reading material should be functional, handing a
+spirit the book's own passages, not a hundred-word summary.
+
+- **Where**: books (PDF or text) lie in a folder in the Operator's folder,
+  beside `spiri72.scientia`. They never enter this repository.
+- **Reading**: each book is read once with the PDF reader already here
+  (`liber.rs`), split into passages of a few paragraphs with their page
+  numbers, and the split is kept on disk so it is not redone at every start.
+  Text PDFs first; a page that is only a picture is reported as unread.
+- **Finding**: the same arithmetic as `scientia` (word rarity among the open
+  books, least weight, fair part of the question, clear of the next). A
+  doubtful match hands nothing.
+- **Handing**: up to three passages, about 3,000 characters in all (a setting),
+  each marked with book and page, sealed and fenced as untrusted handed text,
+  and shown verbatim to the Operator.
+- **Gating**: each book has a short header of claves, as a library has; it
+  opens only to spirits whose offices hold them. Agreed gates for new matter:
+  programming on `mechanical arts, mechanics, all arts`; human behaviour on
+  `thoughts, love, discord, wrath`. Modern books are flagged as modern.
+- **Proof before merge**: a measure like `tests/quaesitio.rs` for passages,
+  and attack tests in `tests/hostis.rs` (a book can hold any text).
+- The hand-written libraries stay, for short curated knowledge.
+
 ## Order of work
 
 1. Merge the measure (pull request #8). 2. Token counting per rite.
