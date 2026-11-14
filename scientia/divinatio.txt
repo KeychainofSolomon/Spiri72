@@ -1,6 +1,6 @@
 # liber: divinatio
 # nomen: the diviner's arts
-# claves: secret, hidden, come, past, present, future, prophecy, prophetess, divination, fortune, lots, omen, omens, dream, dreams, art, arts, science, sciences
+# claves: secret things, things secret, all secrets, hidden, things to come, past, present, future, prophecy, prophetess, divination, fortune, lots, omen, omens, dream, dreams, art, arts, science, sciences
 
 == divination | the-theory ==
 Divination is the art of reading the unknown — the hidden, the distant, the yet to

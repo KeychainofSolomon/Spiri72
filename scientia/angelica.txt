@@ -1,6 +1,6 @@
 # liber: angelica
 # nomen: the angelic art
-# claves: angel, angels, divine, heaven, heavenly, secret, hidden, sacred, holy, choir, orders, spirits, science, sciences, prophecy, dignities
+# claves: angel, angels, divine, heaven, heavenly, secret things, things secret, all secrets, hidden, sacred, holy, choir, orders, spirits, science, sciences, prophecy, dignities
 
 == angel-magic | theurgy ==
 Angel magic, or theurgy ("god-work"), is the brighter twin of the goetic art: in
