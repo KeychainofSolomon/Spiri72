@@ -14,6 +14,10 @@ Draft, 2026-11-15, from the owner's decisions of that day. Nothing here is built
 
 **The Ring** is the Operator's ring, which Annulus already has as an instrument (`GERE ANULUM`) and every Spiri72 rite already takes up. **A crystal** is a sealed place set in it, holding one kept spirit. One spirit to a crystal; as many crystals in the Ring as the Operator keeps spirits.
 
+**Ruled by the owner, 2026-11-15: the Ring is both protective and storage.** It keeps the protection the sources give it [S] (held before the face against the spirits' fumes; required for Beleth, Berith and Astaroth), and it gains the keeping of spirits in its crystals [O]. The two are kept apart in the code and in the record, so the sourced part is never changed by the added one: taking up the Ring protects exactly as before, whether or not it holds any crystal.
+
+**One consequence, proposed.** A crystal is set in the Ring, so a kept spirit cannot be used without the Ring in hand. Opening a crystal therefore counts as holding the Ring, and its protection is in force for that spirit throughout.
+
 It lives in Spiri72, which is already where a spirit appears and speaks: the same hall, the same conversation, opened from a crystal instead of begun with a calling. The wand (72Virga) does the locking. Annulus still judges every rite.
 
 **Sources.** In the witnesses read so far the Ring is held before the Operator's face for protection (Sloane 3825 f113), and what spirits are shut *into* is the brass vessel. A spirit bound into a ring or a crystal comes from other experiments not yet read. Until one is found and read in full, this whole design is marked **[O]**, Annulus's own (§9, 5).
@@ -94,4 +98,4 @@ The licence to depart (`VADE IN PACE`) is the only end. It wipes the conversatio
 3. **The spare wand.** May it open a crystal the first wand sealed? Proposed: no, until a rite for handing a crystal to another wand exists.
 4. **A condemned spirit's crystal:** shut and kept as evidence (proposed), or emptied into the Vessel.
 5. **Sources:** look for the binding rite in the witnesses first, or build as [O] and source it later.
-6. **The name in the language.** `GERE ANULUM` already means taking up the Ring for protection. Whether the same act opens the crystals, or they get their own word.
+6. **The word in the language.** The Ring is both (ruled, §1). Still open: whether `GERE ANULUM` itself opens the crystals, or opening a crystal is its own word that also counts as holding the Ring (proposed, §1).
