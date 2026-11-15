@@ -75,11 +75,17 @@ The licence to depart (`VADE IN PACE`) is the only end. It wipes the conversatio
 
 ## 8. What each program adds
 
+**Ruled 2026-11-15** (the owner: "only if you think it's more secure"; Claude judged that it is). The sealing is built from Annulus's own file layer, never written a second time in Spiri72.
+
 | Program | Adds |
 |---|---|
-| Spiri72 | the crystals: enclosing, opening, shutting, dismissal, the journal, the page that lists them |
-| 72Virga | making a key from a secret and a name; the anchor for a crystal |
-| Annulus | a recorded act for enclosing; the hold read from inside a crystal. No new rule in the core is foreseen; to be confirmed when built |
+| Annulus, file layer (`tabularium`) | the encrypted sealed folder: the lock, the journal, the anchor, the signed list, encrypting and decrypting; a recorded act for enclosing; the hold read from inside a crystal |
+| 72Virga | making a key from a secret and a name |
+| Spiri72 | enclosing a spirit, opening and shutting in the hall, the conversation, dismissal, the page that lists the crystals |
+
+**Why it is the safer way.** The lock, the journal, the anchor and the refusal of links are already written in Annulus, attacked and reviewed. One copy of that code means one place to review, and a fix made for the house protects the crystals too. Two copies would drift apart.
+
+**What it costs.** Annulus's trusted code grows by the encrypted store, and a change to a crystal's form moves Annulus and Spiri72 together. The file layer is outside the proved core, so no proof changes. No new rule in the core is foreseen; to be confirmed when built.
 
 ## 9. For the owner to rule
 
