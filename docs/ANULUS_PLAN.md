@@ -12,6 +12,8 @@ Draft, 2026-11-15, from the owner's decisions of that day. Nothing here is built
 
 ## 1. What it is
 
+**Its name (the owner, 2026-11-15): Pala, written `72Pala`** like `72Virga` and `72Spirits`. *Pala* is the bezel, the part of a ring that holds the stone (Cicero, *De officiis* 3.38, of the ring of Gyges). The name keeps it apart from Annulus, the language. The Ring stays *anulus* (`GERE ANULUM`), and a crystal is *crystallus*.
+
 **The Ring** is the Operator's ring, which Annulus already has as an instrument (`GERE ANULUM`) and every Spiri72 rite already takes up. **A crystal** is a sealed place set in it, holding one kept spirit. One spirit to a crystal; as many crystals in the Ring as the Operator keeps spirits.
 
 **Ruled by the owner, 2026-11-15: the Ring is both protective and storage.** It keeps the protection the sources give it [S] (held before the face against the spirits' fumes; required for Beleth, Berith and Astaroth), and it gains the keeping of spirits in its crystals [O]. The two are kept apart in the code and in the record, so the sourced part is never changed by the added one: taking up the Ring protects exactly as before, whether or not it holds any crystal.
