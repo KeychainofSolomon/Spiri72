@@ -64,6 +64,14 @@ Opening a crystal is still an Annulus rite, so everything Annulus guarantees sti
 - its standing: a crystal whose spirit has since been proscribed or damned does not open for use (§9, 4);
 - the instruments its register requires.
 
+**Where it is loaded** (the owner, 2026-11-15). When a crystal is unlocked, the Operator is asked which folder to load the spirit into. The crystal remembers the folder it was last drawn from or loaded into, and offers it first, so the usual case is one confirmation.
+
+Proposed rules for that folder, so that loading can never widen what the spirit reaches:
+- **It must be empty, or not yet exist.** Whatever is in the folder becomes part of the spirit's world, so the Operator's own files must not already be there. The remembered folder qualifies again each time, because shutting the crystal empties it.
+- **The same checks as any place:** no links on the way, not inside a house or another crystal, not in use by another run.
+- **The remembered folder is kept inside the crystal,** encrypted with the rest, so a shut crystal does not tell where it was used. If that folder no longer exists (another PC, another drive letter), the Operator is simply asked.
+- **Shutting** encrypts from that folder and then removes the open copy from it.
+
 **The seal.** Until Annulus has seals that last (made once, worn in each Circle), each opening still inscribes the spirit's seal and spends one unit of ink (§9, 2).
 
 ## 6. The conversation
