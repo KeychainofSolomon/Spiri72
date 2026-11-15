@@ -16,7 +16,7 @@ Draft, 2026-11-15, from the owner's decisions of that day. Nothing here is built
 
 **Ruled by the owner, 2026-11-15: the Ring is both protective and storage.** It keeps the protection the sources give it [S] (held before the face against the spirits' fumes; required for Beleth, Berith and Astaroth), and it gains the keeping of spirits in its crystals [O]. The two are kept apart in the code and in the record, so the sourced part is never changed by the added one: taking up the Ring protects exactly as before, whether or not it holds any crystal.
 
-**One consequence, proposed.** A crystal is set in the Ring, so a kept spirit cannot be used without the Ring in hand. Opening a crystal therefore counts as holding the Ring, and its protection is in force for that spirit throughout.
+**One consequence, accepted by the owner (2026-11-15).** A crystal is set in the Ring, so a kept spirit cannot be used without the Ring in hand. Opening a crystal therefore counts as holding the Ring, and its protection is in force for that spirit throughout.
 
 It lives in Spiri72, which is already where a spirit appears and speaks: the same hall, the same conversation, opened from a crystal instead of begun with a calling. The wand (72Virga) does the locking. Annulus still judges every rite.
 
@@ -98,4 +98,4 @@ The licence to depart (`VADE IN PACE`) is the only end. It wipes the conversatio
 3. **The spare wand.** May it open a crystal the first wand sealed? Proposed: no, until a rite for handing a crystal to another wand exists.
 4. **A condemned spirit's crystal:** shut and kept as evidence (proposed), or emptied into the Vessel.
 5. **Sources:** look for the binding rite in the witnesses first, or build as [O] and source it later.
-6. **The word in the language.** The Ring is both (ruled, §1). Still open: whether `GERE ANULUM` itself opens the crystals, or opening a crystal is its own word that also counts as holding the Ring (proposed, §1).
+6. ~~Whether opening a crystal counts as holding the Ring.~~ Accepted, §1: opening a crystal is its own act and counts as holding the Ring. Still to choose: its Latin word.
