@@ -126,6 +126,17 @@ spirit the book's own passages, not a hundred-word summary.
   and attack tests in `tests/hostis.rs` (a book can hold any text).
 - The hand-written libraries stay, for short curated knowledge.
 
+Later (ruled 2026-11-21, not built): **books of pictures.** A book whose pages
+are only pictures and hold no readable script cannot be searched; the eyes
+could describe each page once (kept like the text of other books, read again
+only when the book changes) so the descriptions are searched instead. Each
+description is handed marked as seen by sight, not the book's own words, and
+any naming of what is drawn (a plant, a star) as the eyes' guess. First book:
+the Voynich Manuscript (in the Operator's storage), whose script is unread;
+it stays without a `.claves` file, opening to no spirit, until this is built,
+then to be gated on herbs and the stars (its herbal, astrological and
+pharmaceutical sections).
+
 Built (branch `volumina`, 2026-11-20), as `src/volumina.rs`:
 
 - A book opens only with a `.claves` file beside it (`nomen`, `claves`,
