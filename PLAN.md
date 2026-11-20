@@ -140,6 +140,10 @@ Built (branch `volumina`, 2026-11-20), as `src/volumina.rs`:
   answering nearly as well is doubt, and nothing is handed.
 - Contents and index passages (dot leaders, lines ending in page numbers)
   are set aside; running heads (`The Law of Demeter 97`) are no headings.
+- A passage opens at a heading. A short heading naming the question's rarest
+  word, where that word recurs in the passage, finds it alone (`Tannins`,
+  `Psoriasis`); a question of one everyday word still finds nothing. Near
+  passages within four pages of each other are one place.
 - Measure: `tests/volumina.rs` on a book written for the test (14 of 14
   plain, oblique floor 6 and ceiling 1 wrong, idle ceiling 1); attacks in
   `tests/hostis.rs` (forged passage ends, commands, hidden and control
@@ -148,8 +152,14 @@ Built (branch `volumina`, 2026-11-20), as `src/volumina.rs`:
   passages from 460 pages, 167 tables set aside, 3 pages pictures only.
   16 of 17 questions on its matter found the right section; 1 of 16 idle
   questions found a passage (`build a house`, the foreword's architect).
-  Known weak: `keep my classes small` ranks a concurrency heading first; a
-  question of one word finds nothing.
+  Known weak: `keep my classes small` ranks a concurrency heading first.
+- Trial on all five of the Operator's books (2026-11-20; each with 15 or 17
+  questions on its matter and 10 or 16 idle ones; right / wrong / nothing,
+  then idle finds): Clean Code 16/0/1, idle 1 of 16; Medical Herbalism
+  12/2/1, idle 2 of 10; Astronomy for Mere Mortals 13/1/1, idle 0 of 10;
+  SICP 11/0/4, idle 0 of 10; Behave 10/3/2, idle 1 of 10. Text read with
+  pdftotext there; the program reads with hayro, which may differ (SICP's
+  fonts drop the letters of some ligatures: `e` for `The`, `paern`).
 
 ## Order of work
 

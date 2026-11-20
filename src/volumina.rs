@@ -62,12 +62,15 @@ pub const PASSUS_MAXIMI: usize = 3;
 /// How many places of a book (or of the open books) may answer nearly as well
 /// as the best before the match is held doubtful: a question that answers
 /// equally well all over the books is answered by none of them. Passages that
-/// stand near each other in one book (within `VICINIA` passages) are one place,
-/// a section speaking of its matter, and no sign of doubt.
-const TURBA: usize = 4;
+/// stand near each other in one book, each within `VICINIA` pages of the next,
+/// are one place, a section speaking of its matter, and no sign of doubt.
+const TURBA: usize = 5;
 
-/// How many passages apart two passages may stand and still be one place.
+/// How many pages apart two passages may stand and still be one place (a
+/// section may run over several pages); in a book without pages, how many
+/// passages apart.
 const VICINIA: u32 = 4;
+const VICINIA_PASSUUM: u32 = 12;
 
 /// The least part of the question's matter, by weight, that a passage must
 /// hold (a word no open book holds weighs a whole word against it).
@@ -79,6 +82,13 @@ const PONDUS_LIBRI: f64 = 0.6;
 
 /// The longest line, in words, taken for a heading.
 const CAPUT_MAXIMUM: usize = 8;
+
+/// The most words of matter a heading may hold to name the question's subject
+/// by its one rarest word (`Psoriasis`, `Herbs for Psoriasis`).
+const CAPUT_NOMINIS: usize = 3;
+
+/// How rare the question's rarest word must be to stand as its subject.
+const RARISSIMI: f64 = 0.35;
 
 /// How far a passage must weigh above the next before it stands alone: below
 /// this part of the best, a passage is no rival.
@@ -273,8 +283,10 @@ fn pieces(line: &str, max: usize) -> Vec<String> {
 }
 
 /// Cuts one page into passages of at most `max` characters. A passage closes
-/// at the end of a sentence once it is well filled, or at a blank line once it
-/// is fairly filled; a short remainder joins the passage before it if it fits.
+/// at the end of a sentence once it is well filled, at a blank line once it
+/// is fairly filled, or before a heading once it holds a quarter, so that a
+/// heading opens the passage that treats its matter; a short remainder joins
+/// the passage before it if it fits.
 pub fn divide(text: &str, max: usize) -> Vec<String> {
     let max = max.max(200);
     let (full, fair) = (max * 6 / 10, max * 4 / 10);
@@ -296,6 +308,9 @@ pub fn divide(text: &str, max: usize) -> Vec<String> {
                 cur.push('\n');
             }
             continue;
+        }
+        if caput(l) && length(&cur) >= max / 4 {
+            close(&mut cur, &mut out);
         }
         for piece in pieces(l, max) {
             if !cur.is_empty() && length(&cur) + 1 + length(&piece) > max {
@@ -340,18 +355,22 @@ fn ordo(text: &str) -> Vec<String> {
 fn capita(text: &str) -> Vec<Vec<String>> {
     text.lines()
         .map(str::trim)
-        .filter(|l| {
-            let n = l.split_whitespace().count();
-            (1..=CAPUT_MAXIMUM).contains(&n)
-                && !l.ends_with(['.', ',', ';', ':'])
-                && !l.contains(['(', ')', '{', '}', '=', ';', '<', '>'])
-                && l.chars().next().is_some_and(char::is_alphabetic)
-                // a running head carries the page's number: `The Law of Demeter 97`
-                && !l.ends_with(|c: char| c.is_ascii_digit())
-        })
+        .filter(|l| caput(l))
         .map(ordo)
         .filter(|w| !w.is_empty())
         .collect()
+}
+
+/// Whether one line reads as a heading (see `capita`).
+fn caput(l: &str) -> bool {
+    let l = l.trim();
+    let n = l.split_whitespace().count();
+    (1..=CAPUT_MAXIMUM).contains(&n)
+        && !l.ends_with(['.', ',', ';', ':'])
+        && !l.contains(['(', ')', '{', '}', '=', ';', '<', '>'])
+        && l.chars().next().is_some_and(char::is_alphabetic)
+        // a running head carries the page's number: `The Law of Demeter 97`
+        && !l.ends_with(|c: char| c.is_ascii_digit())
 }
 
 /// Whether a passage is a table (contents or index) rather than writing: most
@@ -652,17 +671,20 @@ fn asked(question: &str) -> Vec<String> {
 /// each pair of the question's words that stand side by side in the passage
 /// as they stand in the question (`boy scout`, `single responsibility`).
 /// A heading line of the passage that holds two of the question's words or
-/// more adds their rarity again: the book names that matter as its subject
-/// there (`The Single Responsibility Principle`, `Don't Return Null`).
-/// Returns the score, how many distinct words it holds, and their plain
-/// weight (each once), which is what the question's part is measured by.
+/// more, or a short heading holding the question's rarest word where that
+/// word recurs in the passage, adds their rarity again: the book names that
+/// matter as its subject there (`The Single Responsibility Principle`,
+/// `Don't Return Null`, `Tannins`, `Psoriasis`). Returns the
+/// score, how many distinct words it holds, their plain weight (each once),
+/// which is what the question's part is measured by, and whether a heading
+/// held them.
 fn score(
     materia: &[String],
     raritas: &[f64],
     pairs: &[(usize, usize)],
     seq: &[String],
     heads: &[Vec<String>],
-) -> (f64, usize, f64) {
+) -> (f64, usize, f64, bool) {
     let mut counts = vec![0usize; materia.len()];
     let mut at: Vec<Option<usize>> = Vec::with_capacity(seq.len());
     for w in seq {
@@ -685,6 +707,11 @@ fn score(
             score += (raritas[a] + raritas[b]) / 2.0;
         }
     }
+    // the question's rarest word, if it is said more than once in the passage
+    let rarest = (0..materia.len())
+        .filter(|&k| raritas[k] > 0.0)
+        .max_by(|&a, &b| raritas[a].total_cmp(&raritas[b]));
+    let subject = rarest.filter(|&k| raritas[k] >= RARISSIMI && counts[k] >= 2);
     let headed = heads
         .iter()
         .map(|h| {
@@ -695,14 +722,16 @@ fn score(
                 .collect();
             ks.sort();
             ks.dedup();
-            if ks.len() >= 2 {
+            // a short heading naming the question's subject (`Psoriasis`)
+            let names = subject.is_some_and(|k| ks.contains(&k)) && h.len() <= CAPUT_NOMINIS;
+            if ks.len() >= 2 || names {
                 ks.iter().map(|&k| raritas[k]).sum()
             } else {
                 0.0
             }
         })
         .fold(0.0_f64, f64::max);
-    (score + headed, held, plain)
+    (score + headed, held, plain, headed > 0.0)
 }
 
 /// As `consult`, for a spirit whose offices read like `offices`.
@@ -757,9 +786,11 @@ pub fn consult_as(
     let mut found: Vec<(f64, usize, usize)> = Vec::new();
     for (b, v) in open.iter().enumerate() {
         for (e, seq) in v.ordines.iter().enumerate() {
-            let (s, held, plain) = score(materia, raritas, &pairs, seq, &v.capita[e]);
-            let enough =
-                held >= 2 && plain >= PONDUS_LIBRI.min(whole) && plain >= whole * PARS_LIBRI;
+            let (s, held, plain, headed) = score(materia, raritas, &pairs, seq, &v.capita[e]);
+            // two of the question's words, or a heading naming its subject
+            let enough = (held >= 2 || headed)
+                && plain >= PONDUS_LIBRI.min(whole)
+                && plain >= whole * PARS_LIBRI;
             if enough {
                 found.push((s, b, e));
             }
@@ -774,14 +805,20 @@ pub fn consult_as(
         .take_while(|f| f.0 >= best * SECUNDI_LIBRI)
         .count();
     // the places those passages stand in: neighbours in one book are one
-    let mut stands: Vec<(usize, u32)> = found[..near]
+    let mut stands: Vec<(usize, u32, u32)> = found[..near]
         .iter()
-        .map(|&(_, b, e)| (b, open[b].loci[e].ordo))
+        .map(|&(_, b, e)| {
+            let l = open[b].loci[e];
+            match l.pagina {
+                Some(p) => (b, p, VICINIA),
+                None => (b, l.ordo, VICINIA_PASSUUM),
+            }
+        })
         .collect();
     stands.sort();
     let places = stands
         .windows(2)
-        .filter(|w| w[0].0 != w[1].0 || w[1].1 - w[0].1 > VICINIA)
+        .filter(|w| w[0].0 != w[1].0 || w[1].1 - w[0].1 > w[1].2)
         .count()
         + 1;
     if places > TURBA {
