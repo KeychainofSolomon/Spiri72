@@ -101,7 +101,7 @@ A spirit could work a program the way it will consult a library:
   read-only), how a struck ledger line unlearns a rote, and attack tests in
   `tests/hostis.rs` for every new door.
 
-## Volumina: whole books a spirit may read from (ruled 2026-11-14, not built)
+## Volumina: whole books a spirit may read from (ruled 2026-11-14; built on branch `volumina`)
 
 The Operator's ruling: all reading material should be functional, handing a
 spirit the book's own passages, not a hundred-word summary.
@@ -125,6 +125,31 @@ spirit the book's own passages, not a hundred-word summary.
 - **Proof before merge**: a measure like `tests/quaesitio.rs` for passages,
   and attack tests in `tests/hostis.rs` (a book can hold any text).
 - The hand-written libraries stay, for short curated knowledge.
+
+Built (branch `volumina`, 2026-11-20), as `src/volumina.rs`:
+
+- A book opens only with a `.claves` file beside it (`nomen`, `claves`,
+  `aetas`); a book without one is not read. What a PDF holds is kept in
+  `spiri72.volumina/.lecta` and read again only when the book's file changes.
+- Long books need their own arithmetic, for rarity among a thousand passages
+  never reaches the libraries' fixed floor. A passage is weighed by the
+  rarity of the question's words it holds, more where a word recurs, where
+  two of them stand side by side as asked, and where a heading line of the
+  passage holds them. It must hold two of the words and half the question.
+  Passages near each other in a book are one place; more than four places
+  answering nearly as well is doubt, and nothing is handed.
+- Contents and index passages (dot leaders, lines ending in page numbers)
+  are set aside; running heads (`The Law of Demeter 97`) are no headings.
+- Measure: `tests/volumina.rs` on a book written for the test (14 of 14
+  plain, oblique floor 6 and ceiling 1 wrong, idle ceiling 1); attacks in
+  `tests/hostis.rs` (forged passage ends, commands, hidden and control
+  characters, closed and ungated books, floods).
+- Trial on the Operator's own Clean Code (not in the repository): 1,142
+  passages from 460 pages, 167 tables set aside, 3 pages pictures only.
+  16 of 17 questions on its matter found the right section; 1 of 16 idle
+  questions found a passage (`build a house`, the foreword's architect).
+  Known weak: `keep my classes small` ranks a concurrency heading first; a
+  question of one word finds nothing.
 
 ## Order of work
 

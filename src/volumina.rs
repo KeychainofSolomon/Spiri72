@@ -59,10 +59,40 @@ pub const SIGNA_MAXIMA: usize = 9000;
 /// The most passages handed in one rite.
 pub const PASSUS_MAXIMI: usize = 3;
 
-/// How many passages may stand beside the best (within `SECUNDI_PARS` of it)
-/// before the match is held doubtful: a question that a crowd of passages
-/// answers equally well is answered by none of them.
-const TURBA: usize = 6;
+/// How many places of a book (or of the open books) may answer nearly as well
+/// as the best before the match is held doubtful: a question that answers
+/// equally well all over the books is answered by none of them. Passages that
+/// stand near each other in one book (within `VICINIA` passages) are one place,
+/// a section speaking of its matter, and no sign of doubt.
+const TURBA: usize = 4;
+
+/// How many passages apart two passages may stand and still be one place.
+const VICINIA: u32 = 4;
+
+/// The least part of the question's matter, by weight, that a passage must
+/// hold (a word no open book holds weighs a whole word against it).
+const PARS_LIBRI: f64 = 0.5;
+
+/// The least weight of rare matter a passage must share, however short the
+/// question: two words of middling rarity, or one very rare word alone.
+const PONDUS_LIBRI: f64 = 0.6;
+
+/// The longest line, in words, taken for a heading.
+const CAPUT_MAXIMUM: usize = 8;
+
+/// How far a passage must weigh above the next before it stands alone: below
+/// this part of the best, a passage is no rival.
+const SECUNDI_LIBRI: f64 = 0.8;
+
+/// Words that `scientia` sets aside as asking, which in a long book are
+/// matter: a question of how to name a thing is about naming.
+const NOMINANDI: &[&str] = &["name", "named", "names", "call", "called", "use", "used"];
+
+/// Words of asking that carry no matter in a book, beside those of `scientia`.
+const ROGANDI: &[&str] = &[
+    "best", "better", "describe", "explain", "just", "look", "many", "mean", "meaning", "means",
+    "much", "need", "please", "really", "right", "think", "want", "way", "ways", "wrong",
+];
 
 /// A book larger than this is not read.
 const MOLES_MAXIMA: u64 = 512 * 1024 * 1024;
@@ -105,6 +135,15 @@ pub struct Volumen {
     pub liber: Liber,
     /// Where each passage stands, in step with `liber.entries`.
     pub loci: Vec<Locus>,
+    /// Each passage's words of matter, stemmed, in the order they stand: for
+    /// counting how often a word recurs and which words stand side by side.
+    pub ordines: Vec<Vec<String>>,
+    /// The heading lines of each passage (short lines that do not end a
+    /// sentence), as words of matter: a passage headed by the question's own
+    /// matter is the place the book treats it.
+    pub capita: Vec<Vec<Vec<String>>>,
+    /// How many passages were set aside as tables (contents, index).
+    pub tabulae: usize,
     /// The age the Operator marked the book with (`modern`), if any.
     pub aetas: Option<String>,
     /// How many pages the book has, and how many were only pictures.
@@ -288,6 +327,59 @@ pub fn divide(text: &str, max: usize) -> Vec<String> {
     out
 }
 
+/// The words of matter of a text, stemmed, in the order they stand. Words of
+/// naming (`NOMINANDI`) are matter here.
+fn ordo(text: &str) -> Vec<String> {
+    scientia::matter_in_order(text, NOMINANDI)
+}
+
+/// The heading lines of a passage: lines of at most `CAPUT_MAXIMUM` words that
+/// begin with a letter, do not end in a full stop, a comma, a colon or a page
+/// number, and are not code (no brackets or operators), each as its words of
+/// matter.
+fn capita(text: &str) -> Vec<Vec<String>> {
+    text.lines()
+        .map(str::trim)
+        .filter(|l| {
+            let n = l.split_whitespace().count();
+            (1..=CAPUT_MAXIMUM).contains(&n)
+                && !l.ends_with(['.', ',', ';', ':'])
+                && !l.contains(['(', ')', '{', '}', '=', ';', '<', '>'])
+                && l.chars().next().is_some_and(char::is_alphabetic)
+                // a running head carries the page's number: `The Law of Demeter 97`
+                && !l.ends_with(|c: char| c.is_ascii_digit())
+        })
+        .map(ordo)
+        .filter(|w| !w.is_empty())
+        .collect()
+}
+
+/// Whether a passage is a table (contents or index) rather than writing: most
+/// of its lines run out in dot leaders or end in a page number (`clean, 154`,
+/// `69–70`). Such a passage holds every heading word at once and would answer
+/// every question, so it is never handed.
+pub fn tabula(text: &str) -> bool {
+    let lines: Vec<&str> = text
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .collect();
+    if lines.len() < 3 {
+        return false;
+    }
+    let listed = lines
+        .iter()
+        .filter(|l| {
+            let leader = l.contains("....") || l.contains(". . .");
+            let tail =
+                l.trim_end_matches(|c: char| c.is_ascii_digit() || "-\u{2013},  ".contains(c));
+            let numbered = tail.len() < l.len() && l.ends_with(|c: char| c.is_ascii_digit());
+            leader || numbered
+        })
+        .count();
+    listed * 10 >= lines.len() * 4
+}
+
 /// The setting kept within its bounds.
 pub fn signa(n: Option<usize>) -> usize {
     n.unwrap_or(SIGNA).clamp(SIGNA_MINIMA, SIGNA_MAXIMA)
@@ -306,16 +398,29 @@ pub fn bind(
     let max = self::signa(Some(signa)) / PASSUS_MAXIMI;
     let mut entries = Vec::new();
     let mut loci = Vec::new();
+    let mut ordines = Vec::new();
+    let mut heads = Vec::new();
+    let mut tabulae = 0;
     for (i, page) in pages.iter().enumerate() {
         let Some(text) = page else { continue };
         for raw in divide(&purga(text), max) {
+            if tabula(&raw) {
+                tabulae += 1;
+                continue;
+            }
+            let seq = ordo(&raw);
+            let mut verba = seq.clone();
+            verba.sort();
+            verba.dedup();
+            ordines.push(seq);
+            heads.push(capita(&raw));
             loci.push(Locus {
                 pagina: paged.then_some(i as u32 + 1),
                 ordo: loci.len() as u32 + 1,
             });
             entries.push(Entry {
                 claves: Vec::new(),
-                verba: scientia::matter(&raw),
+                verba,
                 raw,
             });
         }
@@ -328,6 +433,9 @@ pub fn bind(
             entries,
         },
         loci,
+        ordines,
+        capita: heads,
+        tabulae,
         aetas: titulus.aetas.clone(),
         paginae: pages.len(),
         pictae: pages.iter().filter(|p| p.is_none()).count(),
@@ -528,6 +636,75 @@ pub fn opens(v: &Volumen, n: u32) -> bool {
     scientia::opens(&v.liber, n)
 }
 
+/// A question's own words of matter in the order asked, stemmed, without
+/// the words of asking.
+fn asked(question: &str) -> Vec<String> {
+    let kept: Vec<String> = scientia::words(question)
+        .into_iter()
+        .filter(|w| !ROGANDI.contains(&w.as_str()))
+        .collect();
+    ordo(&kept.join(" "))
+}
+
+/// How a passage answers a question: the rarity of the question's words it
+/// holds, each counted more when it recurs (by the logarithm, so a word said
+/// ten times weighs about twice a word said once); and, as much again, for
+/// each pair of the question's words that stand side by side in the passage
+/// as they stand in the question (`boy scout`, `single responsibility`).
+/// A heading line of the passage that holds two of the question's words or
+/// more adds their rarity again: the book names that matter as its subject
+/// there (`The Single Responsibility Principle`, `Don't Return Null`).
+/// Returns the score, how many distinct words it holds, and their plain
+/// weight (each once), which is what the question's part is measured by.
+fn score(
+    materia: &[String],
+    raritas: &[f64],
+    pairs: &[(usize, usize)],
+    seq: &[String],
+    heads: &[Vec<String>],
+) -> (f64, usize, f64) {
+    let mut counts = vec![0usize; materia.len()];
+    let mut at: Vec<Option<usize>> = Vec::with_capacity(seq.len());
+    for w in seq {
+        let k = materia.binary_search(w).ok();
+        if let Some(k) = k {
+            counts[k] += 1;
+        }
+        at.push(k);
+    }
+    let (mut score, mut held, mut plain) = (0.0, 0, 0.0);
+    for (k, &n) in counts.iter().enumerate() {
+        if n > 0 && raritas[k] > 0.0 {
+            score += raritas[k] * (1.0 + (n as f64).ln() * 0.5);
+            plain += raritas[k];
+            held += 1;
+        }
+    }
+    for &(a, b) in pairs {
+        if at.windows(2).any(|w| w[0] == Some(a) && w[1] == Some(b)) {
+            score += (raritas[a] + raritas[b]) / 2.0;
+        }
+    }
+    let headed = heads
+        .iter()
+        .map(|h| {
+            let mut ks: Vec<usize> = h
+                .iter()
+                .filter_map(|w| materia.binary_search(w).ok())
+                .filter(|&k| raritas[k] > 0.0)
+                .collect();
+            ks.sort();
+            ks.dedup();
+            if ks.len() >= 2 {
+                ks.iter().map(|&k| raritas[k]).sum()
+            } else {
+                0.0
+            }
+        })
+        .fold(0.0_f64, f64::max);
+    (score + headed, held, plain)
+}
+
 /// As `consult`, for a spirit whose offices read like `offices`.
 pub fn consult_as(
     volumina: &[Volumen],
@@ -542,16 +719,49 @@ pub fn consult_as(
     if open.is_empty() {
         return Vec::new();
     }
+    let order = asked(question);
     let libri: Vec<&Liber> = open.iter().map(|v| &v.liber).collect();
-    let q = Rogatum::new(&libri, question);
-    let least = scientia::PONDUS_MINIMUM.max(q.whole() * scientia::PARS_MINIMA);
-    // every passage that shares enough of the question: (weight, book, passage)
+    let q = Rogatum::new_keeping(&libri, &order.join(" "), NOMINANDI);
+    let (materia, raritas) = q.materia();
+    // the pairs of the question's words that stand side by side in it
+    let mut pairs: Vec<(usize, usize)> = order
+        .windows(2)
+        .filter_map(|w| {
+            let a = materia.binary_search(&w[0]).ok()?;
+            let b = materia.binary_search(&w[1]).ok()?;
+            (a != b && raritas[a] > 0.0 && raritas[b] > 0.0).then_some((a, b))
+        })
+        .collect();
+    pairs.sort();
+    pairs.dedup();
+    // The weight of all the question's matter: each word's rarity, and a whole
+    // word for one that no open passage holds. (A word every passage holds is
+    // known, and weighs nothing either way.)
+    let whole: f64 = materia
+        .iter()
+        .zip(raritas)
+        .map(|(w, &r)| {
+            let known = r > 0.0
+                || libri
+                    .iter()
+                    .flat_map(|l| &l.entries)
+                    .any(|e| e.verba.binary_search(w).is_ok());
+            if known {
+                r
+            } else {
+                1.0
+            }
+        })
+        .sum();
+    // every passage that holds a fair part of the question: (score, book, passage)
     let mut found: Vec<(f64, usize, usize)> = Vec::new();
     for (b, v) in open.iter().enumerate() {
-        for (e, entry) in v.liber.entries.iter().enumerate() {
-            let (weight, shared) = q.weigh(entry);
-            if shared >= 2 && weight >= least {
-                found.push((weight, b, e));
+        for (e, seq) in v.ordines.iter().enumerate() {
+            let (s, held, plain) = score(materia, raritas, &pairs, seq, &v.capita[e]);
+            let enough =
+                held >= 2 && plain >= PONDUS_LIBRI.min(whole) && plain >= whole * PARS_LIBRI;
+            if enough {
+                found.push((s, b, e));
             }
         }
     }
@@ -561,9 +771,20 @@ pub fn consult_as(
     };
     let near = found
         .iter()
-        .take_while(|f| f.0 >= best * scientia::SECUNDI_PARS)
+        .take_while(|f| f.0 >= best * SECUNDI_LIBRI)
         .count();
-    if near > TURBA {
+    // the places those passages stand in: neighbours in one book are one
+    let mut stands: Vec<(usize, u32)> = found[..near]
+        .iter()
+        .map(|&(_, b, e)| (b, open[b].loci[e].ordo))
+        .collect();
+    stands.sort();
+    let places = stands
+        .windows(2)
+        .filter(|w| w[0].0 != w[1].0 || w[1].1 - w[0].1 > VICINIA)
+        .count()
+        + 1;
+    if places > TURBA {
         return Vec::new();
     }
     let budget = self::signa(Some(signa));

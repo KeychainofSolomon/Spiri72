@@ -180,6 +180,17 @@ pub(crate) fn matter(text: &str) -> Vec<String> {
     v
 }
 
+/// The words of matter in a text, stemmed, in the order they stand (not
+/// sorted, not distinct): what a long text is read with, word by word.
+/// The words in `keep` are kept even where `VACUA` would set them aside.
+pub(crate) fn matter_in_order(text: &str, keep: &[&str]) -> Vec<String> {
+    words(text)
+        .iter()
+        .filter(|w| keep.contains(&w.as_str()) || !VACUA.contains(&w.as_str()))
+        .map(|w| stem(w))
+        .collect()
+}
+
 /// Reads a library file. Lines of `# key: value` before the first entry are the
 /// header; `== a | b ==` opens an entry whose body runs to the next heading.
 pub fn parse(liber: &str, text: &str) -> Liber {
@@ -362,7 +373,18 @@ pub(crate) struct Rogatum {
 
 impl Rogatum {
     pub(crate) fn new(libri: &[&Liber], question: &str) -> Rogatum {
-        let materia = matter(question);
+        Rogatum::with_matter(libri, question, matter(question))
+    }
+
+    /// As `new`, keeping the words in `keep` as matter (as a long book does).
+    pub(crate) fn new_keeping(libri: &[&Liber], question: &str, keep: &[&str]) -> Rogatum {
+        let mut materia = matter_in_order(question, keep);
+        materia.sort();
+        materia.dedup();
+        Rogatum::with_matter(libri, question, materia)
+    }
+
+    fn with_matter(libri: &[&Liber], question: &str, materia: Vec<String>) -> Rogatum {
         let total = libri.iter().map(|l| l.entries.len()).sum::<usize>() as f64;
         let raritas = materia
             .iter()
@@ -388,6 +410,12 @@ impl Rogatum {
 
     /// The weight of the matter an entry shares with the question (rare words
     /// weigh more), and how many of the question's words it shares.
+    /// The question's words of matter (stemmed, sorted, distinct) and how rare
+    /// each is among the open entries; zero for a word none of them holds.
+    pub(crate) fn materia(&self) -> (&[String], &[f64]) {
+        (&self.materia, &self.raritas)
+    }
+
     pub(crate) fn weigh(&self, entry: &Entry) -> (f64, usize) {
         self.materia
             .iter()
