@@ -153,7 +153,25 @@ Built (branch `volumina`, 2026-11-20), as `src/volumina.rs`:
   16 of 17 questions on its matter found the right section; 1 of 16 idle
   questions found a passage (`build a house`, the foreword's architect).
   Known weak: `keep my classes small` ranks a concurrency heading first.
-- Trial on all five of the Operator's books (2026-11-20; each with 15 or 17
+- The concordance (`src/concordantia.rs`, 2026-11-20): word families cut to
+  one root (`digestion`, `digestive`); what each book sets out itself
+  (`Single Responsibility Principle (SRP)`, `Hypericum perforatum (St.
+  John's wort)`, kept where used twice); and the Operator's own groups in
+  `spiri72.volumina/concordantia.txt` (`liver = hepatic`). Passages and
+  questions are both read through it. Joined letters (`ﬁ`, `ﬀ`) are spelled
+  out; orders to the spirit (`write`, `teach`) and the frame of a comparison
+  (`the difference between`) are words of asking.
+- Measured with a fixed list (`tools/volumina_aurum.txt`: 117 questions with
+  the pages that answer them, 40 of them written before any change and never
+  tuned on, and 10 idle questions for each book). Scores: right page first /
+  wrong page first / nothing; right page anywhere among those handed; idle
+  finds of 50. Before the concordance: 82 / 18 / 17; 92; 4. After: 89 / 20 /
+  8; 101; 4. Each part was switched off in turn to see what it adds: word
+  families +4 found, headings only at a passage's top +3, the book's own
+  names about nothing overall (it is St. John's wort), and handing in the
+  books' order puts a right page first more often than handing the best
+  first. A doubtful match is now more than seven places answering alike.
+- Earlier trial on all five of the Operator's books (2026-11-20; each with 15 or 17
   questions on its matter and 10 or 16 idle ones; right / wrong / nothing,
   then idle finds): Clean Code 16/0/1, idle 1 of 16; Medical Herbalism
   12/2/1, idle 2 of 10; Astronomy for Mere Mortals 13/1/1, idle 0 of 10;

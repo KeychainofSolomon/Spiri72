@@ -37,6 +37,7 @@ use std::fs;
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
+use crate::concordantia::{self, Concordantia};
 use crate::scientia::{self, Entry, Liber, Rogatum};
 
 /// The folder, under the Operator's folder, that holds the books.
@@ -64,7 +65,7 @@ pub const PASSUS_MAXIMI: usize = 3;
 /// equally well all over the books is answered by none of them. Passages that
 /// stand near each other in one book, each within `VICINIA` pages of the next,
 /// are one place, a section speaking of its matter, and no sign of doubt.
-const TURBA: usize = 5;
+const TURBA: usize = 7;
 
 /// How many pages apart two passages may stand and still be one place (a
 /// section may run over several pages); in a book without pages, how many
@@ -74,11 +75,14 @@ const VICINIA_PASSUUM: u32 = 12;
 
 /// The least part of the question's matter, by weight, that a passage must
 /// hold (a word no open book holds weighs a whole word against it).
-const PARS_LIBRI: f64 = 0.5;
+const PARS_LIBRI: f64 = 0.55;
 
 /// The least weight of rare matter a passage must share, however short the
 /// question: two words of middling rarity, or one very rare word alone.
 const PONDUS_LIBRI: f64 = 0.6;
+
+/// How many of a passage's first lines may be its heading.
+const CAPITA_PRIMA: usize = 2;
 
 /// The longest line, in words, taken for a heading.
 const CAPUT_MAXIMUM: usize = 8;
@@ -98,10 +102,39 @@ const SECUNDI_LIBRI: f64 = 0.8;
 /// matter: a question of how to name a thing is about naming.
 const NOMINANDI: &[&str] = &["name", "named", "names", "call", "called", "use", "used"];
 
-/// Words of asking that carry no matter in a book, beside those of `scientia`.
+/// Words of asking that carry no matter in a book, beside those of `scientia`:
+/// among them the orders given to the spirit (`write`, `teach`, `explain`) and
+/// the frame of a comparison (`the difference between`).
 const ROGANDI: &[&str] = &[
-    "best", "better", "describe", "explain", "just", "look", "many", "mean", "meaning", "means",
-    "much", "need", "please", "really", "right", "think", "want", "way", "ways", "wrong",
+    "best",
+    "better",
+    "between",
+    "compare",
+    "compose",
+    "describe",
+    "difference",
+    "differences",
+    "explain",
+    "just",
+    "list",
+    "look",
+    "many",
+    "mean",
+    "meaning",
+    "means",
+    "much",
+    "need",
+    "please",
+    "really",
+    "right",
+    "teach",
+    "think",
+    "versus",
+    "want",
+    "way",
+    "ways",
+    "write",
+    "wrong",
 ];
 
 /// A book larger than this is not read.
@@ -130,6 +163,11 @@ Beside each book put a small text file with the same name, ending in
 
 A book without a `.claves` file opens to no spirit and is not read.
 
+`concordantia.txt` holds words that mean the same, one group to a line
+(`liver = hepatic`). A question and a book meet on the group's first word.
+Spiri72 also learns from each book the abbreviations and plant names it
+sets out itself, such as `Single Responsibility Principle (SRP)`.
+
 A PDF is read once; what was read is kept in `.lecta` and used until the
 book's file changes. Delete `.lecta` to have every book read anew. Pages
 that are only pictures (scans) are not read; Spiri72 says how many.
@@ -152,6 +190,9 @@ pub struct Volumen {
     /// sentence), as words of matter: a passage headed by the question's own
     /// matter is the place the book treats it.
     pub capita: Vec<Vec<Vec<String>>>,
+    /// How this book's words are read: the Operator's concordance and what the
+    /// book defines itself. A question is read the same way.
+    pub concordantia: Concordantia,
     /// How many passages were set aside as tables (contents, index).
     pub tabulae: usize,
     /// The age the Operator marked the book with (`modern`), if any.
@@ -230,11 +271,20 @@ pub fn titulus(text: &str) -> Titulus {
     t
 }
 
-/// A book's text made plain: line ends alike, tabs as spaces, and no control
+/// A book's text made plain: line ends alike, tabs as spaces, joined letters
+/// spelled out, and no control
 /// or invisible steering characters at all (a book can hold any text, and its
 /// passages are shown to the Operator). Only the line break is kept.
 pub fn purga(text: &str) -> String {
     text.replace("\r\n", "\n")
+        // letters printed joined (`ﬁ`, `ﬀ`) are spelled out, so `deﬁnition`
+        // meets `definition`
+        .replace('\u{fb00}', "ff")
+        .replace('\u{fb01}', "fi")
+        .replace('\u{fb02}', "fl")
+        .replace('\u{fb03}', "ffi")
+        .replace('\u{fb04}', "ffl")
+        .replace(['\u{fb05}', '\u{fb06}'], "st")
         .chars()
         .filter_map(|c| match c {
             '\n' => Some('\n'),
@@ -342,21 +392,27 @@ pub fn divide(text: &str, max: usize) -> Vec<String> {
     out
 }
 
-/// The words of matter of a text, stemmed, in the order they stand. Words of
-/// naming (`NOMINANDI`) are matter here.
-fn ordo(text: &str) -> Vec<String> {
-    scientia::matter_in_order(text, NOMINANDI)
+/// The words of matter of a text, stemmed and cut to their roots, in the
+/// order they stand, each read as the concordance reads it. Words of naming
+/// (`NOMINANDI`) are matter here.
+fn ordo(text: &str, c: &Concordantia) -> Vec<String> {
+    c.apply(concordantia::radices(text, NOMINANDI))
 }
 
-/// The heading lines of a passage: lines of at most `CAPUT_MAXIMUM` words that
-/// begin with a letter, do not end in a full stop, a comma, a colon or a page
-/// number, and are not code (no brackets or operators), each as its words of
-/// matter.
-fn capita(text: &str) -> Vec<Vec<String>> {
+/// The heading lines of a passage, among its first `CAPITA_PRIMA` lines (a
+/// section's heading stands at its top; a short line in its middle is a row of
+/// a table or a list): lines of at most `CAPUT_MAXIMUM` words that begin with
+/// a letter, do not end in a full stop, a comma, a colon or a page number, and
+/// are not code (no brackets or operators), each as its words of matter. A
+/// last full stop after a botanist's initial (`Hypericum perforatum L.`) is
+/// no end of a sentence.
+fn capita(text: &str, c: &Concordantia) -> Vec<Vec<String>> {
     text.lines()
         .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .take(CAPITA_PRIMA)
         .filter(|l| caput(l))
-        .map(ordo)
+        .map(|l| ordo(l, c))
         .filter(|w| !w.is_empty())
         .collect()
 }
@@ -365,8 +421,12 @@ fn capita(text: &str) -> Vec<Vec<String>> {
 fn caput(l: &str) -> bool {
     let l = l.trim();
     let n = l.split_whitespace().count();
+    let initial = l
+        .rsplit(' ')
+        .next()
+        .is_some_and(|w| w.len() <= 3 && w.ends_with('.') && w.starts_with(char::is_uppercase));
     (1..=CAPUT_MAXIMUM).contains(&n)
-        && !l.ends_with(['.', ',', ';', ':'])
+        && (initial || !l.ends_with(['.', ',', ';', ':']))
         && !l.contains(['(', ')', '{', '}', '=', ';', '<', '>'])
         && l.chars().next().is_some_and(char::is_alphabetic)
         // a running head carries the page's number: `The Law of Demeter 97`
@@ -406,7 +466,8 @@ pub fn signa(n: Option<usize>) -> usize {
 
 /// Binds a book from its header and its pages (none for a page that is only a
 /// picture). `paged` says whether the pages are true pages of the book; where
-/// not, a passage is marked by its number in the book alone.
+/// not, a passage is marked by its number in the book alone. The book is read
+/// with what it defines itself and nothing else (see `bind_with`).
 pub fn bind(
     slug: &str,
     titulus: &Titulus,
@@ -414,6 +475,22 @@ pub fn bind(
     paged: bool,
     signa: usize,
 ) -> Volumen {
+    bind_with(slug, titulus, pages, paged, signa, &Concordantia::default())
+}
+
+/// As `bind`, reading the book with the Operator's concordance `common` as
+/// well as with what the book defines itself.
+pub fn bind_with(
+    slug: &str,
+    titulus: &Titulus,
+    pages: &[Option<String>],
+    paged: bool,
+    signa: usize,
+    common: &Concordantia,
+) -> Volumen {
+    let pages: Vec<Option<String>> = pages.iter().map(|p| p.as_deref().map(purga)).collect();
+    let pages = pages.as_slice();
+    let lexicon = common.with(&concordantia::of_book(pages, NOMINANDI));
     let max = self::signa(Some(signa)) / PASSUS_MAXIMI;
     let mut entries = Vec::new();
     let mut loci = Vec::new();
@@ -422,17 +499,17 @@ pub fn bind(
     let mut tabulae = 0;
     for (i, page) in pages.iter().enumerate() {
         let Some(text) = page else { continue };
-        for raw in divide(&purga(text), max) {
+        for raw in divide(text, max) {
             if tabula(&raw) {
                 tabulae += 1;
                 continue;
             }
-            let seq = ordo(&raw);
+            let seq = ordo(&raw, &lexicon);
             let mut verba = seq.clone();
             verba.sort();
             verba.dedup();
             ordines.push(seq);
-            heads.push(capita(&raw));
+            heads.push(capita(&raw, &lexicon));
             loci.push(Locus {
                 pagina: paged.then_some(i as u32 + 1),
                 ordo: loci.len() as u32 + 1,
@@ -455,6 +532,7 @@ pub fn bind(
         ordines,
         capita: heads,
         tabulae,
+        concordantia: lexicon,
         aetas: titulus.aetas.clone(),
         paginae: pages.len(),
         pictae: pages.iter().filter(|p| p.is_none()).count(),
@@ -569,11 +647,15 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
             return Vec::new();
         }
         let _ = fs::write(home.join(LEGE), LEGE_TEXT);
+        let _ = fs::write(home.join(concordantia::FILE), concordantia::SEMEN);
         say(format!(
             "A folder for whole books is made at {} (see {LEGE} inside it).",
             home.display()
         ));
     }
+    let common = fs::read_to_string(home.join(concordantia::FILE))
+        .map(|t| Concordantia::parse(&purga(&t), NOMINANDI))
+        .unwrap_or_default();
     let Ok(read) = fs::read_dir(&home) else {
         return Vec::new();
     };
@@ -625,7 +707,7 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
                 continue;
             }
         };
-        let v = bind(stem, &header, &pages, paged, signa);
+        let v = bind_with(stem, &header, &pages, paged, signa, &common);
         let open = (1..=72).filter(|n| opens(&v, *n)).count();
         let mut told = format!(
             "{} ({shown}): {} passages from {} pages",
@@ -657,12 +739,12 @@ pub fn opens(v: &Volumen, n: u32) -> bool {
 
 /// A question's own words of matter in the order asked, stemmed, without
 /// the words of asking.
-fn asked(question: &str) -> Vec<String> {
+fn asked(question: &str, c: &Concordantia) -> Vec<String> {
     let kept: Vec<String> = scientia::words(question)
         .into_iter()
         .filter(|w| !ROGANDI.contains(&w.as_str()))
         .collect();
-    ordo(&kept.join(" "))
+    ordo(&kept.join(" "), c)
 }
 
 /// How a passage answers a question: the rarity of the question's words it
@@ -748,9 +830,16 @@ pub fn consult_as(
     if open.is_empty() {
         return Vec::new();
     }
-    let order = asked(question);
+    // the question is read as the open books are read
+    let lexicon = open
+        .iter()
+        .fold(Concordantia::default(), |c, v| c.with(&v.concordantia));
+    let order = asked(question, &lexicon);
     let libri: Vec<&Liber> = open.iter().map(|v| &v.liber).collect();
-    let q = Rogatum::new_keeping(&libri, &order.join(" "), NOMINANDI);
+    let mut materia = order.clone();
+    materia.sort();
+    materia.dedup();
+    let q = Rogatum::from_matter(&libri, question, materia);
     let (materia, raritas) = q.materia();
     // the pairs of the question's words that stand side by side in it
     let mut pairs: Vec<(usize, usize)> = order
@@ -763,9 +852,12 @@ pub fn consult_as(
         .collect();
     pairs.sort();
     pairs.dedup();
-    // The weight of all the question's matter: each word's rarity, and a whole
-    // word for one that no open passage holds. (A word every passage holds is
-    // known, and weighs nothing either way.)
+    // The weight of all the question's matter: each word's rarity, and for a
+    // word no open passage holds, the weight of the rarest word they could
+    // hold (one held by a single passage). A word every passage holds is
+    // known, and weighs nothing either way.
+    let total = libri.iter().map(|l| l.entries.len()).sum::<usize>() as f64;
+    let ignotum = ((total + 1.0) / 2.0).ln() / (total + 1.0).ln().max(f64::MIN_POSITIVE);
     let whole: f64 = materia
         .iter()
         .zip(raritas)
@@ -778,7 +870,7 @@ pub fn consult_as(
             if known {
                 r
             } else {
-                1.0
+                ignotum
             }
         })
         .sum();
@@ -835,7 +927,8 @@ pub fn consult_as(
         spent += n;
         handed.push((b, e));
     }
-    // as they stand in the books, not as they weighed
+    // as they stand in the books: the earliest is most often where the book
+    // sets the matter out (measured on the trial books)
     handed.sort();
     handed
         .into_iter()

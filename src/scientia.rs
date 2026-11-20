@@ -180,6 +180,11 @@ pub(crate) fn matter(text: &str) -> Vec<String> {
     v
 }
 
+/// Whether a word is empty of matter (`the`, `make`).
+pub(crate) fn vacuum(w: &str) -> bool {
+    VACUA.contains(&w)
+}
+
 /// The words of matter in a text, stemmed, in the order they stand (not
 /// sorted, not distinct): what a long text is read with, word by word.
 /// The words in `keep` are kept even where `VACUA` would set them aside.
@@ -376,11 +381,9 @@ impl Rogatum {
         Rogatum::with_matter(libri, question, matter(question))
     }
 
-    /// As `new`, keeping the words in `keep` as matter (as a long book does).
-    pub(crate) fn new_keeping(libri: &[&Liber], question: &str, keep: &[&str]) -> Rogatum {
-        let mut materia = matter_in_order(question, keep);
-        materia.sort();
-        materia.dedup();
+    /// As `new`, with the question's words of matter already read (sorted and
+    /// distinct), as a long book reads them.
+    pub(crate) fn from_matter(libri: &[&Liber], question: &str, materia: Vec<String>) -> Rogatum {
         Rogatum::with_matter(libri, question, materia)
     }
 

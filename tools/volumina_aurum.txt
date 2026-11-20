@@ -1,0 +1,138 @@
+# The measure of whole-book search on the Operator's own books (not in this
+# repository). One question to a line: book|question|pages that answer it
+# (PDF page numbers, ranges with -). Questions are Spiri72's own; no book
+# text is held here. Idle questions (the books' business none of them) are
+# at the end, with no pages.
+#
+# Books: cleancode = Clean Code (Martin); herbal = Medical Herbalism
+# (Hoffmann, 2003); astronomy = Astronomy for Mere Mortals (v2.3); sicp =
+# Structure and Interpretation of Computer Programs, 2nd ed.; behave = Behave
+# (Sapolsky). Offices asked through: mechanical arts, herbs, stars, love.
+
+cleancode|What makes a good name for a variable?|48-61,343
+cleancode|How long should a function be?|63-66
+cleancode|When should I write a comment in my code?|84-104,317-319
+cleancode|What are the three laws of test driven development?|153
+cleancode|What is the boy scout rule?|45,296
+cleancode|How should errors be handled, with exceptions or return codes?|78,134-137
+cleancode|What is the single responsibility principle?|169-170
+cleancode|Why are switch statements a problem?|68-69,330
+cleancode|What does the law of Demeter say?|128-130
+cleancode|what is a function|63-82
+cleancode|How many arguments should a function take?|71-76
+cleancode|What is wrong with returning null?|141-142
+cleancode|How do I keep my classes small?|167-176
+cleancode|What is the stepdown rule?|68,167
+cleancode|explain concurrency and why threads are hard|208-221,351-380
+cleancode|What should a unit test look like, is one assert per test right?|154-163
+cleancode|What are the three laws of TDD?|153
+cleancode|What makes a good class?|166-178
+cleancode|How should code be formatted vertically?|107-115
+cleancode|What are the rules for clean tests?|154-163
+cleancode|How do I handle third party code at the boundaries?|144-151
+cleancode|What is a code smell?|316-347
+cleancode|Why should functions do one thing?|65-67,333
+cleancode|How should objects hide their data?|124-131
+cleancode|What is emergent design?|202-208
+herbal|What are tannins and what do they do?|120-126,209-210
+herbal|What is a nervine?|525-527
+herbal|How are hemorrhoids treated with herbs?|296-299
+herbal|Which herbs help psoriasis?|442-447
+herbal|What is a poultice and how is it made?|239-241
+herbal|How do bitters aid digestion?|265-268,506-509
+herbal|What are saponins?|82-90
+herbal|Which herbs support the adrenal glands?|472-475
+herbal|Can herbs cause photosensitivity?|194,217,551
+herbal|How should medicinal plants be conserved?|34-40
+herbal|What is valerian used for?|616-617
+herbal|Which herbs lower blood sugar?|117,186,472,615
+herbal|What herbs help with kidney stones?|389-392
+herbal|How is tonsillitis treated?|350-351
+herbal|What is echinacea good for?|552-554
+herbal|What herbs calm anxiety?|355,480-490
+herbal|How is a decoction prepared?|229-231
+herbal|What are flavonoids?|106-112
+herbal|Which herbs treat a cough?|329-334,591
+herbal|What is an adaptogen?|251,491
+herbal|How do herbs help with insomnia?|363-368
+herbal|What does St. John's wort do?|567-568
+herbal|Which herbs protect the liver?|290,592
+astronomy|What is a light year?|32,323
+astronomy|Why does the moon have phases?|38-40
+astronomy|What causes a solar eclipse?|40-44
+astronomy|How hot is the core of the sun?|236-243
+astronomy|What is a red giant star?|267-270,409
+astronomy|How was Neptune discovered?|455-458,205-210
+astronomy|What are the rings of Saturn made of?|197-199
+astronomy|What is a black hole?|302-306,332-334
+astronomy|How do stars form in a nebula?|296-301,318
+astronomy|Why is Venus so hot?|164-167
+astronomy|What are comets made of?|222-226
+astronomy|What is the Kuiper belt?|229-231
+astronomy|How far away is the Andromeda galaxy?|17-21,317-320
+astronomy|What is a supernova?|272-277,308-312
+astronomy|What causes the seasons on Earth?|34-37
+astronomy|What is a neutron star?|300-302
+astronomy|How big is Jupiter?|178-186
+astronomy|What is the asteroid belt?|218-222
+astronomy|Why is Mars red?|168-173
+astronomy|What is a white dwarf?|286-291,299
+astronomy|How does a telescope gather light?|72-91
+astronomy|What is the Milky Way?|317-330
+astronomy|How old is the universe?|345-354,464
+sicp|What is the substitution model for procedure application?|46-49
+sicp|What is the difference between a recursive and an iterative process?|69-75
+sicp|What is a higher-order procedure?|102-110
+sicp|What does lambda do?|111-113
+sicp|What are streams and delayed evaluation?|456-470
+sicp|What is the environment model of evaluation?|348-360
+sicp|What is a metacircular evaluator?|520-560
+sicp|How are rational numbers built with data abstraction?|141-150
+sicp|What is the difference between applicative order and normal order evaluation?|48-50
+sicp|How does tree recursion compute Fibonacci numbers?|75-79
+sicp|What is memoization?|81,396-397,478
+sicp|What is a register machine?|696-720
+sicp|How does garbage collection work?|751-765
+sicp|What is message passing?|280-282
+sicp|How do you compute square roots by Newton's method?|56-60,126-131
+sicp|What is a closure in programming?|160-163
+sicp|How are lists represented with pairs?|143-146,162-170
+sicp|What is the purpose of assignment and local state?|324-335
+sicp|How does a compiler differ from an interpreter?|795-830
+sicp|What is symbolic differentiation?|224-232
+sicp|What is a queue?|382-386
+sicp|How do you represent sets?|233-245
+sicp|What is logic programming?|622-660
+behave|What does the amygdala do?|38-48
+behave|What is the role of the frontal cortex in behavior?|50-60
+behave|Does testosterone cause aggression?|95-106
+behave|What does oxytocin do?|107-115
+behave|How does stress affect the brain?|123-131
+behave|What is the role of dopamine in reward?|64-75,256-258
+behave|Do we have free will?|582-600
+behave|How does adolescence change the brain?|154-170
+behave|Why do we divide people into us and them?|391-420
+behave|Are judges harsher when they are hungry?|94,170,568
+behave|What does the prisoner's dilemma teach about cooperation?|349,467,558,634-636,777
+behave|What is kin selection?|341-345
+behave|Why do we feel the pain of others, what is empathy?|180-182,540-560
+behave|How does childhood adversity shape adult behavior?|195-205
+behave|What does the trolley problem show about morality?|62,490-492
+behave|How do hormones change behavior?|95-135
+behave|What is the effect of alcohol on aggression?|132-133
+behave|How does culture shape behavior?|267-330
+behave|Why do people obey authority?|457-475
+behave|What is the role of genes in behavior?|226-266
+behave|What does serotonin do?|78,252-256
+behave|How do fetal hormones shape the brain?|210-222
+behave|Why are people religious?|620-630
+idle|Will it rain tomorrow?|
+idle|Who was king of France in 1500?|
+idle|How do I build a stone tower?|
+idle|Where is the hidden treasure buried?|
+idle|Teach me the liberal sciences and geometry|
+idle|Write me a poem about the sea|
+idle|How do I fix the engine of my car?|
+idle|Tell me about my future|
+idle|How do I make money quickly?|
+idle|Who are you, spirit?|
