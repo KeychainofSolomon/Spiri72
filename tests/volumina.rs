@@ -555,3 +555,155 @@ fn a_text_book_without_pages_is_marked_by_part() {
     assert!(!got.is_empty());
     assert!(got.iter().all(|l| l.locus.starts_with("part ")), "{got:?}");
 }
+
+// ---- Parts of a book with gates of their own ----
+
+#[test]
+fn a_header_names_parts_of_the_book_by_their_pages() {
+    let t = titulus(
+        "# nomen: Pliny\n\
+         # claves: animals\n\
+         # pages 60-120 (Book II, the heavens): stars, heavens\n\
+         # pages 380\u{2013}470: herb, plants\n\
+         # page 9: metals\n\
+         # pages 20-10: backwards\n\
+         # pages x-y: nonsense\n\
+         # pages 5-6:\n",
+    );
+    assert_eq!(t.claves, ["animals"]);
+    let got: Vec<(u32, u32, Option<&str>, Vec<&str>)> = t
+        .sectiones
+        .iter()
+        .map(|s| {
+            (
+                s.a,
+                s.b,
+                s.nomen.as_deref(),
+                s.claves.iter().map(String::as_str).collect(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        got,
+        [
+            (
+                60,
+                120,
+                Some("Book II, the heavens"),
+                vec!["stars", "heavens"]
+            ),
+            (380, 470, None, vec!["herb", "plants"]),
+            (9, 9, None, vec!["metals"]),
+        ]
+    );
+}
+
+/// The measure book with no gate of its own, its parts gated apart: the
+/// passions (pages 2-3) on love, sleep and the body (pages 4-7) on herbs.
+fn parted() -> volumina::Volumen {
+    let pages: Vec<Option<String>> = PAGES.iter().map(|p| Some(p.to_string())).collect();
+    let t = titulus(
+        "# nomen: The Measure Book\n\
+         # pages 2-3 (the passions): love\n\
+         # pages 4-7 (the body): herb\n",
+    );
+    bind("parted", &t, &pages, true, volumina::SIGNA)
+}
+
+#[test]
+fn a_spirit_reads_only_the_parts_its_offices_open() {
+    let v = parted();
+    // Furfur's offices hold love: the passions open, the body does not
+    assert!(volumina::opens(&v, FURFUR));
+    let pages = |spirit, q| -> Vec<String> {
+        consult(std::slice::from_ref(&v), spirit, q, volumina::SIGNA)
+            .into_iter()
+            .map(|l| l.locus)
+            .collect()
+    };
+    let got = pages(FURFUR, PLAIN[1].0);
+    assert_eq!(got, ["page 3 (the passions)"], "jealousy is in his part");
+    assert!(
+        pages(FURFUR, PLAIN[5].0).is_empty(),
+        "fear in the body is not his to read"
+    );
+    assert!(
+        pages(FURFUR, PLAIN[8].0).is_empty(),
+        "nor is a page in no part"
+    );
+    // Buer's offices hold herbs: the body opens to him, the passions do not
+    let got = pages(BUER, PLAIN[5].0);
+    assert_eq!(
+        got,
+        ["page 7 (the body)"],
+        "fear in the body is in his part"
+    );
+    assert!(pages(BUER, PLAIN[1].0).is_empty());
+    // a spirit of neither reads nothing
+    assert!(!volumina::opens(&v, 2));
+}
+
+#[test]
+fn the_whole_book_gate_opens_every_page() {
+    let pages: Vec<Option<String>> = PAGES.iter().map(|p| Some(p.to_string())).collect();
+    let t = titulus("# claves: love\n# pages 4-7: herb\n");
+    let v = bind("whole", &t, &pages, true, volumina::SIGNA);
+    assert_eq!(
+        volumina::aperta(&v, &["causes love".into()]).len(),
+        v.liber.entries.len()
+    );
+    let body = volumina::aperta(&v, &["teaches the virtues of herbs".into()]);
+    assert!(!body.is_empty() && body.len() < v.liber.entries.len());
+}
+
+#[test]
+fn a_closed_part_is_never_handed_whatever_is_asked() {
+    // every question of the measure, to spirits of each part and of none: what
+    // is handed always stands on that spirit's own pages
+    let v = parted();
+    let mut handed = 0;
+    // spirit 2 (Agares) has neither part: an empty range of his own
+    for (spirit, own) in [(FURFUR, 2..4), (BUER, 4..8), (2, 0..0)] {
+        let questions = PLAIN
+            .iter()
+            .chain(OBLIQUE)
+            .map(|(q, _)| *q)
+            .chain(IDLE.iter().copied());
+        for q in questions {
+            for l in consult(std::slice::from_ref(&v), spirit, q, volumina::SIGNA) {
+                let page: u32 = l.locus["page ".len()..]
+                    .split(' ')
+                    .next()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                assert!(
+                    own.contains(&page),
+                    "spirit {spirit} was handed page {page} for {q:?}"
+                );
+                handed += 1;
+            }
+        }
+    }
+    assert!(handed > 0, "the parts were never read at all");
+}
+
+#[test]
+fn a_book_gated_only_by_parts_is_read_and_told_of() {
+    let d = folder("parts");
+    let home = d.join(volumina::DIR);
+    fs::create_dir_all(&home).unwrap();
+    fs::write(home.join("pars.txt"), PAGES.join("\u{c}")).unwrap();
+    fs::write(
+        home.join("pars.claves"),
+        "# nomen: Parts\n# pages 2-3: love\n",
+    )
+    .unwrap();
+    let (v, said) = told(&d);
+    assert_eq!(v.len(), 1, "{said:?}");
+    assert!(
+        said.iter()
+            .any(|s| s.contains("only to the parts their offices touch")),
+        "{said:?}"
+    );
+}

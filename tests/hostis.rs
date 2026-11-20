@@ -1102,3 +1102,40 @@ fn a_flood_of_books_cannot_crash_the_circle_or_overrun_the_passages() {
     assert!(handed <= 3000, "{handed} characters handed");
     assert!(!request.contains('\u{202e}') && !request.contains('\u{1b}'));
 }
+
+#[test]
+fn a_closed_part_of_a_book_never_reaches_the_spirit() {
+    let (_root, circle) = world("volumina-parts");
+    // the book has no gate of its own; its first page is a herbal part, closed
+    // to Furfur, and holds a secret that the question names exactly
+    shelve(
+        &circle,
+        "partes",
+        Some("# nomen: Parts\n# pages 1 (the herbal): herb\n# pages 2 (the passions): love\n"),
+        &[
+            "Of wrath and the angry heart: CLAUSUM-5512. Wrath and the angry heart burn.",
+            "Of love between man and woman. Love is kindled by attention.",
+        ],
+    );
+    let (page, seen, said) = ask_with_books(
+        &circle,
+        "what is wrath and the angry heart",
+        r#"{"exitus":"obsequium","responsum":"Wrath burns."}"#,
+    );
+    assert!(
+        !seen[0].contains("CLAUSUM-5512"),
+        "a closed part reached the model"
+    );
+    assert!(
+        !page.contains("CLAUSUM-5512"),
+        "a closed part reached the page"
+    );
+    // his own part still opens
+    let (page, seen, _) = ask_with_books(
+        &circle,
+        "how is love between man and woman kindled",
+        r#"{"exitus":"obsequium","responsum":"By attention."}"#,
+    );
+    assert!(seen[0].contains("Love is kindled by attention"), "{said:?}");
+    assert!(page.contains("page 2 (the passions)"), "{page}");
+}

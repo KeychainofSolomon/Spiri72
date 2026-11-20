@@ -126,6 +126,23 @@ spirit the book's own passages, not a hundred-word summary.
   and attack tests in `tests/hostis.rs` (a book can hold any text).
 - The hand-written libraries stay, for short curated knowledge.
 
+**Parts of a book with gates of their own** (built 2026-11-21). A book holds
+matter for many offices (Pliny's Book II has stars, storms, earthquakes and
+the sea), so a book-wide gate opened too much or too little. Done as others
+have done it: libraries catalogue a chapter apart from its book (analytical
+entries); Renaissance readers filed passages under heads (Erasmus, *De
+Copia*); Pliny's own Book I lists what each book holds so parts may be read
+alone; search engines filter by permission before searching, never after;
+and medical indexing lets a machine propose subject terms that a person
+approves. So: parts follow the book's own chapters, by PDF pages, in the
+`.claves` file (`# pages 47-102 (Book II, the heavens): stars`); a passage
+opens by its book's gate or its part's; closed passages are never candidates
+(rarity is still counted over the whole book, which is its language and
+reveals nothing); Claude drafts the parts and the Operator approves them.
+Drafts for Pliny vol. I, Bowditch, The Prince and Behave are in the
+Operator's private storage (`claves/`). Tested in `tests/volumina.rs` and
+`tests/hostis.rs` (a closed part's secret never reaches the spirit).
+
 Later (ruled 2026-11-21, not built): **books of pictures.** A book whose pages
 are only pictures and hold no readable script cannot be searched; the eyes
 could describe each page once (kept like the text of other books, read again

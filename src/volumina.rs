@@ -38,7 +38,7 @@ use std::path::Path;
 use std::time::UNIX_EPOCH;
 
 use crate::concordantia::{self, Concordantia};
-use crate::scientia::{self, Entry, Liber, Rogatum};
+use crate::scientia::{self, Entry, Liber};
 
 /// The folder, under the Operator's folder, that holds the books.
 pub const DIR: &str = "spiri72.volumina";
@@ -161,6 +161,15 @@ Beside each book put a small text file with the same name, ending in
 - `aetas` is optional. Write `modern` for a book of the present age; its
   passages are then marked so, and never passed off as ancient.
 
+A part of a book may have a gate of its own, by its pages (PDF pages,
+counted from one), with a name shown beside its passages:
+
+    # pages 60-120 (Book II, the heavens): stars, heavens
+
+A spirit whose offices open such a part reads those pages and no others,
+even where the book as a whole is closed to it. A book may have parts and
+no gate of its own.
+
 A book without a `.claves` file opens to no spirit and is not read.
 
 `concordantia.txt` holds words that mean the same, one group to a line
@@ -190,6 +199,8 @@ pub struct Volumen {
     /// sentence), as words of matter: a passage headed by the question's own
     /// matter is the place the book treats it.
     pub capita: Vec<Vec<Vec<String>>>,
+    /// Parts of the book with gates of their own.
+    pub sectiones: Vec<Sectio>,
     /// How this book's words are read: the Operator's concordance and what the
     /// book defines itself. A question is read the same way.
     pub concordantia: Concordantia,
@@ -230,6 +241,44 @@ pub struct Titulus {
     pub nomen: Option<String>,
     pub claves: Vec<String>,
     pub aetas: Option<String>,
+    /// Parts of the book with gates of their own (`# pages 60-120: stars`).
+    pub sectiones: Vec<Sectio>,
+}
+
+/// A part of a book, by its pages, with its own gate: a spirit whose offices
+/// hold one of its claves may read these pages, and only these, even where the
+/// book as a whole is closed to it. So a librarian catalogues a chapter apart
+/// from its book, and a reader files a passage under its own head.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Sectio {
+    /// The first and last page, counted from one, both included.
+    pub a: u32,
+    pub b: u32,
+    /// What the part is called (`Book II, the heavens`), shown with its passages.
+    pub nomen: Option<String>,
+    pub claves: Vec<String>,
+}
+
+/// Reads `pages 60-120` or `pages 60-120 (Book II, the heavens)`: the range and
+/// the name, if the range is whole and runs forward.
+fn sectio(head: &str) -> Option<(u32, u32, Option<String>)> {
+    let rest = head
+        .trim()
+        .strip_prefix("pages")
+        .or_else(|| head.trim().strip_prefix("page"))?
+        .trim();
+    let (range, nomen) = match rest.split_once('(') {
+        Some((r, n)) => (r.trim(), Some(line(n.trim_end().trim_end_matches(')')))),
+        None => (rest, None),
+    };
+    let (a, b) = match range.split_once(['-', '\u{2013}']) {
+        Some((a, b)) => (a.trim().parse().ok()?, b.trim().parse().ok()?),
+        None => {
+            let p = range.parse().ok()?;
+            (p, p)
+        }
+    };
+    (a >= 1 && a <= b).then_some((a, b, nomen.filter(|n| !n.is_empty())))
 }
 
 /// One line of the Operator's own header, made safe to show: a single line
@@ -258,17 +307,31 @@ pub fn titulus(text: &str) -> Titulus {
         match k.trim() {
             "nomen" => t.nomen = Some(v),
             "aetas" => t.aetas = Some(v),
-            "claves" => {
-                t.claves = v
-                    .split(',')
-                    .map(|c| scientia::words(c).join(" "))
-                    .filter(|c| !c.is_empty())
-                    .collect();
+            "claves" => t.claves = claves(&v),
+            k => {
+                if let Some((a, b, nomen)) = sectio(k) {
+                    let claves = claves(&v);
+                    if !claves.is_empty() {
+                        t.sectiones.push(Sectio {
+                            a,
+                            b,
+                            nomen,
+                            claves,
+                        });
+                    }
+                }
             }
-            _ => {}
         }
     }
     t
+}
+
+/// The claves of a header line: words or whole phrases parted by commas.
+fn claves(v: &str) -> Vec<String> {
+    v.split(',')
+        .map(|c| scientia::words(c).join(" "))
+        .filter(|c| !c.is_empty())
+        .collect()
 }
 
 /// A book's text made plain: line ends alike, tabs as spaces, joined letters
@@ -533,6 +596,7 @@ pub fn bind_with(
         capita: heads,
         tabulae,
         concordantia: lexicon,
+        sectiones: titulus.sectiones.clone(),
         aetas: titulus.aetas.clone(),
         paginae: pages.len(),
         pictae: pages.iter().filter(|p| p.is_none()).count(),
@@ -683,7 +747,7 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
         let header = fs::read_to_string(home.join(format!("{stem}.claves")))
             .map(|t| titulus(&t))
             .unwrap_or_default();
-        if header.claves.is_empty() {
+        if header.claves.is_empty() && header.sectiones.is_empty() {
             say(format!(
                 "{shown}: no claves are set for it (a file {}.claves beside it), so it opens to no spirit and is not read.",
                 line(stem)
@@ -708,6 +772,7 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
             }
         };
         let v = bind_with(stem, &header, &pages, paged, signa, &common);
+        let whole = (1..=72).filter(|n| scientia::opens(&v.liber, *n)).count();
         let open = (1..=72).filter(|n| opens(&v, *n)).count();
         let mut told = format!(
             "{} ({shown}): {} passages from {} pages",
@@ -726,15 +791,58 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
             1 => "; it opens to 1 spirit".to_string(),
             n => format!("; it opens to {n} spirits"),
         });
+        if open > whole {
+            told.push_str(&format!(
+                " ({} of them only to the parts their offices touch, of {} parts)",
+                open - whole,
+                v.sectiones.len()
+            ));
+        }
         say(told + ".");
         volumina.push(v);
     }
     volumina
 }
 
-/// Whether a book opens to spirit `n`, by the offices the register records.
+/// Whether a book, or any part of it, opens to spirit `n`, by the offices the
+/// register records.
 pub fn opens(v: &Volumen, n: u32) -> bool {
-    scientia::opens(&v.liber, n)
+    !aperta(v, &scientia::office_texts(n)).is_empty()
+}
+
+/// The passages of a book open to a spirit whose offices read like `offices`:
+/// every passage if the book's own gate opens, else those standing on the
+/// pages of a part whose gate opens. A passage without a page opens only with
+/// the whole book.
+pub fn aperta(v: &Volumen, offices: &[String]) -> Vec<usize> {
+    if scientia::open_to(&v.liber, offices) {
+        return (0..v.liber.entries.len()).collect();
+    }
+    let parts: Vec<&Sectio> = v
+        .sectiones
+        .iter()
+        .filter(|p| scientia::claves_open(&p.claves, offices))
+        .collect();
+    if parts.is_empty() {
+        return Vec::new();
+    }
+    v.loci
+        .iter()
+        .enumerate()
+        .filter(|(_, l)| {
+            l.pagina
+                .is_some_and(|p| parts.iter().any(|s| (s.a..=s.b).contains(&p)))
+        })
+        .map(|(e, _)| e)
+        .collect()
+}
+
+/// The name of the part a page stands in, if it has one.
+fn pars(v: &Volumen, page: u32) -> Option<&str> {
+    v.sectiones
+        .iter()
+        .find(|s| (s.a..=s.b).contains(&page))
+        .and_then(|s| s.nomen.as_deref())
 }
 
 /// A question's own words of matter in the order asked, stemmed, without
@@ -823,10 +931,13 @@ pub fn consult_as(
     question: &str,
     signa: usize,
 ) -> Vec<Lectio> {
-    let open: Vec<&Volumen> = volumina
+    // the books, or the parts of them, open to this spirit; nothing closed is
+    // ever a candidate to be handed
+    let (open, apertae): (Vec<&Volumen>, Vec<Vec<usize>>) = volumina
         .iter()
-        .filter(|v| scientia::open_to(&v.liber, offices))
-        .collect();
+        .map(|v| (v, aperta(v, offices)))
+        .filter(|(_, a)| !a.is_empty())
+        .unzip();
     if open.is_empty() {
         return Vec::new();
     }
@@ -835,12 +946,32 @@ pub fn consult_as(
         .iter()
         .fold(Concordantia::default(), |c, v| c.with(&v.concordantia));
     let order = asked(question, &lexicon);
-    let libri: Vec<&Liber> = open.iter().map(|v| &v.liber).collect();
     let mut materia = order.clone();
     materia.sort();
     materia.dedup();
-    let q = Rogatum::from_matter(&libri, question, materia);
-    let (materia, raritas) = q.materia();
+    let materia = materia.as_slice();
+    // How rare each word is in the open books, all their passages counted (a
+    // word's rarity is a property of the book's language, and a part of a few
+    // pages is too small to measure it; counting reveals nothing, for only open
+    // passages are ever handed): a word held by one passage alone weighs a
+    // little under one, a word held by all weighs nothing, as in `scientia`.
+    let total = open.iter().map(|v| v.liber.entries.len()).sum::<usize>() as f64;
+    let held: Vec<usize> = materia
+        .iter()
+        .map(|w| {
+            open.iter()
+                .flat_map(|v| &v.liber.entries)
+                .filter(|e| e.verba.binary_search(w).is_ok())
+                .count()
+        })
+        .collect();
+    let rarity =
+        |n: f64| ((total + 1.0) / (n + 1.0)).ln() / (total + 1.0).ln().max(f64::MIN_POSITIVE);
+    let raritas: Vec<f64> = held
+        .iter()
+        .map(|&n| if n == 0 { 0.0 } else { rarity(n as f64) })
+        .collect();
+    let raritas = raritas.as_slice();
     // the pairs of the question's words that stand side by side in it
     let mut pairs: Vec<(usize, usize)> = order
         .windows(2)
@@ -856,28 +987,17 @@ pub fn consult_as(
     // word no open passage holds, the weight of the rarest word they could
     // hold (one held by a single passage). A word every passage holds is
     // known, and weighs nothing either way.
-    let total = libri.iter().map(|l| l.entries.len()).sum::<usize>() as f64;
-    let ignotum = ((total + 1.0) / 2.0).ln() / (total + 1.0).ln().max(f64::MIN_POSITIVE);
-    let whole: f64 = materia
+    let ignotum = rarity(1.0);
+    let whole: f64 = held
         .iter()
         .zip(raritas)
-        .map(|(w, &r)| {
-            let known = r > 0.0
-                || libri
-                    .iter()
-                    .flat_map(|l| &l.entries)
-                    .any(|e| e.verba.binary_search(w).is_ok());
-            if known {
-                r
-            } else {
-                ignotum
-            }
-        })
+        .map(|(&n, &r)| if n > 0 { r } else { ignotum })
         .sum();
     // every passage that holds a fair part of the question: (score, book, passage)
     let mut found: Vec<(f64, usize, usize)> = Vec::new();
     for (b, v) in open.iter().enumerate() {
-        for (e, seq) in v.ordines.iter().enumerate() {
+        for &e in &apertae[b] {
+            let seq = &v.ordines[e];
             let (s, held, plain, headed) = score(materia, raritas, &pairs, seq, &v.capita[e]);
             // two of the question's words, or a heading naming its subject
             let enough = (held >= 2 || headed)
@@ -939,7 +1059,10 @@ pub fn consult_as(
                 liber: v.liber.nomen.clone(),
                 aetas: v.aetas.clone(),
                 locus: match l.pagina {
-                    Some(p) => format!("page {p}"),
+                    Some(p) => match pars(v, p) {
+                        Some(n) => format!("page {p} ({n})"),
+                        None => format!("page {p}"),
+                    },
                     None => format!("part {}", l.ordo),
                 },
                 textus: v.liber.entries[e].raw.clone(),

@@ -169,7 +169,7 @@ fn stem(w: &str) -> String {
 }
 
 /// The words of matter in a text, stemmed, sorted and distinct.
-pub(crate) fn matter(text: &str) -> Vec<String> {
+fn matter(text: &str) -> Vec<String> {
     let mut v: Vec<String> = words(text)
         .iter()
         .filter(|w| !VACUA.contains(&w.as_str()))
@@ -319,8 +319,13 @@ pub fn load(dir: &Path) -> Vec<Liber> {
 /// one of the library's `claves` must stand whole in one of the spirit's offices.
 /// A phrase never reaches across two offices.
 pub fn open_to(liber: &Liber, office_texts: &[String]) -> bool {
+    claves_open(&liber.claves, office_texts)
+}
+
+/// Whether one of `claves` stands whole in one of a spirit's offices.
+pub fn claves_open(claves: &[String], office_texts: &[String]) -> bool {
     let offices: Vec<Vec<String>> = office_texts.iter().map(|t| words(t)).collect();
-    liber.claves.iter().any(|c| {
+    claves.iter().any(|c| {
         let phrase = words(c);
         offices.iter().any(|o| stands_in(&phrase, o))
     })
@@ -349,12 +354,12 @@ pub fn opens(liber: &Liber, n: u32) -> bool {
 /// The least weight of shared matter at which an unnamed entry is handed. A
 /// word held by one entry alone weighs a little under one; a word held by
 /// every entry weighs nothing.
-pub(crate) const PONDUS_MINIMUM: f64 = 1.5;
+const PONDUS_MINIMUM: f64 = 1.5;
 
 /// The least part of the question's matter the entry must hold, by weight. A
 /// word no open library holds counts against it (`IGNOTI_PONDUS`): a question
 /// mostly about things these libraries do not know is not theirs to answer.
-pub(crate) const PARS_MINIMA: f64 = 0.5;
+const PARS_MINIMA: f64 = 0.5;
 
 /// What a word unknown to every open library weighs against a finding.
 const IGNOTI_PONDUS: f64 = 1.0;
@@ -365,26 +370,20 @@ const NOMINIS_RARITAS: f64 = 0.75;
 
 /// How far the best entry must stand above the next (the next may weigh at
 /// most this part of the best), or nothing is handed: a near tie is no finding.
-pub(crate) const SECUNDI_PARS: f64 = 0.8;
+const SECUNDI_PARS: f64 = 0.8;
 
 /// What a question is weighed with: its words as asked, its words of matter,
 /// and how rare each of those is among the entries of the open libraries (a
 /// closed library weighs nothing, even here).
-pub(crate) struct Rogatum {
+struct Rogatum {
     verba: Vec<String>,
     materia: Vec<String>,
     raritas: Vec<f64>,
 }
 
 impl Rogatum {
-    pub(crate) fn new(libri: &[&Liber], question: &str) -> Rogatum {
+    fn new(libri: &[&Liber], question: &str) -> Rogatum {
         Rogatum::with_matter(libri, question, matter(question))
-    }
-
-    /// As `new`, with the question's words of matter already read (sorted and
-    /// distinct), as a long book reads them.
-    pub(crate) fn from_matter(libri: &[&Liber], question: &str, materia: Vec<String>) -> Rogatum {
-        Rogatum::with_matter(libri, question, materia)
     }
 
     fn with_matter(libri: &[&Liber], question: &str, materia: Vec<String>) -> Rogatum {
@@ -413,13 +412,7 @@ impl Rogatum {
 
     /// The weight of the matter an entry shares with the question (rare words
     /// weigh more), and how many of the question's words it shares.
-    /// The question's words of matter (stemmed, sorted, distinct) and how rare
-    /// each is among the open entries; zero for a word none of them holds.
-    pub(crate) fn materia(&self) -> (&[String], &[f64]) {
-        (&self.materia, &self.raritas)
-    }
-
-    pub(crate) fn weigh(&self, entry: &Entry) -> (f64, usize) {
+    fn weigh(&self, entry: &Entry) -> (f64, usize) {
         self.materia
             .iter()
             .zip(&self.raritas)
@@ -428,7 +421,7 @@ impl Rogatum {
     }
 
     /// The weight of all the question's matter, unknown words included.
-    pub(crate) fn whole(&self) -> f64 {
+    fn whole(&self) -> f64 {
         self.raritas
             .iter()
             .map(|r| if *r == 0.0 { IGNOTI_PONDUS } else { *r })
