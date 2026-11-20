@@ -52,6 +52,9 @@ pub struct Ini {
     pub blind: bool,
     /// Seconds between the heartbeat's messages at least (`heartbeat = 60`); never under 30.
     pub heartbeat: Option<u64>,
+    /// How many characters of book passages a spirit is handed in one rite
+    /// (`book-characters = 3000`); kept within the bounds of `volumina`.
+    pub book_characters: Option<usize>,
 }
 
 pub fn read_ini(text: &str) -> Ini {
@@ -68,6 +71,9 @@ pub fn read_ini(text: &str) -> Ini {
             "eyes-mmproj" => ini.eyes_mmproj = Some(v),
             "sight" => ini.blind = v.as_os_str() == "none",
             "heartbeat" => ini.heartbeat = v.to_str().and_then(|s| s.trim().parse().ok()),
+            "book-characters" => {
+                ini.book_characters = v.to_str().and_then(|s| s.trim().parse().ok());
+            }
             _ => {}
         }
     }
@@ -94,6 +100,9 @@ pub fn write_ini(ini: &Ini) -> String {
     }
     if let Some(n) = ini.heartbeat {
         s.push_str(&format!("heartbeat = {n}\n"));
+    }
+    if let Some(n) = ini.book_characters {
+        s.push_str(&format!("book-characters = {n}\n"));
     }
     s
 }

@@ -11,10 +11,10 @@ use annulus::lingua::exsequi::Voluntas;
 use annulus::lingua::json::{self, Json};
 use annulus::lingua::registra::{goetia, Spirit};
 
+use crate::agens::Lecta;
 use crate::fors;
 use crate::llama::quote;
 use crate::persona::entry;
-use crate::scientia::Consultatio;
 use crate::sessio::{
     ask_once_judged, give_licence, held_sky, kept_sound, still_held, telling_offices, unbindable,
 };
@@ -346,7 +346,7 @@ pub fn roga(
     sky: &[String],
     tenti: &RefCell<BTreeMap<u32, (i64, String)>>,
     will: &mut dyn Voluntas,
-    consulta: &Arc<Mutex<Option<Consultatio>>>,
+    consulta: &Arc<Mutex<Lecta>>,
 ) -> Answer {
     let bad = |why: &str| {
         answer(
@@ -396,8 +396,28 @@ pub fn roga(
     let (code, ritus, verdict) = ask_once_judged(
         spirit, &office, &question, &handed, dir, &sitting, will, &mut out, &mut err,
     );
-    let read = consulta.lock().ok().and_then(|mut g| g.take());
-    let scientia = match &read {
+    let read = consulta
+        .lock()
+        .map(|mut g| std::mem::take(&mut *g))
+        .unwrap_or_default();
+    let volumina: Vec<String> = read
+        .volumina
+        .iter()
+        .map(|l| {
+            format!(
+                "{{\"liber\":{},\"aetas\":{},\"locus\":{},\"textus\":{}}}",
+                quote(&l.liber),
+                l.aetas
+                    .as_deref()
+                    .map(quote)
+                    .unwrap_or_else(|| "null".into()),
+                quote(&l.locus),
+                quote(&l.textus)
+            )
+        })
+        .collect();
+    let volumina = format!("[{}]", volumina.join(","));
+    let scientia = match &read.scientia {
         Some(c) => format!(
             "{{\"liber\":{},\"terminus\":{},\"textus\":{}}}",
             quote(&c.liber),
@@ -426,7 +446,7 @@ pub fn roga(
         "200 OK",
         "application/json",
         format!(
-            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{},\"tentus\":{tentus},\"dimissus\":{},\"scientia\":{scientia}}}",
+            "{{\"exitus\":{code},\"iudicium\":{},\"veritas\":{},\"verba\":{},\"error\":{error},\"acta\":{},\"ritus\":{},\"tentus\":{tentus},\"dimissus\":{},\"scientia\":{scientia},\"volumina\":{volumina}}}",
             opt(&r.iudicium),
             opt(&r.veritas),
             opt(&r.verba),
@@ -515,8 +535,9 @@ pub struct Aula<'a> {
     pub tenti: RefCell<BTreeMap<u32, (i64, String)>>,
     /// The heartbeat: measured facts, at most one message per gap.
     pub pulsus: RefCell<crate::pulsus::Pulsus>,
-    /// Where the will sets down the last library reading, for the page to show.
-    pub consulta: Arc<Mutex<Option<Consultatio>>>,
+    /// Where the will sets down the last reading (library entry and book
+    /// passages), for the page to show.
+    pub consulta: Arc<Mutex<Lecta>>,
     /// Whether the eyes have answered once, so their loss is told and their absence is not.
     pub eyes_seen: std::cell::Cell<bool>,
 }
@@ -717,7 +738,7 @@ pub fn serve(
     sky: &[String],
     out: &mut dyn Write,
     open: bool,
-    consulta: Arc<Mutex<Option<Consultatio>>>,
+    consulta: Arc<Mutex<Lecta>>,
 ) -> u8 {
     let listener = match TcpListener::bind("127.0.0.1:0") {
         Ok(l) => l,

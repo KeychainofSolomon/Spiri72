@@ -200,8 +200,19 @@ fn main() -> ExitCode {
         // every run: seeding spiri72.scientia belongs to serving, not to a rite.
         if let Some(d) = agens.status.clone() {
             agens.scientia = spiri72::scientia::load(&d);
+            // Whole books: read once, then kept; what was read is told here.
+            agens.book_characters = spiri72::volumina::signa(
+                std::fs::read_to_string(&ini)
+                    .ok()
+                    .and_then(|t| spiri72::initium::read_ini(&t).book_characters),
+            );
+            agens.volumina =
+                spiri72::volumina::load(&d, agens.book_characters, &mut |line: String| {
+                    let _ = writeln!(out, "{line}");
+                    let _ = out.flush();
+                });
         }
-        let consulta = std::sync::Arc::new(std::sync::Mutex::new(None));
+        let consulta = std::sync::Arc::new(std::sync::Mutex::new(Default::default()));
         agens.consulta = Some(consulta.clone());
         let address = agens.exemplar.address;
         let url = agens.exemplar.url.clone();

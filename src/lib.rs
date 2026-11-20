@@ -14,3 +14,4 @@ pub mod scientia;
 pub mod sessio;
 pub mod sigilla;
 pub mod visus;
+pub mod volumina;

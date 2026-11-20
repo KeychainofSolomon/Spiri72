@@ -207,6 +207,9 @@ footer .sound[aria-pressed="true"] { color: var(--ink); }
   animation: exhale 1.1s cubic-bezier(.2, .7, .2, 1) both;
 }
 .revelatio[hidden] { display: none; }
+.revelatio.longa { overflow-y: auto; }
+.revelatio.longa::after { display: none; }
+.revelatio .rev-body + .rev-head { margin-top: .9rem; }
 .revelatio .rev-head { color: var(--pewter); font-style: italic; font-size: .82rem; margin: 0 0 .55rem; line-height: 1.45; }
 .revelatio .rev-head b { color: var(--ink); font-style: normal; font-weight: normal; }
 .revelatio .rev-body { font-size: .9rem; white-space: pre-wrap; margin: 0; line-height: 1.5; color: var(--ink); }
@@ -590,13 +593,22 @@ function say(node) {
 
 // The true copy a spirit drew from a library, surfacing beside the circle. What
 // overruns the box is hidden; it fades back to smoke when a rite draws nothing.
-function showRevelatio(sc) {
+function showRevelatio(sc, vol) {
   const box = document.getElementById("revelatio");
-  if (!sc) { box.hidden = true; box.replaceChildren(); return; }
-  box.replaceChildren(
+  vol = vol || [];
+  if (!sc && !vol.length) { box.hidden = true; box.replaceChildren(); return; }
+  const parts = [];
+  if (sc) parts.push(
     el("p", { class: "rev-head" }, "From ", el("b", {}, sc.liber), ", on ", el("b", {}, "“" + sc.terminus + "”")),
     el("pre", { class: "rev-body" }, sc.textus)
   );
+  // Passages of whole books, as they stand: set as text, never as markup.
+  for (const v of vol) parts.push(
+    el("p", { class: "rev-head" }, "From the book ", el("b", {}, v.liber), ", ", el("b", {}, v.locus), v.aetas ? ` (${v.aetas})` : ""),
+    el("pre", { class: "rev-body" }, v.textus)
+  );
+  box.replaceChildren(...parts);
+  box.classList.toggle("longa", vol.length > 0);
   box.hidden = false;
   box.style.animation = "none"; void box.offsetWidth; box.style.animation = "";
 }
@@ -707,7 +719,7 @@ document.getElementById("ask").addEventListener("submit", async e => {
     } else {
       say(el("p", { class: "said refused" }, a.error || "The rite was refused or broken off."));
     }
-    showRevelatio(a.scientia);
+    showRevelatio(a.scientia, a.volumina);
     if (a.dimissus && a.exitus !== 2) say(el("p", { class: "said waiting" }, `${s.name} is banished and no longer held; another question calls it anew, in its own hours.`));
     if (a.exitus === 2) depart(false);
   } catch (err) {

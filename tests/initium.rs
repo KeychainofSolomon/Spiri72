@@ -21,6 +21,7 @@ fn the_remembered_paths_survive_the_round_trip() {
         eyes_mmproj: Some(PathBuf::from("D:\\models\\mmproj-Qwen2.5-VL-3B.gguf")),
         blind: false,
         heartbeat: Some(45),
+        book_characters: Some(4500),
     };
     assert_eq!(read_ini(&write_ini(&ini)), ini);
     assert_eq!(read_ini("# nothing here\nnoise\n"), Ini::default());

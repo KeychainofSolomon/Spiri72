@@ -12,6 +12,15 @@ use crate::llama::{Exemplar, Rogatio};
 use crate::memoria;
 use crate::persona;
 use crate::scientia::{self, Consultatio, Liber};
+use crate::volumina::{self, Lectio, Volumen};
+
+/// What a spirit was handed to read in one rite, kept for the Operator to see:
+/// the library entry, if one was found, and the passages of whole books.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Lecta {
+    pub scientia: Option<Consultatio>,
+    pub volumina: Vec<Lectio>,
+}
 
 pub struct Agens {
     pub exemplar: Exemplar,
@@ -25,9 +34,13 @@ pub struct Agens {
     pub own_rite: bool,
     /// The knowledge libraries a spirit may consult, loaded once at the start.
     pub scientia: Vec<Liber>,
-    /// Where the last library reading is set down for the page to show, if the
-    /// page is watching. Cleared each speaking rite; set when something is read.
-    pub consulta: Option<Arc<Mutex<Option<Consultatio>>>>,
+    /// The whole books a spirit may be handed passages from, loaded once at the
+    /// start, and how many characters of them one rite may hand.
+    pub volumina: Vec<Volumen>,
+    pub book_characters: usize,
+    /// Where the last reading (library entry and book passages) is set down for
+    /// the page to show, if the page is watching. Set anew each rite.
+    pub consulta: Option<Arc<Mutex<Lecta>>>,
 }
 
 impl Agens {
@@ -40,6 +53,8 @@ impl Agens {
             status: None,
             own_rite: false,
             scientia: Vec::new(),
+            volumina: Vec::new(),
+            book_characters: volumina::SIGNA,
             consulta: None,
         }
     }
@@ -91,8 +106,17 @@ impl Voluntas for Agens {
         let consulta = speaking
             .then(|| scientia::consult(&self.scientia, p.spirit.n, p.quaestio.unwrap_or("")))
             .flatten();
+        let question = p.quaestio.unwrap_or("");
+        let passus = if speaking {
+            volumina::consult(&self.volumina, p.spirit.n, question, self.book_characters)
+        } else {
+            Vec::new()
+        };
         if let Some(slot) = &self.consulta {
-            *slot.lock().unwrap() = consulta.clone();
+            *slot.lock().unwrap() = Lecta {
+                scientia: consulta.clone(),
+                volumina: passus.clone(),
+            };
         }
         let heading = consulta
             .as_ref()
@@ -101,12 +125,13 @@ impl Voluntas for Agens {
             (Some(h), Some(c)) => Some((h.as_str(), c.textus.as_str())),
             _ => None,
         };
-        let user = persona::user_remembering(
+        let user = persona::user_reading(
             p,
             telling,
             &fors::hex::<8>()?,
             memoria.as_deref(),
             scientia_arg,
+            &passus,
         );
         let reply = self.exemplar.ask(&Rogatio {
             system: &system,

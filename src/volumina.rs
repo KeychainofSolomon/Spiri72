@@ -1,0 +1,609 @@
+//! Whole books (`volumina`): the Operator's own books, from which a spirit may
+//! be handed the book's own passages.
+//!
+//! The books lie under `spiri72.volumina/` in the Operator's folder, beside
+//! `spiri72.scientia`, as PDF or plain text. They are the Operator's and never
+//! part of this program. Beside each book lies a short header file of the same
+//! name ending in `.claves`:
+//!
+//! ```text
+//! # nomen: Medical Herbalism (Hoffmann, 2003)
+//! # claves: herb, plant, medicinal
+//! # aetas: modern
+//! ```
+//!
+//! A book with no such file, or with no claves in it, opens to no spirit and is
+//! not read at all: what is not granted is denied. A book opens to a spirit only
+//! where one of its claves stands whole in one of the spirit's offices, exactly
+//! as a library does.
+//!
+//! A PDF is read once, page by page, with the reader in `liber.rs` (its own
+//! text only: no eyes, no model). What was read is kept under
+//! `spiri72.volumina/.lecta/`, so a book is read again only when its file
+//! changes. A page that is only a picture is counted and reported as unread.
+//! Each page is then cut into passages of a few paragraphs, each knowing its
+//! page.
+//!
+//! Finding is the arithmetic of `scientia`: the question's words of matter,
+//! weighed by their rarity among the passages of the books open to this spirit.
+//! A passage is handed only if it shares enough rare matter and a fair part of
+//! the question; if too many passages answer equally, the match is doubtful
+//! and nothing is handed. At most three passages are handed, within a set
+//! number of characters, each a true copy marked with its book and page. A
+//! book can hold any text, so every passage is handed fenced and sealed as
+//! untrusted text, and shown as it stands to the Operator.
+
+use std::fs;
+use std::path::Path;
+use std::time::UNIX_EPOCH;
+
+use crate::scientia::{self, Entry, Liber, Rogatum};
+
+/// The folder, under the Operator's folder, that holds the books.
+pub const DIR: &str = "spiri72.volumina";
+
+/// The folder, within `DIR`, where what was read of each PDF is kept.
+pub const LECTA: &str = ".lecta";
+
+/// The note written once into a new books folder, telling how it is used.
+pub const LEGE: &str = "LEGE.md";
+
+/// How many characters of passages are handed in one rite, unless the Operator
+/// sets another number (`book-characters = N` in `spiri72.ini`).
+pub const SIGNA: usize = 3000;
+
+/// The bounds of that setting.
+pub const SIGNA_MINIMA: usize = 1500;
+pub const SIGNA_MAXIMA: usize = 9000;
+
+/// The most passages handed in one rite.
+pub const PASSUS_MAXIMI: usize = 3;
+
+/// How many passages may stand beside the best (within `SECUNDI_PARS` of it)
+/// before the match is held doubtful: a question that a crowd of passages
+/// answers equally well is answered by none of them.
+const TURBA: usize = 6;
+
+/// A book larger than this is not read.
+const MOLES_MAXIMA: u64 = 512 * 1024 * 1024;
+
+/// The first line of a kept reading; a file that opens otherwise is read anew.
+const SIGNUM_LECTI: &str = "spiri72 lecta 1";
+
+const LEGE_TEXT: &str = "\
+# spiri72.volumina
+
+Whole books for the spirits. Put a book here as a PDF or a plain text file.
+
+Beside each book put a small text file with the same name, ending in
+`.claves`. For `herbal.pdf` that is `herbal.claves`:
+
+    # nomen: Medical Herbalism (Hoffmann, 2003)
+    # claves: herb, plant, medicinal
+    # aetas: modern
+
+- `nomen` is the name shown with every passage.
+- `claves` are the words or whole phrases that open the book: a spirit may
+  read it only if one of them stands in one of that spirit's offices.
+- `aetas` is optional. Write `modern` for a book of the present age; its
+  passages are then marked so, and never passed off as ancient.
+
+A book without a `.claves` file opens to no spirit and is not read.
+
+A PDF is read once; what was read is kept in `.lecta` and used until the
+book's file changes. Delete `.lecta` to have every book read anew. Pages
+that are only pictures (scans) are not read; Spiri72 says how many.
+";
+
+/// One book: its header, and its passages as the entries of a `Liber`, so the
+/// arithmetic of `scientia` weighs them unchanged. A passage has no keys: it
+/// is never named, only described.
+#[derive(Clone, Debug)]
+pub struct Volumen {
+    /// `liber.nomen` is the book's shown name, `liber.claves` its gate, and
+    /// each of `liber.entries` one passage (`raw` is the passage as it stands).
+    pub liber: Liber,
+    /// Where each passage stands, in step with `liber.entries`.
+    pub loci: Vec<Locus>,
+    /// The age the Operator marked the book with (`modern`), if any.
+    pub aetas: Option<String>,
+    /// How many pages the book has, and how many were only pictures.
+    pub paginae: usize,
+    pub pictae: usize,
+}
+
+/// Where a passage stands in its book.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Locus {
+    /// The page, counted from one; none for a text file without page breaks.
+    pub pagina: Option<u32>,
+    /// The passage's number in the whole book, counted from one.
+    pub ordo: u32,
+}
+
+/// One passage handed to a spirit in a rite, kept for the Operator to see.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Lectio {
+    /// The book's shown name.
+    pub liber: String,
+    /// The book's marked age (`modern`), if any.
+    pub aetas: Option<String>,
+    /// Where it stands, in words (`page 31`, or `part 12` where no pages are known).
+    pub locus: String,
+    /// The passage as it stands in the book, a true copy.
+    pub textus: String,
+}
+
+/// What a book's `.claves` file says.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Titulus {
+    pub nomen: Option<String>,
+    pub claves: Vec<String>,
+    pub aetas: Option<String>,
+}
+
+/// One line of the Operator's own header, made safe to show: a single line
+/// without control characters, of bounded length.
+fn line(s: &str) -> String {
+    purga(s)
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .chars()
+        .take(120)
+        .collect()
+}
+
+/// Reads a `.claves` file: lines of `# key: value`. Anything else is ignored.
+pub fn titulus(text: &str) -> Titulus {
+    let mut t = Titulus::default();
+    for l in text.lines() {
+        let Some((k, v)) = l.trim().trim_start_matches('#').split_once(':') else {
+            continue;
+        };
+        let v = line(v);
+        if v.is_empty() {
+            continue;
+        }
+        match k.trim() {
+            "nomen" => t.nomen = Some(v),
+            "aetas" => t.aetas = Some(v),
+            "claves" => {
+                t.claves = v
+                    .split(',')
+                    .map(|c| scientia::words(c).join(" "))
+                    .filter(|c| !c.is_empty())
+                    .collect();
+            }
+            _ => {}
+        }
+    }
+    t
+}
+
+/// A book's text made plain: line ends alike, tabs as spaces, and no control
+/// or invisible steering characters at all (a book can hold any text, and its
+/// passages are shown to the Operator). Only the line break is kept.
+pub fn purga(text: &str) -> String {
+    text.replace("\r\n", "\n")
+        .chars()
+        .filter_map(|c| match c {
+            '\n' => Some('\n'),
+            '\t' | '\r' | '\u{a0}' => Some(' '),
+            c if c.is_control() => None,
+            '\u{200b}'..='\u{200f}'
+            | '\u{2028}'..='\u{202e}'
+            | '\u{2060}'..='\u{206f}'
+            | '\u{feff}' => None,
+            c => Some(c),
+        })
+        .collect()
+}
+
+fn length(s: &str) -> usize {
+    s.chars().count()
+}
+
+/// A line longer than `max` cut into pieces no longer than it, at a space
+/// where one is found.
+fn pieces(line: &str, max: usize) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    for word in line.split(' ') {
+        let mut word = word.to_string();
+        while length(&word) > max {
+            if !cur.is_empty() {
+                out.push(std::mem::take(&mut cur));
+            }
+            let head: String = word.chars().take(max).collect();
+            word = word.chars().skip(max).collect();
+            out.push(head);
+        }
+        if !cur.is_empty() && length(&cur) + 1 + length(&word) > max {
+            out.push(std::mem::take(&mut cur));
+        }
+        if !cur.is_empty() {
+            cur.push(' ');
+        }
+        cur.push_str(&word);
+    }
+    if !cur.trim().is_empty() {
+        out.push(cur);
+    }
+    out
+}
+
+/// Cuts one page into passages of at most `max` characters. A passage closes
+/// at the end of a sentence once it is well filled, or at a blank line once it
+/// is fairly filled; a short remainder joins the passage before it if it fits.
+pub fn divide(text: &str, max: usize) -> Vec<String> {
+    let max = max.max(200);
+    let (full, fair) = (max * 6 / 10, max * 4 / 10);
+    let mut out: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    let close = |cur: &mut String, out: &mut Vec<String>| {
+        let t = cur.trim();
+        if !t.is_empty() {
+            out.push(t.to_string());
+        }
+        cur.clear();
+    };
+    for l in text.lines() {
+        let l = l.trim_end();
+        if l.trim().is_empty() {
+            if length(&cur) >= fair {
+                close(&mut cur, &mut out);
+            } else if !cur.is_empty() && !cur.ends_with("\n\n") {
+                cur.push('\n');
+            }
+            continue;
+        }
+        for piece in pieces(l, max) {
+            if !cur.is_empty() && length(&cur) + 1 + length(&piece) > max {
+                close(&mut cur, &mut out);
+            }
+            if !cur.is_empty() && !cur.ends_with('\n') {
+                cur.push('\n');
+            }
+            cur.push_str(&piece);
+            let ended = piece
+                .trim_end_matches(['"', '\'', ')', '\u{201d}', '\u{2019}'])
+                .ends_with(['.', '?', '!']);
+            if ended && length(&cur) >= full {
+                close(&mut cur, &mut out);
+            }
+        }
+    }
+    close(&mut cur, &mut out);
+    if out.len() >= 2 {
+        let n = out.len();
+        if length(&out[n - 1]) < max / 5 && length(&out[n - 2]) + 1 + length(&out[n - 1]) <= max {
+            let tail = out.pop().unwrap_or_default();
+            if let Some(prev) = out.last_mut() {
+                prev.push('\n');
+                prev.push_str(&tail);
+            }
+        }
+    }
+    out
+}
+
+/// The setting kept within its bounds.
+pub fn signa(n: Option<usize>) -> usize {
+    n.unwrap_or(SIGNA).clamp(SIGNA_MINIMA, SIGNA_MAXIMA)
+}
+
+/// Binds a book from its header and its pages (none for a page that is only a
+/// picture). `paged` says whether the pages are true pages of the book; where
+/// not, a passage is marked by its number in the book alone.
+pub fn bind(
+    slug: &str,
+    titulus: &Titulus,
+    pages: &[Option<String>],
+    paged: bool,
+    signa: usize,
+) -> Volumen {
+    let max = self::signa(Some(signa)) / PASSUS_MAXIMI;
+    let mut entries = Vec::new();
+    let mut loci = Vec::new();
+    for (i, page) in pages.iter().enumerate() {
+        let Some(text) = page else { continue };
+        for raw in divide(&purga(text), max) {
+            loci.push(Locus {
+                pagina: paged.then_some(i as u32 + 1),
+                ordo: loci.len() as u32 + 1,
+            });
+            entries.push(Entry {
+                claves: Vec::new(),
+                verba: scientia::matter(&raw),
+                raw,
+            });
+        }
+    }
+    Volumen {
+        liber: Liber {
+            liber: slug.to_string(),
+            nomen: titulus.nomen.clone().unwrap_or_else(|| line(slug)),
+            claves: titulus.claves.clone(),
+            entries,
+        },
+        loci,
+        aetas: titulus.aetas.clone(),
+        paginae: pages.len(),
+        pictae: pages.iter().filter(|p| p.is_none()).count(),
+    }
+}
+
+/// What was read of a PDF, as kept on disk: a first line naming the book file's
+/// size and time, then each page under a form-feed line with its number
+/// (`picta` after the number for a page that was only a picture). A page's text
+/// holds no form feed, for `purga` has taken every control character out.
+fn write_lecta(path: &Path, size: u64, time: u64, pages: &[Option<String>]) {
+    let mut s = format!("{SIGNUM_LECTI} {size} {time} {}\n", pages.len());
+    for (i, p) in pages.iter().enumerate() {
+        match p {
+            Some(t) => s.push_str(&format!("\u{c}{}\n{}\n", i + 1, t.trim_end())),
+            None => s.push_str(&format!("\u{c}{} picta\n", i + 1)),
+        }
+    }
+    let tmp = path.with_extension("tmp");
+    if fs::write(&tmp, s).is_ok() && fs::rename(&tmp, path).is_err() {
+        let _ = fs::remove_file(&tmp);
+    }
+}
+
+/// Reads a kept reading back, if it is of this very file (same size and time)
+/// and whole. Anything amiss gives none, and the book is read anew.
+fn read_lecta(path: &Path, size: u64, time: u64) -> Option<Vec<Option<String>>> {
+    let text = fs::read_to_string(path).ok()?;
+    let (head, rest) = text.split_once('\n')?;
+    let fields: Vec<&str> = head
+        .strip_prefix(SIGNUM_LECTI)?
+        .split_whitespace()
+        .collect();
+    let [s, t, n] = fields.as_slice() else {
+        return None;
+    };
+    if s.parse::<u64>().ok()? != size || t.parse::<u64>().ok()? != time {
+        return None;
+    }
+    let n: usize = n.parse().ok()?;
+    let mut pages: Vec<Option<String>> = Vec::new();
+    for block in rest.split('\u{c}').skip(1) {
+        let (mark, body) = block.split_once('\n').unwrap_or((block, ""));
+        let mut mark = mark.split_whitespace();
+        if mark.next()?.parse::<usize>().ok()? != pages.len() + 1 {
+            return None;
+        }
+        pages.push(match mark.next() {
+            Some("picta") => None,
+            Some(_) => return None,
+            None => Some(purga(body.trim_end())),
+        });
+    }
+    (pages.len() == n).then_some(pages)
+}
+
+/// The pages of a PDF: from what was kept, or read now and kept.
+fn pdf_pages(
+    path: &Path,
+    kept: &Path,
+    name: &str,
+    say: &mut dyn FnMut(String),
+) -> Result<Vec<Option<String>>, String> {
+    let meta = fs::metadata(path).map_err(|e| format!("cannot be read: {e}"))?;
+    let time = meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_secs());
+    if let Some(pages) = read_lecta(kept, meta.len(), time) {
+        return Ok(pages);
+    }
+    say(format!(
+        "Reading {name} for the first time. This is done once and may take a few minutes."
+    ));
+    let bytes = fs::read(path).map_err(|e| format!("cannot be read: {e}"))?;
+    let book = crate::liber::Book::open(&bytes)?;
+    let pages: Vec<Option<String>> = (0..book.page_count())
+        .map(|i| book.text_of(i).map(|t| purga(&t)))
+        .collect();
+    if let Some(dir) = kept.parent() {
+        let _ = fs::create_dir_all(dir);
+    }
+    write_lecta(kept, meta.len(), time, &pages);
+    Ok(pages)
+}
+
+/// The pages of a text file: parted at form feeds if it has any (then they are
+/// its pages), else the whole file as one run without page numbers.
+fn text_pages(path: &Path) -> Result<(Vec<Option<String>>, bool), String> {
+    let bytes = fs::read(path).map_err(|e| format!("cannot be read: {e}"))?;
+    let text = String::from_utf8_lossy(&bytes);
+    if text.contains('\u{c}') {
+        let pages = text
+            .split('\u{c}')
+            .map(|p| (!p.trim().is_empty()).then(|| purga(p)))
+            .collect();
+        Ok((pages, true))
+    } else {
+        Ok((vec![Some(purga(&text))], false))
+    }
+}
+
+/// Loads every book under `<dir>/spiri72.volumina` that has a `.claves` file
+/// with claves in it, making the folder (with a note on its use) if it is not
+/// there. `say` is told, in plain words, what was found, read and left unread.
+/// A book that cannot be read is told of and skipped, never fatal.
+pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volumen> {
+    let home = dir.join(DIR);
+    if !home.exists() {
+        if fs::create_dir_all(&home).is_err() {
+            return Vec::new();
+        }
+        let _ = fs::write(home.join(LEGE), LEGE_TEXT);
+        say(format!(
+            "A folder for whole books is made at {} (see {LEGE} inside it).",
+            home.display()
+        ));
+    }
+    let Ok(read) = fs::read_dir(&home) else {
+        return Vec::new();
+    };
+    let kind = |p: &Path| {
+        p.extension()
+            .and_then(|x| x.to_str())
+            .map(str::to_lowercase)
+            .filter(|x| x == "pdf" || x == "txt")
+    };
+    let mut paths: Vec<_> = read
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.is_file() && kind(p).is_some())
+        .collect();
+    paths.sort();
+    let mut volumina = Vec::new();
+    for path in paths {
+        let (Some(name), Some(stem)) = (
+            path.file_name().and_then(|s| s.to_str()),
+            path.file_stem().and_then(|s| s.to_str()),
+        ) else {
+            continue;
+        };
+        let shown = line(name);
+        let header = fs::read_to_string(home.join(format!("{stem}.claves")))
+            .map(|t| titulus(&t))
+            .unwrap_or_default();
+        if header.claves.is_empty() {
+            say(format!(
+                "{shown}: no claves are set for it (a file {}.claves beside it), so it opens to no spirit and is not read.",
+                line(stem)
+            ));
+            continue;
+        }
+        if fs::metadata(&path).map_or(0, |m| m.len()) > MOLES_MAXIMA {
+            say(format!("{shown}: too large to read; it is left alone."));
+            continue;
+        }
+        let pages = if kind(&path).as_deref() == Some("pdf") {
+            let kept = home.join(LECTA).join(format!("{name}.txt"));
+            pdf_pages(&path, &kept, &shown, say).map(|p| (p, true))
+        } else {
+            text_pages(&path)
+        };
+        let (pages, paged) = match pages {
+            Ok(p) => p,
+            Err(e) => {
+                say(format!("{shown}: {e}"));
+                continue;
+            }
+        };
+        let v = bind(stem, &header, &pages, paged, signa);
+        let open = (1..=72).filter(|n| opens(&v, *n)).count();
+        let mut told = format!(
+            "{} ({shown}): {} passages from {} pages",
+            v.liber.nomen,
+            v.liber.entries.len(),
+            v.paginae - v.pictae
+        );
+        if v.pictae > 0 {
+            told.push_str(&format!(
+                "; {} pages are only pictures and were not read",
+                v.pictae
+            ));
+        }
+        told.push_str(&match open {
+            0 => "; its claves stand in no spirit's offices, so it opens to none".to_string(),
+            1 => "; it opens to 1 spirit".to_string(),
+            n => format!("; it opens to {n} spirits"),
+        });
+        say(told + ".");
+        volumina.push(v);
+    }
+    volumina
+}
+
+/// Whether a book opens to spirit `n`, by the offices the register records.
+pub fn opens(v: &Volumen, n: u32) -> bool {
+    scientia::opens(&v.liber, n)
+}
+
+/// As `consult`, for a spirit whose offices read like `offices`.
+pub fn consult_as(
+    volumina: &[Volumen],
+    offices: &[String],
+    question: &str,
+    signa: usize,
+) -> Vec<Lectio> {
+    let open: Vec<&Volumen> = volumina
+        .iter()
+        .filter(|v| scientia::open_to(&v.liber, offices))
+        .collect();
+    if open.is_empty() {
+        return Vec::new();
+    }
+    let libri: Vec<&Liber> = open.iter().map(|v| &v.liber).collect();
+    let q = Rogatum::new(&libri, question);
+    let least = scientia::PONDUS_MINIMUM.max(q.whole() * scientia::PARS_MINIMA);
+    // every passage that shares enough of the question: (weight, book, passage)
+    let mut found: Vec<(f64, usize, usize)> = Vec::new();
+    for (b, v) in open.iter().enumerate() {
+        for (e, entry) in v.liber.entries.iter().enumerate() {
+            let (weight, shared) = q.weigh(entry);
+            if shared >= 2 && weight >= least {
+                found.push((weight, b, e));
+            }
+        }
+    }
+    found.sort_by(|x, y| y.0.total_cmp(&x.0).then((x.1, x.2).cmp(&(y.1, y.2))));
+    let Some(&(best, _, _)) = found.first() else {
+        return Vec::new();
+    };
+    let near = found
+        .iter()
+        .take_while(|f| f.0 >= best * scientia::SECUNDI_PARS)
+        .count();
+    if near > TURBA {
+        return Vec::new();
+    }
+    let budget = self::signa(Some(signa));
+    let mut spent = 0;
+    let mut handed: Vec<(usize, usize)> = Vec::new();
+    for &(_, b, e) in found.iter().take(near.min(PASSUS_MAXIMI)) {
+        let n = length(&open[b].liber.entries[e].raw);
+        if spent + n > budget {
+            break;
+        }
+        spent += n;
+        handed.push((b, e));
+    }
+    // as they stand in the books, not as they weighed
+    handed.sort();
+    handed
+        .into_iter()
+        .map(|(b, e)| {
+            let v = open[b];
+            let l = v.loci[e];
+            Lectio {
+                liber: v.liber.nomen.clone(),
+                aetas: v.aetas.clone(),
+                locus: match l.pagina {
+                    Some(p) => format!("page {p}"),
+                    None => format!("part {}", l.ordo),
+                },
+                textus: v.liber.entries[e].raw.clone(),
+            }
+        })
+        .collect()
+}
+
+/// Given the loaded books, a spirit and its question, returns the passages the
+/// spirit is handed, if any, from books open to it by its offices: at most
+/// `PASSUS_MAXIMI`, within `signa` characters in all. No model is asked; a
+/// closed book is never searched, nor weighed.
+pub fn consult(volumina: &[Volumen], spirit: u32, question: &str, signa: usize) -> Vec<Lectio> {
+    if volumina.is_empty() {
+        return Vec::new();
+    }
+    consult_as(volumina, &scientia::office_texts(spirit), question, signa)
+}
