@@ -83,6 +83,15 @@ const PARS_LIBRI: f64 = 0.55;
 /// question: two words of middling rarity, or one very rare word alone.
 const PONDUS_LIBRI: f64 = 0.6;
 
+/// How many words apart, at most, two different words of the question must
+/// stand somewhere in a passage for it to answer: a passage that holds the
+/// question's words only far from each other speaks of each in passing, not of
+/// the question (`engine` in one paragraph, `car` in another). A heading that
+/// names the matter answers without it. Measured on the trial books
+/// (2026-11-21): right 89 to 92, wrong 20 to 18, nothing 8 to 7, idle finds
+/// 4 to 3; any bound from 5 to 20 words did better than none, 3 did worse.
+const PROPINQUITAS: usize = 8;
+
 /// How many of a passage's first lines may be its heading.
 const CAPITA_PRIMA: usize = 2;
 
@@ -1100,15 +1109,16 @@ fn asked(question: &str, c: &Concordantia) -> Vec<String> {
 /// matter as its subject there (`The Single Responsibility Principle`,
 /// `Don't Return Null`, `Tannins`, `Psoriasis`). Returns the
 /// score, how many distinct words it holds, their plain weight (each once),
-/// which is what the question's part is measured by, and whether a heading
-/// held them.
+/// which is what the question's part is measured by, whether a heading
+/// held them, and whether two different words of the question stand within
+/// `PROPINQUITAS` words of each other.
 fn score<'h>(
     raritas: &[f64],
     pairs: &[(usize, usize)],
     kinds: &[(u32, usize)],
     seq: &[u32],
     heads: impl Iterator<Item = &'h [u32]>,
-) -> (f64, usize, f64, bool) {
+) -> (f64, usize, f64, bool, bool) {
     // which of the question's words a word of the book is, if any
     let kind = |w: u32| {
         kinds
@@ -1161,7 +1171,20 @@ fn score<'h>(
             }
         })
         .fold(0.0_f64, f64::max);
-    (score + headed, held, plain, headed > 0.0)
+    // two different words of the question, near each other
+    let mut near = false;
+    let mut last: Option<(usize, usize)> = None;
+    for (i, k) in at.iter().enumerate() {
+        let Some(k) = k.filter(|&k| raritas[k] > 0.0) else {
+            continue;
+        };
+        if last.is_some_and(|(j, other)| other != k && i - j <= PROPINQUITAS) {
+            near = true;
+            break;
+        }
+        last = Some((i, k));
+    }
+    (score + headed, held, plain, headed > 0.0, near)
 }
 
 /// As `consult`, for a spirit whose offices read like `offices`.
@@ -1260,12 +1283,12 @@ pub fn consult_as(
             if !patet(v, &apertiones[b], e) {
                 continue;
             }
-            let (s, held, plain, headed) =
+            let (s, _, plain, headed, near) =
                 score(raritas, &pairs, &kinds[b], v.index.seq(e), v.index.heads(e));
-            // two of the question's words, or a heading naming its subject
-            let enough = (held >= 2 || headed)
-                && plain >= PONDUS_LIBRI.min(whole)
-                && plain >= whole * PARS_LIBRI;
+            // two of the question's words standing near each other, or a heading
+            // naming its subject
+            let enough =
+                (near || headed) && plain >= PONDUS_LIBRI.min(whole) && plain >= whole * PARS_LIBRI;
             if enough {
                 found.push((s, b, e));
             }

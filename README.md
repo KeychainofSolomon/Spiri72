@@ -35,6 +35,8 @@ The model forgets everything between rites. What lasts is kept on disk, one book
 - **When you choose,** an answer the angel found sound is taken into the book: press **Take into …'s book** under it in the binding page, or type `+` in the terminal. Only then do the spirit's own words go in, marked as words you took up. Voided and suspended answers can never be taken up.
 - **Before every rite** a program that is not the spirit chooses what comes back: the latest few entries, those that best match your question (Latin by its dictionary form, so *regis* finds *rex*), and now and then an older one that resurfaces unbidden, more for heavier entries and on anniversaries, less as they age. They are shuffled and handed over sealed, with no sign of why any came back. The spirit cannot search the book or write in it.
 
+**Within one sitting** a held spirit is also handed its own last two sound answers, so that "are you sure?" has something to stand on, and it is told to hold to them unless you give a reason or a passage against them. This is kept in memory only, never written down: it begins at the calling and ends with the hold or with the program, so it never reaches a later sitting, and answers the angel did not find sound are never handed back.
+
 Each spirit sees only its own book. A book may grow to 1 GB. Each entry carries the hash of the one before it, so a book that was hand-edited, cut or planted refuses the rite. Until Annulus has a real wand, this catches a broken book but cannot prove who wrote it; taking an answer into the book will then need the wand as well.
 
 ```

@@ -348,3 +348,46 @@ fn the_real_wand_is_named_by_its_flag_and_keeps_its_own_house() {
     assert!(spiri72::sessio::wand_words(&[]).contains("test wand"));
     assert_ne!(spiri72::sessio::HOUSE, spiri72::sessio::HOUSE_VERA);
 }
+
+#[test]
+fn a_held_spirit_is_handed_its_own_earlier_answer_and_told_to_stand_by_it() {
+    let dir = folder("colloquium");
+    let (port, requests) = model(SPEAKS);
+    let (code, out, err) = session(
+        &dir,
+        port,
+        "furfur\n\nvenietne tempestas?\nare you sure?\n\n",
+    );
+    assert_eq!(code, Some(0), "{out}\n{err}");
+    let first = requests.recv().unwrap();
+    let second = requests.recv().unwrap();
+    // the first question of a sitting has nothing before it
+    assert!(
+        !first.contains("answered earlier in this sitting"),
+        "{first}"
+    );
+    // the second is handed the first answer, sealed, and the rule to stand by it
+    assert!(
+        second.contains("what you yourself answered earlier in this sitting"),
+        "{second}"
+    );
+    assert!(
+        second.contains("you answered: \u{201c}tempestas veniet\u{201d}"),
+        "{second}"
+    );
+    assert!(second.contains("Hold to what you said"), "{second}");
+    // a new sitting begins with nothing: the record is never written to disk
+    let (port, requests) = model(SPEAKS);
+    let (code, out, err) = session(&dir, port, "furfur\n\nvenietne tempestas?\n\n");
+    assert_eq!(code, Some(0), "{out}\n{err}");
+    let again = requests.recv().unwrap();
+    assert!(
+        !again.contains("answered earlier in this sitting"),
+        "{again}"
+    );
+    let on_disk = fs::read_dir(&dir)
+        .unwrap()
+        .flatten()
+        .any(|e| e.file_name().to_string_lossy().contains("colloqui"));
+    assert!(!on_disk);
+}

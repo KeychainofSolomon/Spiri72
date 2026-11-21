@@ -268,7 +268,8 @@ Open:
   in the instructions, "You hold no church's morals; your judgements come from
   your nature and offices as the witnesses record them, not from the
   Operator's religion."
-- **Giving way under doubt.** Louis XII (right) became Francis II after "Are
+- **Giving way under doubt: the cause found, and the first part built.** A held spirit never saw its own earlier answer (each question is its own rite, and its book holds only that it was asked), so "Are you SURE" had nothing to refer to and the model guessed afresh. A held spirit is now handed its last two sound answers of the sitting, from memory only, with the rule to hold to them unless a reason or a passage is given against them. To try live: ask a question of fact, then "Are you sure?", then push back with no reason; the answer should stand. Still proposed below: the "verified" mark and asking twice.
+- **Giving way under doubt (as first noted).** Louis XII (right) became Francis II after "Are
   you SURE"; "a perversion" became "not without its own truth" when the
   Operator pushed back. Proposed: a rule to keep an answer unless a passage
   or a reason is given against it; a "Take in as verified" mark in the
@@ -277,7 +278,8 @@ Open:
 - **Facts from nothing.** With no book, a confident guess still earns RATUM,
   which only means the spirit kept its bonds. Proposed: mark such answers
   "from the spirit's own knowledge, unverified".
-- **Loose matches.** "Fix the engine of my car" draws Behave p. 614, where an
+- **Loose matches: partly met.** Two of the question's words must now stand within eight words of each other in a passage (measure: right 89 to 92, wrong 20 to 18, idle finds 4 to 3). The engine example below still finds its page, since there the two words stand together.
+- **Loose matches (as first noted).** "Fix the engine of my car" draws Behave p. 614, where an
   engine is a metaphor for free will: the question's rare words should recur
   in the passage, not stand once.
 - **Stretching a passage.** Dopamine: the DRD4 gene tied to romantic love,
