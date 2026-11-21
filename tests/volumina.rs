@@ -875,3 +875,49 @@ fn text_changed_on_disk_while_running_is_still_made_plain() {
         assert!(consult(&v, FURFUR, q, volumina::SIGNA).is_empty(), "{q}");
     }
 }
+
+/// A book of four pages: in one the lantern and the pilgrim stand in one
+/// sentence; in another each is spoken of in passing, a long way apart.
+fn lantern_book(with_near: bool) -> volumina::Volumen {
+    let far = "The old lantern hung beside the kitchen door through every winter of that decade. \
+        Bread was baked on the third day of each week, and the loaves were set to cool upon the sill \
+        while the children gathered kindling from the orchard and stacked it neatly under the eaves \
+        before the rain came down from the northern hills at dusk. \
+        Many seasons afterwards a pilgrim passed the gate and asked the way to the coast.";
+    let near = "A pilgrim carries a lantern through the dark valley, and by its flame the path is \
+        found where the road divides.";
+    let mut pages = vec![
+        Some(
+            "Of rivers and their fords. A river is crossed where the bed is firm and shallow."
+                .to_string(),
+        ),
+        Some(far.to_string()),
+        Some(
+            "Of bees and their hives. Bees winter in the hive and feed on what they stored."
+                .to_string(),
+        ),
+    ];
+    if with_near {
+        pages.push(Some(near.to_string()));
+    }
+    bind("lucerna", &titulus(CLAVES), &pages, true, volumina::SIGNA)
+}
+
+#[test]
+fn the_questions_words_must_stand_near_each_other() {
+    let found = |book: volumina::Volumen| -> Vec<String> {
+        consult(
+            &[book],
+            FURFUR,
+            "Tell me of the pilgrim and the lantern",
+            volumina::SIGNA,
+        )
+        .into_iter()
+        .map(|l| l.locus)
+        .collect()
+    };
+    // the page that speaks of both together is handed, and the other is not
+    assert_eq!(found(lantern_book(true)), ["page 4"]);
+    // a page that holds both words only far apart answers nothing
+    assert!(found(lantern_book(false)).is_empty());
+}
