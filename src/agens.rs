@@ -28,6 +28,9 @@ pub struct Agens {
     /// Where the last library reading is set down for the page to show, if the
     /// page is watching. Cleared each speaking rite; set when something is read.
     pub consulta: Option<Arc<Mutex<Option<Consultatio>>>>,
+    /// The lot each spirit's bearing is drawn by: the operating system's random
+    /// source, except in the proving, where it is fixed so that runs can be compared.
+    pub fors: fn() -> Result<f64, String>,
 }
 
 impl Agens {
@@ -41,6 +44,7 @@ impl Agens {
             own_rite: false,
             scientia: Vec::new(),
             consulta: None,
+            fors: fors::unit,
         }
     }
 }
@@ -72,7 +76,8 @@ impl Voluntas for Agens {
             Some(dir) => ingenium::read_status(dir, p.spirit)?,
             None => Status::default(),
         };
-        let gestus = ingenium::draw(profile, p.spirit, self.own_rite, &before, &mut fors::unit)?;
+        let mut lot = self.fors;
+        let gestus = ingenium::draw(profile, p.spirit, self.own_rite, &before, &mut lot)?;
         if let Some(dir) = &self.status {
             ingenium::record_call(dir, p.spirit, &gestus)?;
         }

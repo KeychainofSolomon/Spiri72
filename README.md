@@ -93,6 +93,18 @@ Classical readings come first. Late, medieval and Renaissance words (the Church 
    ```
    Every flag of `annulus ritus` works here too (`--domus`, `--mundus`, `--acta`, …). `--exemplar http://127.0.0.1:8080` chooses another port; `--max-tokens N` limits the reply.
 
+## Proving the model
+
+```
+.\spiri72.exe --probatio
+```
+
+This runs a fixed set of rites whose answers an angel can check, and scores the model by the angel's own judgements: every spirit of **VIRTUTES** counts four set files (the angel counts them again), and five spirits of **PRAETERITA** recount their rite (the angel checks each claim against the record). A spirit's free speech has nothing to be checked against, so it is not scored.
+
+Run it before and after you change the model, its settings or a control vector: the score tells you whether the change helped. Each proving is written to `spiri72.probatio\` as a table (open the `.tsv` file in a spreadsheet), and the next one tells you the score before it.
+
+Every rite of the proving is held in its own fresh folder with the test wand, at an hour in which the spirit may come, so your own house, books and records are not touched. Each spirit's bearing is fixed at the foot of its range (least pride, deceit, ill will and withholding), so two provings differ only by the model. The model still answers at its usual temperature, so the score can move a little from run to run; a change is real when it is larger than that.
+
 ## Spirit natures in the model itself (control vectors)
 
 The binding lives in Annulus; the *nature* of a bound spirit can also be put into the model's own activations, with llama.cpp's `llama-cvector-generator`. Three natures are prepared in `vires/`, each as 360 matched pairs of prompts that differ only in the spirit's nature:

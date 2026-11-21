@@ -14,6 +14,7 @@ const USAGE: &str =
     "usage: spiri72 [--virga-probationis | --virga E:\\] [--exemplar http://127.0.0.1:8080]   (the binding page)
        spiri72 <program.annulus> --virga-probationis [--exemplar http://127.0.0.1:8080]
                [--max-tokens N] [any other flag of annulus ritus]
+       spiri72 --probatio                  (prove the model: a fixed set of rites the angel checks)
        spiri72 --latina <Latin words>
        spiri72 --liber <spirit>            (read a spirit's book)
        spiri72 --dele <spirit> <entry>     (strike an entry from it)
@@ -124,7 +125,8 @@ fn main() -> ExitCode {
     let mut out = io::stdout().lock();
     let terminal = rest.iter().any(|a| a == "--terminal");
     let no_browser = rest.iter().any(|a| a == "--no-browser");
-    rest.retain(|a| a != "--terminal" && a != "--no-browser");
+    let probatio = rest.iter().any(|a| a == "--probatio");
+    rest.retain(|a| a != "--terminal" && a != "--no-browser" && a != "--probatio");
     if rest.iter().all(|a| a == "--virga-probationis") {
         if spiri72::sessio::virga_of(&sky).is_some() && !rest.is_empty() {
             let _ = writeln!(
@@ -174,7 +176,7 @@ fn main() -> ExitCode {
         };
         // the eyes are made ready only beside a model Spiri72 looks after itself, and only
         // for the binding page, where files are handed; they open when an image is handed
-        let eyes = if named_model || terminal {
+        let eyes = if named_model || terminal || probatio {
             None
         } else {
             spiri72::initium::prepare_eyes(
@@ -190,6 +192,39 @@ fn main() -> ExitCode {
                 let _ = c.wait();
             }
         };
+        if probatio {
+            // The proving: each item is its own rite in its own folder, with the test
+            // wand, the spirit's bearing fixed at the foot of its range.
+            let (exemplar, max_tokens, temperature, vires) = (
+                agens.exemplar.clone(),
+                agens.max_tokens,
+                agens.temperature,
+                agens.vires.clone(),
+            );
+            let mut will =
+                |folder: &std::path::Path| -> Box<dyn annulus::lingua::exsequi::Voluntas> {
+                    let mut a = Agens::new(exemplar.clone());
+                    a.max_tokens = max_tokens;
+                    a.temperature = temperature;
+                    a.vires = vires.clone();
+                    a.own_rite = true;
+                    a.status = Some(folder.to_path_buf());
+                    a.fors = || Ok(0.0);
+                    Box::new(a)
+                };
+            let proved = spiri72::probatio::run(&dir, &mut will, &mut out);
+            stop(&mut model);
+            return match proved {
+                Ok(summa) => {
+                    let _ = write!(out, "\n{}", summa.narratio());
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    let _ = writeln!(err, "error: {e}");
+                    ExitCode::from(1)
+                }
+            };
+        }
         if terminal {
             let mut input = io::stdin().lock();
             let code = sessio(&mut input, &mut out, &mut err, &mut agens, &dir, &sky);
