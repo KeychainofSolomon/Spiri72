@@ -23,7 +23,10 @@ fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     let mut err = io::stderr().lock();
     if args.as_slice() == ["--version"] {
-        println!("spiri72 {}", env!("CARGO_PKG_VERSION"));
+        match option_env!("SPIRI72_VERSIO") {
+            Some(v) => println!("spiri72 {}, {v}", env!("CARGO_PKG_VERSION")),
+            None => println!("spiri72 {}", env!("CARGO_PKG_VERSION")),
+        }
         return ExitCode::SUCCESS;
     }
     if args.first().map(String::as_str) == Some("--latina") {

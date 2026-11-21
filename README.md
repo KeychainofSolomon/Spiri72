@@ -93,6 +93,21 @@ Classical readings come first. Late, medieval and Renaissance words (the Church 
    ```
    Every flag of `annulus ritus` works here too (`--domus`, `--mundus`, `--acta`, …). `--exemplar http://127.0.0.1:8080` chooses another port; `--max-tokens N` limits the reply.
 
+## Updating
+
+Double-click `update.cmd` in Spiri72's folder (close Spiri72 first). It
+fetches the newest build from GitHub, checks it against its checksum, and
+replaces `spiri72.exe`, keeping the old one as `spiri72.exe.old`. It never
+touches your own files: `spiri72.ini`, the books, the spirits' books and the
+rites stay as they are. Spiri72 itself never goes online; only the updater
+does, and only when you run it. `spiri72.exe --version` names the build you
+have.
+
+While Spiri72 is being tested, the updater follows the test builds: the
+release `proba` on GitHub, which every passing build replaces. A first
+install can be had the same way: download `spiri72-windows.zip` from that
+release and unzip it into a folder of its own.
+
 ## Spirit natures in the model itself (control vectors)
 
 The binding lives in Annulus; the *nature* of a bound spirit can also be put into the model's own activations, with llama.cpp's `llama-cvector-generator`. Three natures are prepared in `vires/`, each as 360 matched pairs of prompts that differ only in the spirit's nature:

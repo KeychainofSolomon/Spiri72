@@ -12,6 +12,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_TOOLCHAIN: "1.97.0"
+  # what `spiri72 --version` and the updater name this build
+  SPIRI72_VERSIO: "build ${{ github.run_number }} (${{ github.ref_name }}, ${{ github.sha }})"
 
 jobs:
   verify:
@@ -33,7 +35,48 @@ jobs:
       - if: matrix.os == 'windows-latest'
         run: cargo build --locked --release
       - if: matrix.os == 'windows-latest'
+        name: Package the build with its updater
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist, release | Out-Null
+          Copy-Item target/release/spiri72.exe, update/update.ps1, update/update.cmd, README.md dist/
+          Set-Content dist/VERSIO.txt $env:SPIRI72_VERSIO -Encoding ascii
+          Compress-Archive -Path dist/* -DestinationPath release/spiri72-windows.zip
+          $h = (Get-FileHash release/spiri72-windows.zip -Algorithm SHA256).Hash.ToLower()
+          Set-Content release/SHA256SUMS.txt "$h  spiri72-windows.zip" -Encoding ascii
+          Copy-Item dist/VERSIO.txt release/
+      - if: matrix.os == 'windows-latest'
+        name: Test the updater (Windows PowerShell, as the Operator has it)
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File update/probatio.ps1 (Resolve-Path release).Path (Resolve-Path target/release/spiri72.exe).Path
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: spiri72-windows
-          path: target/release/spiri72.exe
+          path: release/
+
+  # While Spiri72 is tested, every passing build that is not a pull request is
+  # published as the test release "proba", replacing the one before, which the
+  # updater follows. Later: finished releases from main only.
+  publish:
+    needs: verify
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: spiri72-windows
+          path: release
+      - name: Publish the test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete proba --cleanup-tag --yes -R "$GITHUB_REPOSITORY" || true
+          gh release create proba release/spiri72-windows.zip release/SHA256SUMS.txt release/VERSIO.txt \
+            --prerelease --target "$GITHUB_SHA" -R "$GITHUB_REPOSITORY" \
+            --title "Test build ${{ github.run_number }} (${{ github.ref_name }})" \
+            --notes "$(cat release/VERSIO.txt). Update with update.cmd in Spiri72's folder, or download spiri72-windows.zip and unzip it into a folder of its own."
