@@ -218,6 +218,15 @@ pub const CACHE_RAM: &str = "LLAMA_ARG_CACHE_RAM";
 pub const MODEL_CACHE_MIB: u32 = 256;
 /// The eyes remember no prompts: each image is seen once.
 pub const EYES_CACHE_MIB: u32 = 0;
+/// The eyes' context. One image can cost several thousand tokens by itself, and the
+/// eyes must still have room for the request and for what they write of it.
+pub const EYES_CONTEXT: u32 = 8192;
+/// The environment variable by which llama-server takes `--image-max-tokens`.
+pub const IMAGE_MAX_TOKENS: &str = "LLAMA_ARG_IMAGE_MAX_TOKENS";
+/// The most tokens one image may cost: with the longest request and reply the eyes
+/// are asked for (about 1,700 tokens), it fits `EYES_CONTEXT`. A larger image is
+/// scaled down by the server, not refused.
+pub const EYES_IMAGE_TOKENS: u32 = 4096;
 
 enum OsArg {
     P(PathBuf),
@@ -259,6 +268,7 @@ fn start(
     // otherwise. Named by its environment variable, not a flag, so that an older
     // build, which does not know it, still starts.
     .env(CACHE_RAM, cache_mib.to_string())
+    .env(IMAGE_MAX_TOKENS, EYES_IMAGE_TOKENS.to_string())
     .stdin(Stdio::null());
     match log.and_then(|l| l.try_clone().ok().map(|c| (l, c))) {
         Some((a, b)) => {
@@ -333,7 +343,7 @@ impl Oculi {
             self.address,
             &self.log,
             "Opening the spirits' eyes",
-            4096,
+            EYES_CONTEXT,
             EYES_CACHE_MIB,
             &mut std::io::sink(),
         );
