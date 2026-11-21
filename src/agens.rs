@@ -120,6 +120,13 @@ impl Voluntas for Agens {
                 volumina: passus.clone(),
             };
         }
+        // A held spirit is handed its own sound answers of this sitting, so that a
+        // question about them ("are you sure?") has something to stand on.
+        let colloquium = if speaking {
+            crate::sessio::colloquium(p.spirit.n)
+        } else {
+            Vec::new()
+        };
         let heading = consulta
             .as_ref()
             .map(|c| format!("the {} library, on \u{201c}{}\u{201d}", c.liber, c.terminus));
@@ -134,6 +141,7 @@ impl Voluntas for Agens {
             memoria.as_deref(),
             scientia_arg,
             &passus,
+            &colloquium,
         );
         let reply = self.exemplar.ask(&Rogatio {
             system: &system,

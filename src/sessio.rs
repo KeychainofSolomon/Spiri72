@@ -69,6 +69,67 @@ pub fn virga_of(flags: &[String]) -> Option<&str> {
 }
 const MAX_QUESTION: usize = 2000;
 
+/// How many of its own earlier answers a held spirit is handed back, and how many
+/// characters of each question and answer.
+pub const COLLOQUII_RESPONSA: usize = 2;
+pub const COLLOQUII_QUAESTIO: usize = 200;
+pub const COLLOQUII_VERBA: usize = 600;
+
+/// What each held spirit was asked and answered soundly in its present sitting, the
+/// newest last. Kept in memory only, never on disk: it begins at the calling, ends
+/// with the hold (the licence to depart, a banishment, a broken rite) and with the
+/// program, and so can never reach a later sitting. A spirit's book is another
+/// matter: its words enter that only when the Operator takes them up.
+static COLLOQUIUM: std::sync::Mutex<std::collections::BTreeMap<u32, Vec<(String, String)>>> =
+    std::sync::Mutex::new(std::collections::BTreeMap::new());
+
+fn clipped(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        return s.to_string();
+    }
+    let mut t: String = s.chars().take(max).collect();
+    t.push('\u{2026}');
+    t
+}
+
+/// The spirit's own sound answers earlier in this sitting, the newest last: each
+/// the question and what it answered, clipped.
+pub fn colloquium(n: u32) -> Vec<(String, String)> {
+    COLLOQUIUM
+        .lock()
+        .map(|c| c.get(&n).cloned().unwrap_or_default())
+        .unwrap_or_default()
+}
+
+/// A sound answer joins the sitting; only the latest few are kept.
+fn colloquium_adde(n: u32, question: &str, words: &str) {
+    if let Ok(mut c) = COLLOQUIUM.lock() {
+        let said = c.entry(n).or_default();
+        said.push((
+            clipped(question, COLLOQUII_QUAESTIO),
+            clipped(words, COLLOQUII_VERBA),
+        ));
+        let over = said.len().saturating_sub(COLLOQUII_RESPONSA);
+        said.drain(..over);
+    }
+}
+
+/// The sitting is over: nothing of it is handed again.
+pub fn colloquium_fini(n: u32) {
+    if let Ok(mut c) = COLLOQUIUM.lock() {
+        c.remove(&n);
+    }
+}
+
+/// Whether these flags declare this spirit held (`--tentus N@HOUR`).
+fn tentus_in(sky: &[String], n: u32) -> bool {
+    sky.chunks(2).any(|c| {
+        c[0] == "--tentus"
+            && c.get(1)
+                .is_some_and(|v| v.split('@').next() == Some(n.to_string().as_str()))
+    })
+}
+
 /// The sky for one sitting of a spirit. A held spirit (called at `held`, an
 /// open hour, and not yet given licence to depart) is declared with
 /// `--tentus`, so its hours are those of its calling. A spirit not yet held
@@ -260,6 +321,7 @@ pub fn give_licence(
             return 2;
         }
     };
+    colloquium_fini(spirit.n);
     let (sky, _) = held_sky(spirit, sky, Some(held));
     match perform(spirit, &program, dir, &sky, will, out, err) {
         Ok((code, _, _)) => code,
@@ -481,16 +543,24 @@ pub fn ask_once_judged(
     out: &mut dyn Write,
     err: &mut dyn Write,
 ) -> (u8, Option<String>, Option<String>) {
+    // a spirit called anew begins a new sitting: nothing said before is handed back
+    if !tentus_in(sky, spirit.n) {
+        colloquium_fini(spirit.n);
+    }
     let program = match rite(spirit, office, question, handed) {
         Ok(p) => p,
         Err(e) => {
             let _ = writeln!(err, "{e}");
+            colloquium_fini(spirit.n);
             return (2, None, None);
         }
     };
     let (code, path, kept) = match perform(spirit, &program, dir, sky, will, out, err) {
         Ok(r) => r,
-        Err(code) => return (code, None, None),
+        Err(code) => {
+            colloquium_fini(spirit.n);
+            return (code, None, None);
+        }
     };
     let rites = dir.join(RITES);
     // The rite's first line is the angel's judgement (MANIFESTA iudicium).
@@ -512,6 +582,13 @@ pub fn ask_once_judged(
             let words = crate::aula::read_output(spirit, &String::from_utf8_lossy(&kept))
                 .verba
                 .unwrap_or_default();
+            // only an answer the angel found sound is the spirit's to stand by;
+            // any other judgement banishes it, and the sitting is over
+            if v == "RATUM" && !words.trim().is_empty() {
+                colloquium_adde(spirit.n, question, &words);
+            } else if v != "RATUM" {
+                colloquium_fini(spirit.n);
+            }
             let kept = format!(
                 "{{\"n\":{},\"officium\":{},\"quaestio\":{},\"iudicium\":{},\"verba\":{}}}\n",
                 spirit.n,
@@ -530,7 +607,10 @@ pub fn ask_once_judged(
             }
             (code, Some(name), Some(v.to_string()))
         }
-        _ => (code, None, None),
+        _ => {
+            colloquium_fini(spirit.n);
+            (code, None, None)
+        }
     }
 }
 
