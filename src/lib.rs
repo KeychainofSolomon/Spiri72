@@ -9,6 +9,7 @@ pub mod liber;
 pub mod llama;
 pub mod memoria;
 pub mod persona;
+pub mod probatio;
 pub mod pulsus;
 pub mod scientia;
 pub mod sessio;
