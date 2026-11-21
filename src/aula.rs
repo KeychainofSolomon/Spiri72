@@ -717,12 +717,49 @@ pub fn write_answer(stream: &mut dyn Write, a: &Answer) {
     let _ = stream.write_all(&a.body);
 }
 
+/// Opens the binding page in the Operator's own browser.
+///
+/// On Windows this asks the shell itself to open the address, as any program
+/// opening a link does (`ShellExecuteW`). It no longer runs `rundll32
+/// url.dll,FileProtocolHandler`: that old way starts a system program to open
+/// something on another's behalf, as malware does to hide, and Windows
+/// Defender took Spiri72 for a trojan for it (2026-11-21).
+#[cfg(windows)]
 pub fn open_browser(url: &str) {
-    let _ = if cfg!(windows) {
-        std::process::Command::new("rundll32")
-            .args(["url.dll,FileProtocolHandler", url])
-            .spawn()
-    } else if cfg!(target_os = "macos") {
+    use std::ffi::{c_void, OsStr};
+    use std::os::windows::ffi::OsStrExt;
+    const SW_SHOWNORMAL: i32 = 1;
+    #[link(name = "shell32")]
+    extern "system" {
+        fn ShellExecuteW(
+            hwnd: *mut c_void,
+            operation: *const u16,
+            file: *const u16,
+            parameters: *const u16,
+            directory: *const u16,
+            show: i32,
+        ) -> *mut c_void;
+    }
+    let wide = |s: &str| -> Vec<u16> { OsStr::new(s).encode_wide().chain([0]).collect() };
+    let (verb, file) = (wide("open"), wide(url));
+    // SAFETY: both strings are live, zero-ended UTF-16 buffers for the length
+    // of the call; the window, parameters and directory may be null.
+    unsafe {
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            verb.as_ptr(),
+            file.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            SW_SHOWNORMAL,
+        );
+    }
+}
+
+/// Opens the binding page in the Operator's own browser.
+#[cfg(not(windows))]
+pub fn open_browser(url: &str) {
+    let _ = if cfg!(target_os = "macos") {
         std::process::Command::new("open").arg(url).spawn()
     } else {
         std::process::Command::new("xdg-open").arg(url).spawn()
