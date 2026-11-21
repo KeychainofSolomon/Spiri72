@@ -30,3 +30,8 @@ fn the_remembered_paths_survive_the_round_trip() {
     };
     assert_eq!(read_ini(&write_ini(&blind)), blind);
 }
+
+// The eyes have room for an image and its reading: the longest reply they are asked
+// for is 1536 tokens (a page copied out), and 200 more for the request itself.
+const _: () =
+    assert!(spiri72::initium::EYES_IMAGE_TOKENS + 1536 + 200 <= spiri72::initium::EYES_CONTEXT);

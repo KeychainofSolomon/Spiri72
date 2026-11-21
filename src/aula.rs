@@ -519,6 +519,9 @@ pub struct Aula<'a> {
     pub consulta: Arc<Mutex<Option<Consultatio>>>,
     /// Whether the eyes have answered once, so their loss is told and their absence is not.
     pub eyes_seen: std::cell::Cell<bool>,
+    /// The eyes Spiri72 opens itself, only for a look, and shuts after it. Without
+    /// them, `eyes` answer only if the Operator runs them.
+    pub oculi: RefCell<Option<crate::initium::Oculi>>,
 }
 
 impl Aula<'_> {
@@ -541,7 +544,7 @@ impl Aula<'_> {
         });
         if eyes_up {
             self.eyes_seen.set(true);
-        } else if self.eyes_seen.get() {
+        } else if self.eyes_seen.get() && self.oculi.borrow().is_none() {
             facts.push("The eyes no longer answer.".to_string());
         }
         if let Some(stick) = crate::sessio::virga_of(&self.sky) {
@@ -613,9 +616,11 @@ impl Aula<'_> {
                     "{{\"exemplar\":{},\"paratus\":{},\"visus\":{},\"virga\":{}}}",
                     quote(&self.exemplar),
                     (self.reachable)(),
-                    self.eyes.as_ref().is_some_and(|e| {
-                        TcpStream::connect_timeout(&e.address, Duration::from_millis(300)).is_ok()
-                    }),
+                    self.oculi.borrow().is_some()
+                        || self.eyes.as_ref().is_some_and(|e| {
+                            TcpStream::connect_timeout(&e.address, Duration::from_millis(300))
+                                .is_ok()
+                        }),
                     crate::sessio::virga_of(&self.sky)
                         .map(quote)
                         .unwrap_or_else(|| "null".into())
@@ -644,7 +649,26 @@ impl Aula<'_> {
                     .unwrap_or_default();
                 let reply =
                     |status: &'static str, body: String| answer(status, "application/json", body);
-                match crate::visus::affer(self.dir, &name, &req.body, self.eyes.as_ref()) {
+                // The eyes Spiri72 looks after open at the first look this file needs
+                // (an image, or a pictured page of a PDF) and are shut once it is read.
+                let mut oculi = self.oculi.borrow_mut();
+                let mut look = |body: &str| -> Result<String, String> {
+                    if let Some(o) = oculi.as_mut() {
+                        o.open()?;
+                    }
+                    self.eyes
+                        .as_ref()
+                        .ok_or_else(String::new)
+                        .and_then(|e| e.ask_body(body))
+                };
+                let sight: Option<crate::visus::Look<'_>> =
+                    self.eyes.is_some().then_some(&mut look);
+                let taken = crate::visus::affer_by(self.dir, &name, &req.body, sight);
+                if let Some(o) = oculi.as_mut() {
+                    o.close();
+                }
+                drop(oculi);
+                match taken {
                     Ok((place, shown)) => reply(
                         "200 OK",
                         format!(
@@ -718,6 +742,7 @@ pub fn serve(
     out: &mut dyn Write,
     open: bool,
     consulta: Arc<Mutex<Option<Consultatio>>>,
+    oculi: Option<crate::initium::Oculi>,
 ) -> u8 {
     let listener = match TcpListener::bind("127.0.0.1:0") {
         Ok(l) => l,
@@ -753,6 +778,7 @@ pub fn serve(
                 .unwrap_or(30),
         )),
         eyes_seen: std::cell::Cell::new(false),
+        oculi: RefCell::new(oculi),
         eyes: crate::llama::parse_url(exemplar_url)
             .ok()
             .and_then(|e| crate::visus::eyes_of(&e)),

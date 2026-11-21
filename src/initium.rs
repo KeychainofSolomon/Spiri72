@@ -207,9 +207,26 @@ pub fn wake_model(
         &ini_path.with_file_name("spiri72.model.log"),
         "Waking the model",
         8192,
+        MODEL_CACHE_MIB,
         out,
     )
 }
+
+/// The environment variable by which llama-server takes `--cache-ram` (MiB).
+pub const CACHE_RAM: &str = "LLAMA_ARG_CACHE_RAM";
+/// The most ordinary memory the model's server may spend on remembered prompts.
+pub const MODEL_CACHE_MIB: u32 = 256;
+/// The eyes remember no prompts: each image is seen once.
+pub const EYES_CACHE_MIB: u32 = 0;
+/// The eyes' context. One image can cost several thousand tokens by itself, and the
+/// eyes must still have room for the request and for what they write of it.
+pub const EYES_CONTEXT: u32 = 8192;
+/// The environment variable by which llama-server takes `--image-max-tokens`.
+pub const IMAGE_MAX_TOKENS: &str = "LLAMA_ARG_IMAGE_MAX_TOKENS";
+/// The most tokens one image may cost: with the longest request and reply the eyes
+/// are asked for (about 1,700 tokens), it fits `EYES_CONTEXT`. A larger image is
+/// scaled down by the server, not refused.
+pub const EYES_IMAGE_TOKENS: u32 = 4096;
 
 enum OsArg {
     P(PathBuf),
@@ -218,6 +235,7 @@ enum OsArg {
 
 /// Starts `server -m …` (with any further arguments) on `address`, logging to `log_path`,
 /// and waits until it answers.
+#[allow(clippy::too_many_arguments)]
 fn start(
     server: &Path,
     model: &[OsArg],
@@ -225,6 +243,7 @@ fn start(
     log_path: &Path,
     what: &str,
     context: u32,
+    cache_mib: u32,
     out: &mut dyn Write,
 ) -> Option<Child> {
     let answers = || TcpStream::connect_timeout(&address, Duration::from_millis(400)).is_ok();
@@ -245,6 +264,11 @@ fn start(
         "-c",
         &context.to_string(),
     ])
+    // llama-server keeps old prompts in ordinary memory, up to 8 GB unless told
+    // otherwise. Named by its environment variable, not a flag, so that an older
+    // build, which does not know it, still starts.
+    .env(CACHE_RAM, cache_mib.to_string())
+    .env(IMAGE_MAX_TOKENS, EYES_IMAGE_TOKENS.to_string())
     .stdin(Stdio::null());
     match log.and_then(|l| l.try_clone().ok().map(|c| (l, c))) {
         Some((a, b)) => {
@@ -285,14 +309,80 @@ fn start(
     Some(child)
 }
 
-/// Wakes the spirits' eyes one port above the model, from the remembered vision model and
-/// its vision file, asking once (Enter alone: go without sight, and do not ask again).
-pub fn wake_eyes(
+/// The spirits' eyes, kept shut: where their server, model and vision file are, and the
+/// server itself while it runs. They are opened for a look and shut after it, so their
+/// memory is spent only while an image is being seen.
+#[derive(Debug)]
+pub struct Oculi {
+    server: PathBuf,
+    model: PathBuf,
+    mmproj: PathBuf,
+    address: SocketAddr,
+    log: PathBuf,
+    child: Option<Child>,
+}
+
+impl Oculi {
+    fn answers(&self) -> bool {
+        TcpStream::connect_timeout(&self.address, Duration::from_millis(400)).is_ok()
+    }
+
+    /// Opens the eyes if they are shut, and waits until they answer.
+    pub fn open(&mut self) -> Result<(), String> {
+        if self.answers() {
+            return Ok(());
+        }
+        self.close();
+        self.child = start(
+            &self.server,
+            &[
+                OsArg::P(self.model.clone()),
+                OsArg::S("--mmproj"),
+                OsArg::P(self.mmproj.clone()),
+            ],
+            self.address,
+            &self.log,
+            "Opening the spirits' eyes",
+            EYES_CONTEXT,
+            EYES_CACHE_MIB,
+            &mut std::io::sink(),
+        );
+        if self.answers() {
+            Ok(())
+        } else {
+            self.close();
+            Err(format!(
+                "the eyes did not open; see {} for why",
+                self.log.display()
+            ))
+        }
+    }
+
+    /// Shuts the eyes, if Spiri72 opened them, and gives their memory back.
+    pub fn close(&mut self) {
+        if let Some(mut c) = self.child.take() {
+            let _ = c.kill();
+            let _ = c.wait();
+        }
+    }
+}
+
+impl Drop for Oculi {
+    fn drop(&mut self) {
+        self.close();
+    }
+}
+
+/// Makes the spirits' eyes ready one port above the model, from the remembered vision
+/// model and its vision file, asking once (Enter alone: go without sight, and do not ask
+/// again). The eyes are not opened here: they open when an image is handed. Eyes that
+/// already answer are the Operator's own, and are left alone.
+pub fn prepare_eyes(
     model_address: SocketAddr,
     ini_path: &Path,
     input: &mut dyn BufRead,
     out: &mut dyn Write,
-) -> Option<Child> {
+) -> Option<Oculi> {
     let address = SocketAddr::new(model_address.ip(), model_address.port().checked_add(1)?);
     if TcpStream::connect_timeout(&address, Duration::from_millis(400)).is_ok() {
         return None;
@@ -325,13 +415,12 @@ pub fn wake_eyes(
     let (Some(eyes), Some(mmproj)) = (ini.eyes, ini.eyes_mmproj) else {
         return None;
     };
-    start(
-        &server,
-        &[OsArg::P(eyes), OsArg::S("--mmproj"), OsArg::P(mmproj)],
+    Some(Oculi {
+        server,
+        model: eyes,
+        mmproj,
         address,
-        &ini_path.with_file_name("spiri72.eyes.log"),
-        "Opening the spirits' eyes",
-        4096,
-        out,
-    )
+        log: ini_path.with_file_name("spiri72.eyes.log"),
+        child: None,
+    })
 }

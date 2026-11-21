@@ -213,47 +213,63 @@ fn office_texts(n: u32) -> Vec<String> {
         .collect()
 }
 
+/// One entry a question names: how many words its key has, where in the question
+/// the key stands, the key, and the entry.
+type Hit<'a> = (usize, usize, &'a str, &'a Entry);
+
 /// Finds the one entry a question narrows to within a library: an entry whose key
-/// stands as a whole word (or its singular) in the question. The key that matches
-/// is returned as the term.
-fn narrow<'a>(liber: &'a Liber, question: &[String]) -> Option<(&'a str, &'a Entry)> {
+/// stands as a whole word (or its singular) in the question. Where the question
+/// names several, the most exact key wins (the one of most words: `herb of grace`
+/// over `herb`), and among equals the one the question names first, whatever the
+/// order of the file.
+fn narrow<'a>(liber: &'a Liber, question: &[String]) -> Option<Hit<'a>> {
+    let mut best: Option<Hit<'a>> = None;
     for entry in &liber.entries {
         for key in &entry.claves {
             let kw = words(key);
             if kw.is_empty() {
                 continue;
             }
-            let hit = question
+            let at = question
                 .windows(kw.len())
-                .any(|win| win.iter().zip(&kw).all(|(a, b)| same(a, b)));
-            if hit {
-                return Some((key.as_str(), entry));
+                .position(|win| win.iter().zip(&kw).all(|(a, b)| same(a, b)));
+            let Some(at) = at else { continue };
+            if best.is_none_or(|(n, p, _, _)| kw.len() > n || (kw.len() == n && at < p)) {
+                best = Some((kw.len(), at, key.as_str(), entry));
             }
         }
     }
-    None
+    best
 }
 
 /// Given the loaded libraries, a spirit and its question, returns the one entry
 /// the spirit may consult, if any: a library open to the spirit by its offices,
-/// holding an entry the question names. The first such match wins.
+/// holding an entry the question names. Across the open libraries the choice is
+/// made as within one: the most exact key, then the one named first; among equals
+/// the earlier library stands.
 pub fn consult(libri: &[Liber], spirit: u32, question: &str) -> Option<Consultatio> {
     if libri.is_empty() {
         return None;
     }
     let offices = office_texts(spirit);
     let qwords = words(question);
+    let mut best: Option<(&Liber, Hit<'_>)> = None;
     for liber in libri {
         if !open_to(liber, &offices) {
             continue;
         }
-        if let Some((term, entry)) = narrow(liber, &qwords) {
-            return Some(Consultatio {
-                liber: liber.nomen.clone(),
-                terminus: term.to_string(),
-                textus: entry.raw.clone(),
-            });
+        if let Some(hit) = narrow(liber, &qwords) {
+            if best
+                .as_ref()
+                .is_none_or(|(_, b)| hit.0 > b.0 || (hit.0 == b.0 && hit.1 < b.1))
+            {
+                best = Some((liber, hit));
+            }
         }
     }
-    None
+    best.map(|(liber, (_, _, term, entry))| Consultatio {
+        liber: liber.nomen.clone(),
+        terminus: term.to_string(),
+        textus: entry.raw.clone(),
+    })
 }
