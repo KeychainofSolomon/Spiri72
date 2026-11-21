@@ -150,14 +150,31 @@ pub fn affer(
     bytes: &[u8],
     eyes: Option<&Exemplar>,
 ) -> Result<(String, String), String> {
+    let mut look = |body: &str| eyes.map_or(Err(String::new()), |e| e.ask_body(body));
+    let sight: Option<Look<'_>> = eyes.is_some().then_some(&mut look);
+    affer_by(dir, name, bytes, sight)
+}
+
+/// The eyes, asked one ready request (an image to describe, or a page to copy out).
+pub type Look<'a> = &'a mut dyn FnMut(&str) -> Result<String, String>;
+
+/// As `affer`, with the eyes given as a way of asking them, so that whoever keeps the
+/// eyes may open them only when a look is truly needed.
+pub fn affer_by(
+    dir: &Path,
+    name: &str,
+    bytes: &[u8],
+    mut eyes: Option<Look<'_>>,
+) -> Result<(String, String), String> {
     let name = plain_name(name).ok_or("that file's name cannot be kept; rename it plainly")?;
     if bytes.len() > MAX_FILE {
         return Err("the file is larger than 16 MB".into());
     }
     if let Some(mime) = image_kind(bytes) {
-        let eyes = eyes.ok_or("the spirits have no sight yet: set up the eyes (see the README)")?;
-        let seen = eyes
-            .ask_body(&sight_request(mime, bytes))
+        let look = eyes
+            .as_mut()
+            .ok_or("the spirits have no sight yet: set up the eyes (see the README)")?;
+        let seen = look(&sight_request(mime, bytes))
             .map_err(|e| format!("the image could not be seen: {e}"))?;
         let image = keep(dir, &name, bytes)?;
         let text = keep(dir, &format!("{image}{VISIO}"), seen.trim().as_bytes())?;
@@ -165,9 +182,12 @@ pub fn affer(
     }
     if bytes.starts_with(b"%PDF") {
         let book = crate::liber::Book::open(bytes)?;
-        let mut look =
-            |png: &[u8]| eyes.map_or(Err(String::new()), |e| e.ask_body(&reading_request(png)));
-        let see: Option<crate::liber::Sight<'_>> = eyes.is_some().then_some(&mut look);
+        let has_eyes = eyes.is_some();
+        let mut look = |png: &[u8]| match eyes.as_mut() {
+            Some(l) => l(&reading_request(png)),
+            None => Err(String::new()),
+        };
+        let see: Option<crate::liber::Sight<'_>> = has_eyes.then_some(&mut look);
         let reading = crate::liber::read(&book, see)?;
         if reading.text.len() > annulus::tabularium::MAX_PLACE as usize {
             return Err("the text of this PDF is larger than 8 MB and cannot be handed".into());

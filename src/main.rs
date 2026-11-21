@@ -172,11 +172,12 @@ fn main() -> ExitCode {
                 &mut out,
             )
         };
-        // the eyes wake only beside a model Spiri72 looks after itself
-        let mut eyes = if named_model {
+        // the eyes are made ready only beside a model Spiri72 looks after itself, and only
+        // for the binding page, where files are handed; they open when an image is handed
+        let eyes = if named_model || terminal {
             None
         } else {
-            spiri72::initium::wake_eyes(
+            spiri72::initium::prepare_eyes(
                 agens.exemplar.address,
                 &ini,
                 &mut io::stdin().lock(),
@@ -193,7 +194,6 @@ fn main() -> ExitCode {
             let mut input = io::stdin().lock();
             let code = sessio(&mut input, &mut out, &mut err, &mut agens, &dir, &sky);
             stop(&mut model);
-            stop(&mut eyes);
             return ExitCode::from(code);
         }
         // Only the binding page consults libraries, so load them here, not on
@@ -214,9 +214,9 @@ fn main() -> ExitCode {
             &mut out,
             !no_browser,
             consulta.clone(),
+            eyes,
         );
         stop(&mut model);
-        stop(&mut eyes);
         return ExitCode::from(code);
     }
     rest.extend(sky);

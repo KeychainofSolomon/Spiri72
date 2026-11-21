@@ -85,3 +85,23 @@ fn no_named_entry_yields_nothing() {
 fn empty_libraries_yield_nothing() {
     assert_eq!(scientia::consult(&[], 10, "barley"), None);
 }
+
+#[test]
+fn the_entry_named_first_wins_whatever_the_file_order() {
+    let libri = vec![parse("flora", HERBAL)];
+    let first = libri[0].entries[0].claves[0].clone();
+    let second = libri[0].entries[1].claves[0].clone();
+    // the file sets `first` before `second`; the question names `second` first
+    let hit = consult(&libri, 10, &format!("what of {second} and {first}?")).unwrap();
+    assert_eq!(hit.terminus, second);
+    let hit = consult(&libri, 10, &format!("what of {first} and {second}?")).unwrap();
+    assert_eq!(hit.terminus, first);
+}
+
+#[test]
+fn the_more_exact_key_wins() {
+    let text = "# liber: flora\n# nomen: the herbal\n# claves: herb\n\n== grace ==\nA.\n\n== herb of grace | rue ==\nB.\n";
+    let libri = vec![parse("flora", text)];
+    let hit = consult(&libri, 10, "tell me of grace, the herb of grace").unwrap();
+    assert_eq!(hit.terminus, "herb of grace");
+}
