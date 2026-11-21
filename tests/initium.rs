@@ -31,10 +31,7 @@ fn the_remembered_paths_survive_the_round_trip() {
     assert_eq!(read_ini(&write_ini(&blind)), blind);
 }
 
-#[test]
-fn the_eyes_have_room_for_an_image_and_its_reading() {
-    use spiri72::initium::{EYES_CONTEXT, EYES_IMAGE_TOKENS};
-    // the longest reply the eyes are asked for is 1536 tokens (a page copied out);
-    // 200 more for the request itself
-    assert!(EYES_IMAGE_TOKENS + 1536 + 200 <= EYES_CONTEXT);
-}
+// The eyes have room for an image and its reading: the longest reply they are asked
+// for is 1536 tokens (a page copied out), and 200 more for the request itself.
+const _: () =
+    assert!(spiri72::initium::EYES_IMAGE_TOKENS + 1536 + 200 <= spiri72::initium::EYES_CONTEXT);
