@@ -77,8 +77,80 @@ impl<'a> Device<'a> for Letters {
     fn pop_transparency_group(&mut self) {}
 }
 
+/// One line's letters parted where a wide gap falls (more than one and a half letters' height).
+fn segments(line: &[Letter]) -> Vec<std::ops::Range<usize>> {
+    let mut out = Vec::new();
+    let mut start = 0;
+    for i in 1..line.len() {
+        let (p, l) = (&line[i - 1], &line[i]);
+        if l.x - p.end > p.size.min(l.size) * 1.5 {
+            out.push(start..i);
+            start = i;
+        }
+    }
+    out.push(start..line.len());
+    out
+}
+
+/// Where a page of two columns parts them: the middle of the gutter, if at least a
+/// third of its lines (and no fewer than four) have a wide gap near the middle of the
+/// page. `None` for a page of one column.
+fn gutter(lines: &[Vec<Letter>]) -> Option<f64> {
+    let left = lines
+        .iter()
+        .flatten()
+        .map(|l| l.x)
+        .fold(f64::INFINITY, f64::min);
+    let right = lines
+        .iter()
+        .flatten()
+        .map(|l| l.end)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let width = right - left;
+    if width.is_nan() || width <= 0.0 {
+        return None;
+    }
+    let mut gaps: Vec<f64> = Vec::new();
+    for line in lines {
+        for w in segments(line).windows(2) {
+            let a = line[w[0].end - 1].end;
+            let b = line[w[1].start].x;
+            let mid = (a + b) / 2.0;
+            if (left + width * 0.3..left + width * 0.7).contains(&mid) {
+                gaps.push(mid);
+                break;
+            }
+        }
+    }
+    if gaps.len() < 4 || gaps.len() * 3 < lines.len() {
+        return None;
+    }
+    gaps.sort_by(f64::total_cmp);
+    Some(gaps[gaps.len() / 2])
+}
+
+/// One line's letters as text, a space where words part.
+fn say_line(line: &[Letter], out: &mut String) {
+    let mut prev: Option<&Letter> = None;
+    for l in line {
+        if let Some(p) = prev {
+            let parted = l.x - p.end > p.size.min(l.size) * 0.15;
+            if parted && !p.text.ends_with(' ') && !l.text.starts_with(' ') {
+                out.push(' ');
+            }
+        }
+        out.push_str(&l.text);
+        prev = Some(l);
+    }
+    let kept = out.trim_end().len();
+    out.truncate(kept);
+    out.push('\n');
+}
+
 /// The letters set in lines: top to bottom, left to right, a space where words part.
 /// A space is read wherever a letter starts well past where the one before it ended.
+/// A page of two columns is read down the left column, then down the right: a line
+/// that crosses the gutter (a heading) is read where it falls in the left column.
 fn set_in_lines(mut letters: Vec<Letter>) -> String {
     // Page space rises upwards: the top line has the greatest height.
     letters.sort_by(|a, b| b.y.total_cmp(&a.y).then(a.x.total_cmp(&b.x)));
@@ -89,23 +161,38 @@ fn set_in_lines(mut letters: Vec<Letter>) -> String {
             _ => lines.push(vec![l]),
         }
     }
-    let mut out = String::new();
-    for mut line in lines {
+    for line in &mut lines {
         line.sort_by(|a, b| a.x.total_cmp(&b.x));
-        let mut prev: Option<&Letter> = None;
-        for l in &line {
-            if let Some(p) = prev {
-                let parted = l.x - p.end > p.size.min(l.size) * 0.15;
-                if parted && !p.text.ends_with(' ') && !l.text.starts_with(' ') {
-                    out.push(' ');
+    }
+    let mut out = String::new();
+    match gutter(&lines) {
+        None => {
+            for line in &lines {
+                say_line(line, &mut out);
+            }
+        }
+        Some(g) => {
+            let mut right = String::new();
+            for line in &lines {
+                let cut = line.iter().position(|l| l.x >= g).unwrap_or(line.len());
+                // a line whose letters cross the gutter with no gap is one line
+                let crosses = cut > 0
+                    && cut < line.len()
+                    && line[cut].x - line[cut - 1].end
+                        <= line[cut - 1].size.min(line[cut].size) * 1.5;
+                if crosses {
+                    say_line(line, &mut out);
+                    continue;
+                }
+                if cut > 0 {
+                    say_line(&line[..cut], &mut out);
+                }
+                if cut < line.len() {
+                    say_line(&line[cut..], &mut right);
                 }
             }
-            out.push_str(&l.text);
-            prev = Some(l);
+            out.push_str(&right);
         }
-        let kept = out.trim_end().len();
-        out.truncate(kept);
-        out.push('\n');
     }
     out.trim().to_string()
 }

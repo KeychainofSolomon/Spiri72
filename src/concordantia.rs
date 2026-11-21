@@ -65,6 +65,7 @@ blood sugar = blood glucose
 partner = lover, spouse, mate
 
 # the sky
+storm = tempest
 sun = solar
 moon = lunar
 star = stellar

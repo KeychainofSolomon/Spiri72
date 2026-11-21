@@ -113,6 +113,19 @@ fn a_page_that_flips_its_space_is_read_top_to_bottom() {
     );
 }
 
+/// Two columns, as in Bowditch: each line of the left column stands at the height of a
+/// line of the right, with only a narrow gutter between.
+const COLUMNS: &str = "BT /F1 9 Tf 10 180 Td (The left column) Tj 0 -11 Td (goes on here) Tj 0 -11 Td (and ends here) Tj 0 -11 Td (with a fourth) Tj ET BT /F1 9 Tf 160 180 Td (The right column) Tj 0 -11 Td (starts at top) Tj 0 -11 Td (and runs down) Tj 0 -11 Td (to its end) Tj ET";
+
+#[test]
+fn a_page_of_two_columns_is_read_column_by_column() {
+    let book = Book::open(&pdf(&[COLUMNS])).unwrap();
+    assert_eq!(
+        book.text_of(0).unwrap(),
+        "The left column\ngoes on here\nand ends here\nwith a fourth\nThe right column\nstarts at top\nand runs down\nto its end"
+    );
+}
+
 #[test]
 fn a_text_pdf_is_handed_without_the_eyes() {
     let d = folder("text");
