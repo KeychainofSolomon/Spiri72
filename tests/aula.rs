@@ -332,7 +332,7 @@ fn a_spirit_is_held_past_its_hours_until_licence_is_given() {
         "{body}"
     );
     let later = Aula {
-        sky: ["--hora", "2024-04-14T14:30:00Z", "--locus", "41.9,12.5"]
+        sky: ["--hora", "2024-04-25T14:30:00Z", "--locus", "41.9,12.5"]
             .map(String::from)
             .to_vec(),
         tenti: called.tenti,
@@ -364,7 +364,7 @@ fn a_spirit_is_held_past_its_hours_until_licence_is_given() {
     assert!(read(1).contains("MANE v;") && read(2).contains("MANE v;"));
     assert!(read(3).contains("VADE IN PACE v;") && !read(3).contains("PETE"));
     let body = post(&later, "roga", ask, &mut will);
-    assert!(body.contains("Moon is 5 days old"), "{body}");
+    assert!(body.contains("Moon is 16 days old and waning"), "{body}");
     assert!(body.contains("\"tentus\":false"), "{body}");
 }
 
