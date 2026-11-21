@@ -17,6 +17,7 @@ const USAGE: &str =
        spiri72 --latina <Latin words>
        spiri72 --liber <spirit>            (read a spirit's book)
        spiri72 --dele <spirit> <entry>     (strike an entry from it)
+       spiri72 --sanci [--virga E:\\]    (ratify the Constitution with the real wand, once)
        spiri72 --version";
 
 fn main() -> ExitCode {
@@ -28,6 +29,9 @@ fn main() -> ExitCode {
             None => println!("spiri72 {}", env!("CARGO_PKG_VERSION")),
         }
         return ExitCode::SUCCESS;
+    }
+    if args.first().map(String::as_str) == Some("--sanci") {
+        return sanci(&args[1..], &mut err);
     }
     if args.first().map(String::as_str) == Some("--latina") {
         let text = args[1..].join(" ");
@@ -295,4 +299,57 @@ fn liber(cmd: &str, args: &[String], err: &mut dyn Write) -> ExitCode {
         }
     }
     ExitCode::SUCCESS
+}
+
+/// `--sanci`: ratify the Constitution with the real wand for the house a real wand keeps
+/// in this folder. The wand is the one named with `--virga`, or the one plugged in.
+fn sanci(rest: &[String], err: &mut dyn Write) -> ExitCode {
+    let stick = match rest {
+        [] => match spiri72::initium::wands().as_slice() {
+            [one] => one.to_string_lossy().into_owned(),
+            [] => {
+                let _ = writeln!(
+                    err,
+                    "No wand is plugged in: plug in the wand's stick and run this again."
+                );
+                return ExitCode::from(1);
+            }
+            _ => {
+                let _ = writeln!(err, "More than one wand is plugged in: unplug the spare, or name the one you mean with --virga.");
+                return ExitCode::from(EXIT_USAGE);
+            }
+        },
+        [flag, path] if flag == "--virga" => path.clone(),
+        _ => {
+            let _ = writeln!(err, "{USAGE}");
+            return ExitCode::from(EXIT_USAGE);
+        }
+    };
+    let dir = match env::current_dir() {
+        Ok(d) => d,
+        Err(e) => {
+            let _ = writeln!(err, "error: cannot find this folder: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    let args: Vec<String> = vec![
+        "--virga".into(),
+        stick,
+        "--domus".into(),
+        dir.join(spiri72::sessio::HOUSE_VERA)
+            .to_string_lossy()
+            .into_owned(),
+    ];
+    let mut out = io::stdout().lock();
+    match annulus::mandata::sanci(&args, &mut out, err) {
+        Ok(0) => {
+            let _ = writeln!(out, "Spiri72 may now be launched with this wand.");
+            ExitCode::SUCCESS
+        }
+        Ok(code) => ExitCode::from(code),
+        Err(annulus::mandata::Usage(u)) => {
+            let _ = writeln!(err, "{u}");
+            ExitCode::from(EXIT_USAGE)
+        }
+    }
 }
