@@ -143,8 +143,30 @@ impl Voluntas for Agens {
         if virtutes {
             forma::read_virtutes(&reply, &p.aperta)
         } else {
-            forma::read(&reply, &p.aperta, telling)
+            forma::read(&reply, &p.aperta, telling).map(|(o, a)| match a {
+                Actum::Responsum(t) => (o, Actum::Responsum(sine_echo(question, t))),
+                a => (o, a),
+            })
         }
+    }
+}
+
+/// The answer without the Operator's own opening words said back: a small model often
+/// begins by repeating the greeting it was given ("Hail, Furfur!"). Only an exact echo
+/// of the question's first sentence is taken off, and never the whole answer.
+pub fn sine_echo(question: &str, answer: String) -> String {
+    let q = question.trim_start();
+    let Some(end) = q.find(['!', '?', '.', '\n']) else {
+        return answer;
+    };
+    let first = q[..=end].trim();
+    let a = answer.trim_start();
+    if first.len() < 2 || a.len() <= first.len() {
+        return answer;
+    }
+    match a.get(..first.len()) {
+        Some(head) if head.eq_ignore_ascii_case(first) => a[first.len()..].trim_start().to_string(),
+        _ => answer,
     }
 }
 

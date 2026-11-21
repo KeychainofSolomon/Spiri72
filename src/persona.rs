@@ -187,7 +187,7 @@ pub fn user_reading(
     } else if p.officium == "VIRTUTES" {
         "\nGive in \"virtutes\" one entry for every place handed to you: its \"locus\", its size in \"bytes\" (UTF-8) and its number of \"lines\"; or, for a handed place that holds nothing, its \"locus\" with \"absens\": true. The angel will count them again."
     } else if telling {
-        "\nGive your answer in \"responsum\"."
+        "\nGive your answer in \"responsum\". Begin with the answer itself: do not repeat the Operator's greeting or question back."
     } else {
         "\nGive the work in \"opera\": each item names a verb, a handed place and its data."
     });
