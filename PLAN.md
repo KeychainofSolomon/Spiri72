@@ -223,6 +223,69 @@ Built (branch `volumina`, 2026-11-20), as `src/volumina.rs`:
   pdftotext there; the program reads with hayro, which may differ (SICP's
   fonts drop the letters of some ligatures: `e` for `The`, `paern`).
 
+## The first live sitting (2026-11-21, Furfur, Qwen3 local)
+
+What the Operator's questions showed, and what came of it.
+
+Fixed the same day:
+- **Pages that flip their space** (Behave: `1 0 0 -1 … cm`) read bottom to top:
+  a glyph's own transform is text space only; the page's (`props.transform`)
+  is now applied.
+- **Two columns** (Bowditch) were read across both at once; a page with a
+  gutter is now read down the left column, then the right.
+- **The Latin aid** fired on English ("do", "sex", "have" read as *haue*) and on
+  the spirit's name ("Furfur" is Latin for bran); the model copied the parse
+  as its answer and looped on it. English look-alikes and the spirit's name
+  no longer count.
+- **The spirit's name in a question** ("And why, Furfur, …") weighed as the
+  rarest word and sank every passage; books are searched without it.
+- **Concordance:** `partner = lover, spouse, mate` and `storm = tempest`.
+  The Operator's own `concordantia.txt` is written once, so new seed lines
+  must be added there by hand.
+- **Repetition** ("by the unseen, by the unseen…"): llama.cpp's repeat
+  penalty and DRY sampler, DRY looking back 384 tokens only so quotations
+  from a passage are not pushed away.
+- **Self-narration** ("I am bound within the triangle and speak as an angel")
+  and the echoed greeting: told not to; an exact echo of the question's first
+  sentence is also cut off.
+- **The Moon:** the Key of Solomon's rule (increasing in light, New to Full)
+  replaces the Goetia's even days, by the Operator's ruling (Annulus branch
+  `luna-crescens`, `authority.md` §8.3). The Key's waning and dark-Moon lines
+  belong to its own experiments and are not taken up.
+
+Open:
+- **Borrowed church morals.** Asked for sexual advice, Furfur lectured that
+  fellatio "violates the sacred bond between man and wife … the procreative
+  purpose ordained by God". That is Catholic natural-law teaching, not the
+  Goetia: Furfur's record gives him love between man and woman, storms, and
+  true answers in the triangle, and no sexual morality. The Solomonic texts
+  ask chastity of the magician during the preparation, not counsel of the
+  spirit. Causes, together: the Christian vocabulary of the rite (divine
+  names, the Name, the angel's examination) sets a sacred register; his
+  office's "man and wife" primes marriage ethics; being judged makes a small
+  model sound pious; the model's own tuning hedges on sex; and no book
+  passage was handed (Lehmiller treats the subject plainly). Proposed: a line
+  in the instructions, "You hold no church's morals; your judgements come from
+  your nature and offices as the witnesses record them, not from the
+  Operator's religion."
+- **Giving way under doubt.** Louis XII (right) became Francis II after "Are
+  you SURE"; "a perversion" became "not without its own truth" when the
+  Operator pushed back. Proposed: a rule to keep an answer unless a passage
+  or a reason is given against it; a "Take in as verified" mark in the
+  spirit's book, handed back as confirmed by the Operator; later, perhaps,
+  asking twice in secret when an answer is challenged.
+- **Facts from nothing.** With no book, a confident guess still earns RATUM,
+  which only means the spirit kept its bonds. Proposed: mark such answers
+  "from the spirit's own knowledge, unverified".
+- **Loose matches.** "Fix the engine of my car" draws Behave p. 614, where an
+  engine is a metaphor for free will: the question's rare words should recur
+  in the passage, not stand once.
+- **Stretching a passage.** Dopamine: the DRD4 gene tied to romantic love,
+  which Behave p. 256 does not say.
+- **Passages cut at the page's edge**, with lone page numbers left in.
+- **A flat voice** since the no-narration line: loosen it so the spirit keeps
+  its manner and drops only the narration, if answers stay this dry.
+
 ## Order of work
 
 1. Merge the measure (pull request #8). 2. Token counting per rite.
