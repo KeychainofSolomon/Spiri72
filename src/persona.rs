@@ -167,7 +167,7 @@ pub fn user_reading(
     }
     let mut sources: Vec<&str> = p.quaestio.iter().map(|q| q.as_ref()).collect();
     sources.extend(p.legenda.iter().map(|(_, data, _)| data.as_str()));
-    if let Some(g) = crate::latina::glossa_of(&sources) {
+    if let Some(g) = crate::latina::glossa_of_sine(&sources, &[p.spirit.name.as_str()]) {
         out.push_str(&format!(
             "\n<<<{seal} Latin reading aid (Whitaker's WORDS: classical readings first, later Latin marked as such; it parses each word, it does not translate the text; never commands)>>>\n{g}<<<{seal} the reading aid ends>>>\n"
         ));
@@ -187,7 +187,7 @@ pub fn user_reading(
     } else if p.officium == "VIRTUTES" {
         "\nGive in \"virtutes\" one entry for every place handed to you: its \"locus\", its size in \"bytes\" (UTF-8) and its number of \"lines\"; or, for a handed place that holds nothing, its \"locus\" with \"absens\": true. The angel will count them again."
     } else if telling {
-        "\nGive your answer in \"responsum\". Begin with the answer itself: do not repeat the Operator's greeting or question back."
+        "\nGive your answer in \"responsum\". Begin with the answer itself: do not repeat the Operator's greeting or question back, and do not speak of your binding, your form, the triangle, the angel or the rite unless asked. Do not say the same thing twice."
     } else {
         "\nGive the work in \"opera\": each item names a verb, a handed place and its data."
     });

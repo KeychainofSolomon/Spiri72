@@ -111,3 +111,18 @@ fn other_words_of_the_same_spelling_are_shown() {
     let g = glossa("liber regis est").unwrap();
     assert!(g.contains("book, volume"), "{g}");
 }
+
+#[test]
+fn english_spelled_like_latin_gets_none() {
+    for q in [
+        "Furfur, how do I have sex with a woman!",
+        "What was meant by Furfur, furfuris, do have, sex, with, woman.",
+    ] {
+        assert!(
+            spiri72::latina::glossa_of_sine(&[q], &["Furfur"]).is_none(),
+            "{q}"
+        );
+    }
+    let latin = "Furfur, dic mihi veritatem de amore";
+    assert!(spiri72::latina::glossa_of_sine(&[latin], &["Furfur"]).is_some());
+}

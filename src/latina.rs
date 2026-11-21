@@ -386,14 +386,41 @@ fn tokens(text: &str) -> Vec<&str> {
 /// Whether `text` is mostly Latin: at least half its words of two letters
 /// or more are found in the lexicon.
 pub fn is_latin(text: &str) -> bool {
+    is_latin_sine(text, &[])
+}
+
+/// English words spelled like Latin ones ("do", "sex", "have" read as *haue*): in a
+/// question they are English, and count against its being Latin.
+const ANGLICA: &[&str] = &[
+    "sex", "dies", "die", "age", "ago", "post", "pro", "via", "sat",
+];
+
+fn anglica(raw: &str) -> bool {
+    let w = raw.to_lowercase();
+    crate::scientia::vacuum(&w) || ANGLICA.contains(&w.as_str())
+}
+
+/// Whether `raw` is passed over: a name in `skip` (a spirit's), or a case of it
+/// ("Furfur", "furfuris").
+fn skipped(raw: &str, skip: &[&str]) -> bool {
+    let w = norm(raw);
+    skip.iter().any(|n| {
+        let n = norm(n);
+        n.chars().count() >= 3 && w.starts_with(&n)
+    })
+}
+
+/// [`is_latin`], passing over the words of `skip` and counting English words spelled
+/// like Latin ones as English.
+pub fn is_latin_sine(text: &str, skip: &[&str]) -> bool {
     let (mut total, mut latin) = (0usize, 0usize);
     for t in tokens(text) {
         let w = norm(t);
-        if w.chars().count() < 2 {
+        if w.chars().count() < 2 || skipped(t, skip) {
             continue;
         }
         total += 1;
-        if !analyse(&w).is_empty() {
+        if !anglica(t) && !analyse(&w).is_empty() {
             latin += 1;
         }
     }
@@ -403,7 +430,17 @@ pub fn is_latin(text: &str) -> bool {
 /// A reading aid for every Latin text among `texts`, with each word
 /// explained once. `None` when none of them is Latin.
 pub fn glossa_of(texts: &[&str]) -> Option<String> {
-    let latin: Vec<&str> = texts.iter().copied().filter(|t| is_latin(t)).collect();
+    glossa_of_sine(texts, &[])
+}
+
+/// [`glossa_of`], passing over the words of `skip` (the spirit's own name) when
+/// judging whether a text is Latin.
+pub fn glossa_of_sine(texts: &[&str], skip: &[&str]) -> Option<String> {
+    let latin: Vec<&str> = texts
+        .iter()
+        .copied()
+        .filter(|t| is_latin_sine(t, skip))
+        .collect();
     if latin.is_empty() {
         return None;
     }

@@ -41,14 +41,17 @@ impl<'a> Device<'a> for Letters {
     fn draw_path(&mut self, _: &BezPath, _: DrawProps<'a>, _: &DrawMode) {}
     fn push_clip_path(&mut self, _: &ClipPath) {}
     fn push_transparency_group(&mut self, _: f32, _: Option<SoftMask<'a>>, _: BlendMode) {}
-    fn draw_glyph_run(&mut self, run: &GlyphRun<'_, 'a>, _: DrawProps<'a>, _: &DrawMode) {
+    fn draw_glyph_run(&mut self, run: &GlyphRun<'_, 'a>, props: DrawProps<'a>, _: &DrawMode) {
         for g in run.glyphs() {
             let text = match Glyph::as_unicode(g) {
                 Some(BfString::Char(c)) => c.to_string(),
                 Some(BfString::String(s)) => s,
                 None => continue,
             };
-            let t = g.transform();
+            // A glyph's own transform places it in text space only; the page's current
+            // transform (here, `props.transform`) places it on the page. A page that flips
+            // its space (`1 0 0 -1 … cm`, as in Behave) reads upside down without it.
+            let t = props.transform * g.transform();
             let o = t * Point::ZERO;
             let [_, _, c, d, _, _] = t.as_coeffs();
             let size = (c.hypot(d) * 1000.0).max(0.1);

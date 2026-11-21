@@ -58,6 +58,13 @@ pub fn quote(s: &str) -> String {
     out
 }
 
+/// Against a small model saying the same words over and over ("by the unseen, by the
+/// unseen…"). A mild penalty on repeated tokens, and llama.cpp's DRY sampler on repeated
+/// phrases. DRY looks back over the last 384 tokens only: the answer and the end of the
+/// instructions, not the passages handed earlier, so a quotation from a passage is not
+/// pushed away.
+pub const SINE_ITERATIONE: &str = "\"repeat_penalty\":1.1,\"repeat_last_n\":128,\"dry_multiplier\":0.8,\"dry_base\":1.75,\"dry_allowed_length\":3,\"dry_penalty_last_n\":384,";
+
 #[derive(Clone, Debug)]
 pub struct Rogatio<'a> {
     pub system: &'a str,
@@ -70,12 +77,13 @@ pub struct Rogatio<'a> {
 impl Rogatio<'_> {
     pub fn body(&self) -> String {
         format!(
-            "{{\"messages\":[{{\"role\":\"system\",\"content\":{}}},{{\"role\":\"user\",\"content\":{}}}],\"grammar\":{},\"max_tokens\":{},\"temperature\":{},\"stream\":false,\"chat_template_kwargs\":{{\"enable_thinking\":false}}}}",
+            "{{\"messages\":[{{\"role\":\"system\",\"content\":{}}},{{\"role\":\"user\",\"content\":{}}}],\"grammar\":{},\"max_tokens\":{},\"temperature\":{},{}\"stream\":false,\"chat_template_kwargs\":{{\"enable_thinking\":false}}}}",
             quote(self.system),
             quote(self.user),
             quote(self.grammar),
             self.max_tokens,
-            self.temperature
+            self.temperature,
+            SINE_ITERATIONE
         )
     }
 }

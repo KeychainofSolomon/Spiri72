@@ -100,6 +100,19 @@ fn a_page_with_its_own_text_is_read_as_it_stands() {
     assert!(Book::open(&pdf(&[PICTURE])).unwrap().text_of(0).is_none());
 }
 
+/// Behave's pages flip their space (`1 0 0 -1 0 200 cm`) and set each line with a
+/// flipped text matrix, so a line further down has a greater height before the flip.
+const FLIPPED: &str = "1 0 0 -1 0 200 cm BT /F1 12 Tf 1 0 0 -1 20 50 Tm (Clavicula Salomonis) Tj ET BT /F1 12 Tf 1 0 0 -1 20 70 Tm (de spiritibus) Tj ET";
+
+#[test]
+fn a_page_that_flips_its_space_is_read_top_to_bottom() {
+    let book = Book::open(&pdf(&[FLIPPED])).unwrap();
+    assert_eq!(
+        book.text_of(0).unwrap(),
+        "Clavicula Salomonis\nde spiritibus"
+    );
+}
+
 #[test]
 fn a_text_pdf_is_handed_without_the_eyes() {
     let d = folder("text");
