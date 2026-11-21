@@ -103,12 +103,14 @@ impl Voluntas for Agens {
         // A speaking office (not the counting or the recounting of the past) may
         // draw on a knowledge library the spirit's inclination opens to it.
         let speaking = telling && !virtutes && p.officium != "PRAETERITA";
-        let consulta = speaking
-            .then(|| scientia::consult(&self.scientia, p.spirit.n, p.quaestio.unwrap_or("")))
-            .flatten();
         let question = p.quaestio.unwrap_or("");
+        // The spirit's own name, said in greeting, is no word to search the books by.
+        let quaerenda = sine_nomine(question, &p.spirit.name);
+        let consulta = speaking
+            .then(|| scientia::consult(&self.scientia, p.spirit.n, &quaerenda))
+            .flatten();
         let passus = if speaking {
-            volumina::consult(&self.volumina, p.spirit.n, question, self.book_characters)
+            volumina::consult(&self.volumina, p.spirit.n, &quaerenda, self.book_characters)
         } else {
             Vec::new()
         };
@@ -149,6 +151,24 @@ impl Voluntas for Agens {
             })
         }
     }
+}
+
+/// The question without the spirit's name ("And why, Furfur, does…"): a name no book
+/// holds would weigh as the rarest word and sink every passage that answers the rest.
+pub fn sine_nomine(question: &str, name: &str) -> String {
+    let name = name.to_lowercase();
+    question
+        .split_whitespace()
+        .filter(|w| {
+            let w: String = w
+                .chars()
+                .filter(|c| c.is_alphanumeric())
+                .collect::<String>()
+                .to_lowercase();
+            name.chars().count() < 3 || !w.starts_with(&name)
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// The answer without the Operator's own opening words said back: a small model often

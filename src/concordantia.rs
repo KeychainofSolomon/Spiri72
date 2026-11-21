@@ -61,6 +61,9 @@ bowel = intestine, intestinal
 insomnia = sleeplessness
 blood sugar = blood glucose
 
+# love
+partner = lover, spouse, mate
+
 # the sky
 sun = solar
 moon = lunar

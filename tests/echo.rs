@@ -25,3 +25,15 @@ fn only_an_exact_echo_is_taken_off() {
         "no stop at all, said"
     );
 }
+
+#[test]
+fn the_spirits_name_is_not_searched_for() {
+    assert_eq!(
+        spiri72::agens::sine_nomine("And why, Furfur, does passionate love fade?", "Furfur"),
+        "And why, does passionate love fade?"
+    );
+    assert_eq!(
+        spiri72::agens::sine_nomine("Furfur! Speak of storms", "Furfur"),
+        "Speak of storms"
+    );
+}
