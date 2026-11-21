@@ -425,6 +425,11 @@ fn a_pdf_is_read_once_kept_and_read_again_when_it_changes() {
     assert!(v.is_empty());
     let home = d.join(volumina::DIR);
     assert!(home.join(volumina::LEGE).exists());
+    // the concordance is no book
+    assert!(
+        !said.iter().any(|s| s.contains(spiri72::concordantia::FILE)),
+        "{said:?}"
+    );
     assert!(
         said.iter().any(|s| s.contains("folder for whole books")),
         "{said:?}"
@@ -478,7 +483,7 @@ fn a_pdf_is_read_once_kept_and_read_again_when_it_changes() {
         !said.iter().any(|s| s.contains("for the first time")),
         "{said:?}"
     );
-    assert_eq!(v2[0].liber.entries.len(), v[0].liber.entries.len());
+    assert_eq!(v2[0].passus(), v[0].passus());
 
     // a changed book is read anew
     fs::write(home.join("liber.pdf"), pdf(&[PAGE_LOVE, PAGE_WRATH])).unwrap();
@@ -489,7 +494,9 @@ fn a_pdf_is_read_once_kept_and_read_again_when_it_changes() {
     );
     assert_eq!((v3[0].paginae, v3[0].pictae), (2, 0));
 
-    // a spoiled reading is never trusted: the book is read anew
+    // a spoiled reading is never trusted: the book is read anew (the kept
+    // index is taken away, or it would answer without the reading)
+    fs::remove_file(home.join(volumina::LECTA).join("liber.pdf.index")).unwrap();
     fs::write(&kept, "spiri72 lecta 1 1 1 1\n\u{c}9\nforged").unwrap();
     let (v4, said) = told(&d);
     assert!(
@@ -650,10 +657,10 @@ fn the_whole_book_gate_opens_every_page() {
     let v = bind("whole", &t, &pages, true, volumina::SIGNA);
     assert_eq!(
         volumina::aperta(&v, &["causes love".into()]).len(),
-        v.liber.entries.len()
+        v.passus()
     );
     let body = volumina::aperta(&v, &["teaches the virtues of herbs".into()]);
-    assert!(!body.is_empty() && body.len() < v.liber.entries.len());
+    assert!(!body.is_empty() && body.len() < v.passus());
 }
 
 #[test]
@@ -706,4 +713,165 @@ fn a_book_gated_only_by_parts_is_read_and_told_of() {
             .any(|s| s.contains("only to the parts their offices touch")),
         "{said:?}"
     );
+}
+
+// ---- The kept index: reused, made anew, never trusted blindly ----
+
+/// A folder holding the measure book as a text book with pages, and what each
+/// plain question finds in it.
+fn kept(name: &str) -> (PathBuf, PathBuf) {
+    let d = folder(name);
+    let home = d.join(volumina::DIR);
+    fs::create_dir_all(&home).unwrap();
+    fs::write(home.join("mensura.txt"), PAGES.join("\u{c}")).unwrap();
+    fs::write(home.join("mensura.claves"), CLAVES).unwrap();
+    (d, home)
+}
+
+fn answers(v: &[volumina::Volumen]) -> Vec<Vec<(String, String)>> {
+    PLAIN
+        .iter()
+        .chain(OBLIQUE)
+        .map(|(q, _)| {
+            consult(v, FURFUR, q, volumina::SIGNA)
+                .into_iter()
+                .map(|l| (l.locus, l.textus))
+                .collect()
+        })
+        .collect()
+}
+
+#[test]
+fn a_kept_index_answers_as_the_book_itself_does() {
+    let (d, home) = kept("kept-same");
+    let (first, _) = told(&d);
+    let lecta = home.join(volumina::LECTA);
+    let (index, passus) = (
+        lecta.join("mensura.txt.index"),
+        lecta.join("mensura.txt.passus"),
+    );
+    assert!(index.exists() && passus.exists());
+    let made = fs::read(&index).unwrap();
+    // the second start reads the kept index, and answers alike
+    let (second, _) = told(&d);
+    assert_eq!(
+        fs::read(&index).unwrap(),
+        made,
+        "the index was made anew for nothing"
+    );
+    assert!(matches!(second[0].textus, volumina::Textus::Liber(..)));
+    assert_eq!(answers(&second), answers(&first));
+    // and as the same book bound in memory
+    let pages: Vec<Option<String>> = PAGES.iter().map(|p| Some(p.to_string())).collect();
+    let common = spiri72::concordantia::Concordantia::parse(
+        &fs::read_to_string(home.join(spiri72::concordantia::FILE)).unwrap_or_default(),
+        &["name", "named", "names", "call", "called", "use", "used"],
+    );
+    let memory = volumina::bind_with(
+        "mensura",
+        &titulus(CLAVES),
+        &pages,
+        true,
+        volumina::SIGNA,
+        &common,
+    );
+    assert_eq!(answers(&second), answers(&[memory]));
+}
+
+#[test]
+fn a_change_to_the_book_or_the_concordance_makes_the_index_anew() {
+    let (d, home) = kept("kept-change");
+    let index = home.join(volumina::LECTA).join("mensura.txt.index");
+    told(&d);
+    let first = fs::read(&index).unwrap();
+    // the Operator's concordance changes how words are read
+    fs::write(home.join(spiri72::concordantia::FILE), "jealousy = envy\n").unwrap();
+    told(&d);
+    let second = fs::read(&index).unwrap();
+    assert_ne!(second, first, "a changed concordance kept the old index");
+    // the book changes
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    fs::write(home.join("mensura.txt"), PAGES[1..].join("\u{c}")).unwrap();
+    let (v, _) = told(&d);
+    assert_ne!(
+        fs::read(&index).unwrap(),
+        second,
+        "a changed book kept the old index"
+    );
+    assert_eq!(v[0].paginae, PAGES.len() - 1);
+}
+
+#[test]
+fn a_damaged_index_is_made_anew_and_answers_alike() {
+    let (d, home) = kept("kept-damaged");
+    let lecta = home.join(volumina::LECTA);
+    let (index, passus) = (
+        lecta.join("mensura.txt.index"),
+        lecta.join("mensura.txt.passus"),
+    );
+    let (good, _) = told(&d);
+    let want = answers(&good);
+    let whole = fs::read(&index).unwrap();
+    let damages: Vec<(&str, Vec<u8>)> = vec![
+        ("cut short", whole[..whole.len() / 2].to_vec()),
+        ("emptied", Vec::new()),
+        ("a byte changed near the end", {
+            let mut b = whole.clone();
+            let n = b.len() - 3;
+            b[n] ^= 0x5a;
+            b
+        }),
+        ("a word number out of range", {
+            let mut b = whole.clone();
+            let n = b.len() - 8;
+            b[n..n + 4].copy_from_slice(&u32::MAX.to_le_bytes()[..]);
+            b
+        }),
+        ("another book's mark", {
+            let mut b = whole.clone();
+            b[16] ^= 1;
+            b
+        }),
+    ];
+    for (what, bytes) in damages {
+        fs::write(&index, &bytes).unwrap();
+        let (v, _) = told(&d);
+        assert_eq!(answers(&v), want, "{what}");
+    }
+    // the text file cut short: the index no longer fits it, and both are made anew
+    let body = fs::read(&passus).unwrap();
+    fs::write(&passus, &body[..body.len() - 10]).unwrap();
+    let (v, _) = told(&d);
+    assert_eq!(answers(&v), want);
+    assert_eq!(fs::read(&passus).unwrap(), body);
+}
+
+#[test]
+fn text_changed_on_disk_while_running_is_still_made_plain() {
+    let (d, home) = kept("kept-tampered");
+    let passus = home.join(volumina::LECTA).join("mensura.txt.passus");
+    let (v, _) = told(&d);
+    // the text file is overwritten under the running Spiri72, byte for byte as
+    // long, with steering and control characters
+    let body = fs::read(&passus).unwrap();
+    let evil: Vec<u8> = "\u{202e}\u{1b}[2J"
+        .bytes()
+        .cycle()
+        .take(body.len())
+        .collect();
+    fs::write(&passus, &evil).unwrap();
+    for (q, _) in PLAIN {
+        for l in consult(&v, FURFUR, q, volumina::SIGNA) {
+            assert!(
+                l.textus.chars().all(|c| c == '\n' || !c.is_control()),
+                "{q}"
+            );
+            assert!(!l.textus.contains('\u{202e}'), "{q}");
+        }
+    }
+    // the text file taken away: nothing is handed, nothing breaks
+    fs::remove_file(&passus).unwrap();
+    for (q, _) in PLAIN {
+        assert!(consult(&v, FURFUR, q, volumina::SIGNA).is_empty(), "{q}");
+    }
 }

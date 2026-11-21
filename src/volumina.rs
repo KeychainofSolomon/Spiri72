@@ -34,11 +34,13 @@
 //! untrusted text, and shown as it stands to the Operator.
 
 use std::fs;
-use std::path::Path;
+use std::io::{Read, Seek, SeekFrom};
+use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
 use crate::concordantia::{self, Concordantia};
-use crate::scientia::{self, Entry, Liber};
+use crate::index::{self, Index};
+use crate::scientia::{self, Liber};
 
 /// The folder, under the Operator's folder, that holds the books.
 pub const DIR: &str = "spiri72.volumina";
@@ -143,6 +145,13 @@ const MOLES_MAXIMA: u64 = 512 * 1024 * 1024;
 /// The first line of a kept reading; a file that opens otherwise is read anew.
 const SIGNUM_LECTI: &str = "spiri72 lecta 1";
 
+/// The first bytes of a kept index; a file that opens otherwise is made anew.
+const SIGNUM_INDICIS: &[u8] = b"spiri72 index 1\n";
+
+/// Changes whenever the way a book is prepared changes (cutting, cleaning,
+/// reading words), so that every kept index is made anew.
+const VERSIO: &[u8] = b"volumina 2026-11-21 1";
+
 const LEGE_TEXT: &str = "\
 # spiri72.volumina
 
@@ -182,28 +191,31 @@ book's file changes. Delete `.lecta` to have every book read anew. Pages
 that are only pictures (scans) are not read; Spiri72 says how many.
 ";
 
-/// One book: its header, and its passages as the entries of a `Liber`, so the
-/// arithmetic of `scientia` weighs them unchanged. A passage has no keys: it
-/// is never named, only described.
+/// One book: its header, its index, and where its passages' text is. The
+/// text of a loaded book stays on disk (in `LECTA`) and only the passages
+/// handed are read; a book bound in memory (`bind`) holds its text itself.
 #[derive(Clone, Debug)]
 pub struct Volumen {
-    /// `liber.nomen` is the book's shown name, `liber.claves` its gate, and
-    /// each of `liber.entries` one passage (`raw` is the passage as it stands).
+    /// `liber.nomen` is the book's shown name and `liber.claves` its gate; its
+    /// entries are empty, for the passages live in `index` and `textus`.
     pub liber: Liber,
-    /// Where each passage stands, in step with `liber.entries`.
+    /// Where each passage stands.
     pub loci: Vec<Locus>,
-    /// Each passage's words of matter, stemmed, in the order they stand: for
-    /// counting how often a word recurs and which words stand side by side.
-    pub ordines: Vec<Vec<String>>,
-    /// The heading lines of each passage (short lines that do not end a
-    /// sentence), as words of matter: a passage headed by the question's own
-    /// matter is the place the book treats it.
-    pub capita: Vec<Vec<Vec<String>>>,
+    /// The passages' words by number, and for each word the passages that hold
+    /// it; each passage's heading lines (short lines that do not end a
+    /// sentence) by number too.
+    pub index: Index,
+    /// How many characters each passage has.
+    pub longitudo: Vec<u32>,
+    /// Where the passages' text is.
+    pub textus: Textus,
     /// Parts of the book with gates of their own.
     pub sectiones: Vec<Sectio>,
     /// How this book's words are read: the Operator's concordance and what the
     /// book defines itself. A question is read the same way.
     pub concordantia: Concordantia,
+    /// What the book defines itself (kept with its index).
+    pub propria: Concordantia,
     /// How many passages were set aside as tables (contents, index).
     pub tabulae: usize,
     /// The age the Operator marked the book with (`modern`), if any.
@@ -211,6 +223,40 @@ pub struct Volumen {
     /// How many pages the book has, and how many were only pictures.
     pub paginae: usize,
     pub pictae: usize,
+}
+
+/// Where a book's passages' text is.
+#[derive(Clone, Debug)]
+pub enum Textus {
+    /// Held in memory, one string a passage.
+    Memoria(Vec<String>),
+    /// In a file on disk, each passage at its place (bytes from the start,
+    /// and how many bytes).
+    Liber(PathBuf, Vec<(u64, u32)>),
+}
+
+impl Volumen {
+    /// How many passages the book has.
+    pub fn passus(&self) -> usize {
+        self.loci.len()
+    }
+
+    /// A passage's text, as it stands in the book. From disk it is read now,
+    /// and made plain again (a file changed under Spiri72 can hold anything);
+    /// none if it cannot be read.
+    pub fn textus(&self, e: usize) -> Option<String> {
+        match &self.textus {
+            Textus::Memoria(t) => t.get(e).cloned(),
+            Textus::Liber(path, spans) => {
+                let &(at, len) = spans.get(e)?;
+                let mut f = fs::File::open(path).ok()?;
+                f.seek(SeekFrom::Start(at)).ok()?;
+                let mut buf = vec![0; len as usize];
+                f.read_exact(&mut buf).ok()?;
+                Some(purga(&String::from_utf8(buf).ok()?))
+            }
+        }
+    }
 }
 
 /// Where a passage stands in its book.
@@ -335,7 +381,7 @@ fn claves(v: &str) -> Vec<String> {
 }
 
 /// A book's text made plain: line ends alike, tabs as spaces, joined letters
-/// spelled out, and no control
+/// spelled out, the long ſ as s, and no control
 /// or invisible steering characters at all (a book can hold any text, and its
 /// passages are shown to the Operator). Only the line break is kept.
 pub fn purga(text: &str) -> String {
@@ -348,6 +394,8 @@ pub fn purga(text: &str) -> String {
         .replace('\u{fb03}', "ffi")
         .replace('\u{fb04}', "ffl")
         .replace(['\u{fb05}', '\u{fb06}'], "st")
+        // the long s of old printing (`ſoldiers`) is an s
+        .replace('\u{17f}', "s")
         .chars()
         .filter_map(|c| match c {
             '\n' => Some('\n'),
@@ -553,9 +601,10 @@ pub fn bind_with(
 ) -> Volumen {
     let pages: Vec<Option<String>> = pages.iter().map(|p| p.as_deref().map(purga)).collect();
     let pages = pages.as_slice();
-    let lexicon = common.with(&concordantia::of_book(pages, NOMINANDI));
+    let propria = concordantia::of_book(pages, NOMINANDI);
+    let lexicon = common.with(&propria);
     let max = self::signa(Some(signa)) / PASSUS_MAXIMI;
-    let mut entries = Vec::new();
+    let mut texts = Vec::new();
     let mut loci = Vec::new();
     let mut ordines = Vec::new();
     let mut heads = Vec::new();
@@ -567,21 +616,13 @@ pub fn bind_with(
                 tabulae += 1;
                 continue;
             }
-            let seq = ordo(&raw, &lexicon);
-            let mut verba = seq.clone();
-            verba.sort();
-            verba.dedup();
-            ordines.push(seq);
+            ordines.push(ordo(&raw, &lexicon));
             heads.push(capita(&raw, &lexicon));
             loci.push(Locus {
                 pagina: paged.then_some(i as u32 + 1),
                 ordo: loci.len() as u32 + 1,
             });
-            entries.push(Entry {
-                claves: Vec::new(),
-                verba,
-                raw,
-            });
+            texts.push(raw);
         }
     }
     Volumen {
@@ -589,18 +630,177 @@ pub fn bind_with(
             liber: slug.to_string(),
             nomen: titulus.nomen.clone().unwrap_or_else(|| line(slug)),
             claves: titulus.claves.clone(),
-            entries,
+            entries: Vec::new(),
         },
         loci,
-        ordines,
-        capita: heads,
+        index: Index::build(&ordines, &heads),
+        longitudo: texts.iter().map(|t| length(t) as u32).collect(),
+        textus: Textus::Memoria(texts),
         tabulae,
         concordantia: lexicon,
+        propria,
         sectiones: titulus.sectiones.clone(),
         aetas: titulus.aetas.clone(),
         paginae: pages.len(),
         pictae: pages.iter().filter(|p| p.is_none()).count(),
     }
+}
+
+/// What a kept index is made from: the way books are prepared, the book file
+/// (its size and time), the passage length, and the Operator's concordance.
+/// If any of these changes, the index is made anew.
+fn signum_indicis(size: u64, time: u64, signa: usize, common: &Concordantia) -> u64 {
+    index::signum(&[
+        VERSIO,
+        &size.to_le_bytes(),
+        &time.to_le_bytes(),
+        &(signa as u64).to_le_bytes(),
+        common.lines().as_bytes(),
+    ])
+}
+
+/// Writes a file whole or not at all: to a side file, then into its place.
+fn write_whole(path: &Path, bytes: &[u8]) -> bool {
+    let tmp = path.with_extension("tmp");
+    if fs::write(&tmp, bytes).is_ok() && fs::rename(&tmp, path).is_ok() {
+        return true;
+    }
+    let _ = fs::remove_file(&tmp);
+    false
+}
+
+/// Keeps a bound book on disk: its passages' text in `passus`, its index and
+/// all else in `indicis`. The book then holds its text on disk; if it cannot
+/// be kept, it holds it in memory as before.
+fn servare(mut v: Volumen, indicis: &Path, passus: &Path, key: u64) -> Volumen {
+    let Textus::Memoria(texts) = &v.textus else {
+        return v;
+    };
+    let mut body = Vec::new();
+    let mut spans = Vec::with_capacity(texts.len());
+    for t in texts {
+        spans.push((body.len() as u64, t.len() as u32));
+        body.extend_from_slice(t.as_bytes());
+    }
+    let mut out = SIGNUM_INDICIS.to_vec();
+    index::put64(&mut out, key);
+    index::put64(&mut out, body.len() as u64);
+    for n in [v.paginae, v.pictae, v.tabulae, v.passus()] {
+        index::put(&mut out, n as u32);
+    }
+    for l in &v.loci {
+        index::put(&mut out, l.pagina.unwrap_or(0));
+        index::put(&mut out, l.ordo);
+    }
+    for &n in &v.longitudo {
+        index::put(&mut out, n);
+    }
+    for &(at, len) in &spans {
+        index::put64(&mut out, at);
+        index::put(&mut out, len);
+    }
+    let propria = v.propria.lines();
+    index::put(&mut out, propria.len() as u32);
+    out.extend_from_slice(propria.as_bytes());
+    v.index.bytes(&mut out);
+    if let Some(dir) = indicis.parent() {
+        let _ = fs::create_dir_all(dir);
+    }
+    if write_whole(passus, &body) && write_whole(indicis, &out) {
+        v.textus = Textus::Liber(passus.to_path_buf(), spans);
+    }
+    v
+}
+
+/// Reads back a book kept by `servare`, if its index is of this very book file,
+/// passage length and concordance (`key`), is whole, and its text file is the
+/// one it was kept with. Anything amiss gives none, and the book is prepared
+/// anew.
+fn recuperare(
+    indicis: &Path,
+    passus: &Path,
+    key: u64,
+    slug: &str,
+    titulus: &Titulus,
+    common: &Concordantia,
+) -> Option<Volumen> {
+    let bytes = fs::read(indicis).ok()?;
+    let mut at = SIGNUM_INDICIS.len();
+    if !bytes.starts_with(SIGNUM_INDICIS) || index::take64(&bytes, &mut at)? != key {
+        return None;
+    }
+    let body_len = index::take64(&bytes, &mut at)?;
+    if fs::metadata(passus).ok()?.len() != body_len {
+        return None;
+    }
+    let mut n4 = || index::take(&bytes, &mut at).map(|n| n as usize);
+    let (paginae, pictae, tabulae, n) = (n4()?, n4()?, n4()?, n4()?);
+    if n > bytes.len() / 8 || pictae > paginae {
+        return None;
+    }
+    let mut loci = Vec::with_capacity(n);
+    for _ in 0..n {
+        let pagina = index::take(&bytes, &mut at)?;
+        let ordo = index::take(&bytes, &mut at)?;
+        if pagina as usize > paginae {
+            return None;
+        }
+        loci.push(Locus {
+            pagina: (pagina > 0).then_some(pagina),
+            ordo,
+        });
+    }
+    let mut longitudo = Vec::with_capacity(n);
+    for _ in 0..n {
+        longitudo.push(index::take(&bytes, &mut at)?);
+    }
+    let mut spans = Vec::with_capacity(n);
+    for _ in 0..n {
+        let start = index::take64(&bytes, &mut at)?;
+        let len = index::take(&bytes, &mut at)?;
+        if start.checked_add(u64::from(len))? > body_len {
+            return None;
+        }
+        spans.push((start, len));
+    }
+    let plen = index::take(&bytes, &mut at)? as usize;
+    let propria = std::str::from_utf8(bytes.get(at..at.checked_add(plen)?)?).ok()?;
+    at += plen;
+    let propria = Concordantia::from_lines(propria);
+    let ix = Index::read(&bytes, &mut at)?;
+    if at != bytes.len() || ix.len() != n {
+        return None;
+    }
+    Some(Volumen {
+        liber: Liber {
+            liber: slug.to_string(),
+            nomen: titulus.nomen.clone().unwrap_or_else(|| line(slug)),
+            claves: titulus.claves.clone(),
+            entries: Vec::new(),
+        },
+        loci,
+        index: ix,
+        longitudo,
+        textus: Textus::Liber(passus.to_path_buf(), spans),
+        sectiones: titulus.sectiones.clone(),
+        concordantia: common.with(&propria),
+        propria,
+        tabulae,
+        aetas: titulus.aetas.clone(),
+        paginae,
+        pictae,
+    })
+}
+
+/// A file's size and time (seconds since 1970), if it can be read.
+fn stamp(path: &Path) -> Option<(u64, u64)> {
+    let meta = fs::metadata(path).ok()?;
+    let time = meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_secs());
+    Some((meta.len(), time))
 }
 
 /// What was read of a PDF, as kept on disk: a first line naming the book file's
@@ -733,6 +933,8 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
         .flatten()
         .map(|e| e.path())
         .filter(|p| p.is_file() && kind(p).is_some())
+        // the concordance is a text file in the folder, but no book
+        .filter(|p| p.file_name().and_then(|n| n.to_str()) != Some(concordantia::FILE))
         .collect();
     paths.sort();
     let mut volumina = Vec::new();
@@ -758,26 +960,41 @@ pub fn load(dir: &Path, signa: usize, say: &mut dyn FnMut(String)) -> Vec<Volume
             say(format!("{shown}: too large to read; it is left alone."));
             continue;
         }
-        let pages = if kind(&path).as_deref() == Some("pdf") {
-            let kept = home.join(LECTA).join(format!("{name}.txt"));
-            pdf_pages(&path, &kept, &shown, say).map(|p| (p, true))
-        } else {
-            text_pages(&path)
+        // the prepared book, if it was kept and nothing it was made from has
+        // changed; else read (or take the kept reading), prepare and keep it
+        let Some((size, time)) = stamp(&path) else {
+            say(format!("{shown}: cannot be read."));
+            continue;
         };
-        let (pages, paged) = match pages {
-            Ok(p) => p,
-            Err(e) => {
-                say(format!("{shown}: {e}"));
-                continue;
+        let key = signum_indicis(size, time, signa, &common);
+        let indicis = home.join(LECTA).join(format!("{name}.index"));
+        let passus = home.join(LECTA).join(format!("{name}.passus"));
+        let v = match recuperare(&indicis, &passus, key, stem, &header, &common) {
+            Some(v) => v,
+            None => {
+                let pages = if kind(&path).as_deref() == Some("pdf") {
+                    let kept = home.join(LECTA).join(format!("{name}.txt"));
+                    pdf_pages(&path, &kept, &shown, say).map(|p| (p, true))
+                } else {
+                    text_pages(&path)
+                };
+                let (pages, paged) = match pages {
+                    Ok(p) => p,
+                    Err(e) => {
+                        say(format!("{shown}: {e}"));
+                        continue;
+                    }
+                };
+                let v = bind_with(stem, &header, &pages, paged, signa, &common);
+                servare(v, &indicis, &passus, key)
             }
         };
-        let v = bind_with(stem, &header, &pages, paged, signa, &common);
         let whole = (1..=72).filter(|n| scientia::opens(&v.liber, *n)).count();
         let open = (1..=72).filter(|n| opens(&v, *n)).count();
         let mut told = format!(
             "{} ({shown}): {} passages from {} pages",
             v.liber.nomen,
-            v.liber.entries.len(),
+            v.passus(),
             v.paginae - v.pictae
         );
         if v.pictae > 0 {
@@ -810,31 +1027,48 @@ pub fn opens(v: &Volumen, n: u32) -> bool {
     !aperta(v, &scientia::office_texts(n)).is_empty()
 }
 
+/// How a book opens to a spirit: whole, or only on the pages of some parts.
+enum Apertio {
+    Tota,
+    Partes(Vec<(u32, u32)>),
+}
+
+/// How a book opens to a spirit whose offices read like `offices`, if at all:
+/// whole if the book's own gate opens, else on the pages of each part whose
+/// gate opens.
+fn apertio(v: &Volumen, offices: &[String]) -> Option<Apertio> {
+    if scientia::open_to(&v.liber, offices) {
+        return Some(Apertio::Tota);
+    }
+    let parts: Vec<(u32, u32)> = v
+        .sectiones
+        .iter()
+        .filter(|p| scientia::claves_open(&p.claves, offices))
+        .map(|p| (p.a, p.b))
+        .collect();
+    (!parts.is_empty()).then_some(Apertio::Partes(parts))
+}
+
+/// Whether passage `e` is open under `a`. A passage without a page opens only
+/// with the whole book.
+fn patet(v: &Volumen, a: &Apertio, e: usize) -> bool {
+    match a {
+        Apertio::Tota => true,
+        Apertio::Partes(parts) => v.loci[e]
+            .pagina
+            .is_some_and(|p| parts.iter().any(|&(x, y)| (x..=y).contains(&p))),
+    }
+}
+
 /// The passages of a book open to a spirit whose offices read like `offices`:
 /// every passage if the book's own gate opens, else those standing on the
 /// pages of a part whose gate opens. A passage without a page opens only with
 /// the whole book.
 pub fn aperta(v: &Volumen, offices: &[String]) -> Vec<usize> {
-    if scientia::open_to(&v.liber, offices) {
-        return (0..v.liber.entries.len()).collect();
+    match apertio(v, offices) {
+        None => Vec::new(),
+        Some(a) => (0..v.passus()).filter(|&e| patet(v, &a, e)).collect(),
     }
-    let parts: Vec<&Sectio> = v
-        .sectiones
-        .iter()
-        .filter(|p| scientia::claves_open(&p.claves, offices))
-        .collect();
-    if parts.is_empty() {
-        return Vec::new();
-    }
-    v.loci
-        .iter()
-        .enumerate()
-        .filter(|(_, l)| {
-            l.pagina
-                .is_some_and(|p| parts.iter().any(|s| (s.a..=s.b).contains(&p)))
-        })
-        .map(|(e, _)| e)
-        .collect()
 }
 
 /// The name of the part a page stands in, if it has one.
@@ -868,17 +1102,24 @@ fn asked(question: &str, c: &Concordantia) -> Vec<String> {
 /// score, how many distinct words it holds, their plain weight (each once),
 /// which is what the question's part is measured by, and whether a heading
 /// held them.
-fn score(
-    materia: &[String],
+fn score<'h>(
     raritas: &[f64],
     pairs: &[(usize, usize)],
-    seq: &[String],
-    heads: &[Vec<String>],
+    kinds: &[(u32, usize)],
+    seq: &[u32],
+    heads: impl Iterator<Item = &'h [u32]>,
 ) -> (f64, usize, f64, bool) {
-    let mut counts = vec![0usize; materia.len()];
+    // which of the question's words a word of the book is, if any
+    let kind = |w: u32| {
+        kinds
+            .binary_search_by_key(&w, |&(id, _)| id)
+            .ok()
+            .map(|i| kinds[i].1)
+    };
+    let mut counts = vec![0usize; raritas.len()];
     let mut at: Vec<Option<usize>> = Vec::with_capacity(seq.len());
-    for w in seq {
-        let k = materia.binary_search(w).ok();
+    for &w in seq {
+        let k = kind(w);
         if let Some(k) = k {
             counts[k] += 1;
         }
@@ -898,16 +1139,15 @@ fn score(
         }
     }
     // the question's rarest word, if it is said more than once in the passage
-    let rarest = (0..materia.len())
+    let rarest = (0..raritas.len())
         .filter(|&k| raritas[k] > 0.0)
         .max_by(|&a, &b| raritas[a].total_cmp(&raritas[b]));
     let subject = rarest.filter(|&k| raritas[k] >= RARISSIMI && counts[k] >= 2);
     let headed = heads
-        .iter()
         .map(|h| {
             let mut ks: Vec<usize> = h
                 .iter()
-                .filter_map(|w| materia.binary_search(w).ok())
+                .filter_map(|&w| kind(w))
                 .filter(|&k| raritas[k] > 0.0)
                 .collect();
             ks.sort();
@@ -933,10 +1173,10 @@ pub fn consult_as(
 ) -> Vec<Lectio> {
     // the books, or the parts of them, open to this spirit; nothing closed is
     // ever a candidate to be handed
-    let (open, apertae): (Vec<&Volumen>, Vec<Vec<usize>>) = volumina
+    let (open, apertiones): (Vec<&Volumen>, Vec<Apertio>) = volumina
         .iter()
-        .map(|v| (v, aperta(v, offices)))
-        .filter(|(_, a)| !a.is_empty())
+        .filter_map(|v| apertio(v, offices).map(|a| (v, a)))
+        .filter(|(v, a)| (0..v.passus()).any(|e| patet(v, a, e)))
         .unzip();
     if open.is_empty() {
         return Vec::new();
@@ -950,21 +1190,32 @@ pub fn consult_as(
     materia.sort();
     materia.dedup();
     let materia = materia.as_slice();
+    // in each open book, the number each of the question's words has there
+    // (with its place among the question's words), sorted by number
+    let kinds: Vec<Vec<(u32, usize)>> = open
+        .iter()
+        .map(|v| {
+            let mut k: Vec<(u32, usize)> = materia
+                .iter()
+                .enumerate()
+                .filter_map(|(k, w)| v.index.id(w).map(|id| (id, k)))
+                .collect();
+            k.sort();
+            k
+        })
+        .collect();
     // How rare each word is in the open books, all their passages counted (a
     // word's rarity is a property of the book's language, and a part of a few
     // pages is too small to measure it; counting reveals nothing, for only open
     // passages are ever handed): a word held by one passage alone weighs a
     // little under one, a word held by all weighs nothing, as in `scientia`.
-    let total = open.iter().map(|v| v.liber.entries.len()).sum::<usize>() as f64;
-    let held: Vec<usize> = materia
-        .iter()
-        .map(|w| {
-            open.iter()
-                .flat_map(|v| &v.liber.entries)
-                .filter(|e| e.verba.binary_search(w).is_ok())
-                .count()
-        })
-        .collect();
+    let total = open.iter().map(|v| v.passus()).sum::<usize>() as f64;
+    let mut held = vec![0usize; materia.len()];
+    for (v, k) in open.iter().zip(&kinds) {
+        for &(id, k) in k {
+            held[k] += v.index.sedes(id).len();
+        }
+    }
     let rarity =
         |n: f64| ((total + 1.0) / (n + 1.0)).ln() / (total + 1.0).ln().max(f64::MIN_POSITIVE);
     let raritas: Vec<f64> = held
@@ -993,12 +1244,24 @@ pub fn consult_as(
         .zip(raritas)
         .map(|(&n, &r)| if n > 0 { r } else { ignotum })
         .sum();
-    // every passage that holds a fair part of the question: (score, book, passage)
+    // every open passage that holds a fair part of the question: (score, book,
+    // passage). Only a passage holding one of the question's words that has
+    // any weight can hold a fair part of it, so only those are weighed.
     let mut found: Vec<(f64, usize, usize)> = Vec::new();
     for (b, v) in open.iter().enumerate() {
-        for &e in &apertae[b] {
-            let seq = &v.ordines[e];
-            let (s, held, plain, headed) = score(materia, raritas, &pairs, seq, &v.capita[e]);
+        let mut candidates: Vec<u32> = kinds[b]
+            .iter()
+            .filter(|&&(_, k)| raritas[k] > 0.0)
+            .flat_map(|&(id, _)| v.index.sedes(id).iter().copied())
+            .collect();
+        candidates.sort();
+        candidates.dedup();
+        for e in candidates.into_iter().map(|e| e as usize) {
+            if !patet(v, &apertiones[b], e) {
+                continue;
+            }
+            let (s, held, plain, headed) =
+                score(raritas, &pairs, &kinds[b], v.index.seq(e), v.index.heads(e));
             // two of the question's words, or a heading naming its subject
             let enough = (held >= 2 || headed)
                 && plain >= PONDUS_LIBRI.min(whole)
@@ -1040,7 +1303,7 @@ pub fn consult_as(
     let mut spent = 0;
     let mut handed: Vec<(usize, usize)> = Vec::new();
     for &(_, b, e) in found.iter().take(near.min(PASSUS_MAXIMI)) {
-        let n = length(&open[b].liber.entries[e].raw);
+        let n = open[b].longitudo[e] as usize;
         if spent + n > budget {
             break;
         }
@@ -1052,10 +1315,10 @@ pub fn consult_as(
     handed.sort();
     handed
         .into_iter()
-        .map(|(b, e)| {
+        .filter_map(|(b, e)| {
             let v = open[b];
             let l = v.loci[e];
-            Lectio {
+            Some(Lectio {
                 liber: v.liber.nomen.clone(),
                 aetas: v.aetas.clone(),
                 locus: match l.pagina {
@@ -1065,8 +1328,8 @@ pub fn consult_as(
                     },
                     None => format!("part {}", l.ordo),
                 },
-                textus: v.liber.entries[e].raw.clone(),
-            }
+                textus: v.textus(e)?,
+            })
         })
         .collect()
 }

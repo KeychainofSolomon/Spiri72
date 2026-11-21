@@ -104,4 +104,9 @@ fn joined_letters_are_spelled_out() {
         purga("de\u{fb01}nition, \u{fb02}ow, di\u{fb00}er, o\u{fb03}ce"),
         "definition, flow, differ, office"
     );
+    // the long s of old printing
+    assert_eq!(
+        purga("\u{17f}oldiers of the Legion"),
+        "soldiers of the Legion"
+    );
 }

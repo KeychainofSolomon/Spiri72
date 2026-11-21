@@ -927,14 +927,20 @@ fn ask_with_books(
 
 /// As `assert_world_kept`, for a rite asked through the binding page, which
 /// also writes the spirit's own memory book (Spiri72's record, one plain file
-/// per spirit under `spiri72.liber`), never anything the spirit chose.
+/// per spirit under `spiri72.liber`), and where loading the books keeps what
+/// it prepared (`spiri72.volumina/.lecta`): never anything the spirit chose.
 fn assert_world_kept_by_the_page(root: &Path, before: &BTreeMap<String, Vec<u8>>, attack: &str) {
     let mut after = snapshot(root);
     after.retain(|path, _| {
         let own = path
             .strip_prefix("circulus/spiri72.liber/")
             .is_some_and(|name| !name.contains('/') && name.ends_with(".liber"));
-        !own
+        let prepared = path
+            .strip_prefix("circulus/spiri72.volumina/.lecta/")
+            .is_some_and(|name| {
+                !name.contains('/') && (name.ends_with(".index") || name.ends_with(".passus"))
+            });
+        !own && !prepared
     });
     for (path, bytes) in before {
         assert_eq!(

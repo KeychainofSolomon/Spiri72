@@ -143,6 +143,22 @@ Drafts for Pliny vol. I, Bowditch, The Prince and Behave are in the
 Operator's private storage (`claves/`). Tested in `tests/volumina.rs` and
 `tests/hostis.rs` (a closed part's secret never reaches the spirit).
 
+**The index** (built 2026-11-21, `src/index.rs`). Every book was held whole
+in memory, each word a string three times over: 23 books (20 MB of text)
+took 222 MB and 3.9 s to prepare at every start. Now, as search engines do
+it: each book's words are kept once and named by number, each passage is a
+run of numbers, and for each word the index lists the passages that hold it;
+the passages' text stays on disk (`.lecta/<book>.passus`) and only the few
+handed are read, made plain again as they are read; the whole prepared book
+is kept (`.lecta/<book>.index`), made anew when the book file, the passage
+length, the Operator's concordance or the way of preparing (`VERSIO`)
+changes, and anything amiss in it (cut short, a number out of range, a text
+file that no longer fits) makes it anew. Measured on 23 books: 36 MB, a start
+of 0.09 s, a search of 1.5 ms (was 97 ms, for only passages holding the
+question's words are weighed). The search answers exactly as before: all 167
+questions of the measure gave the same passages, word for word. Also: the
+long ſ is read as s, and `concordantia.txt` is no longer taken for a book.
+
 Later (ruled 2026-11-21, not built): **books of pictures.** A book whose pages
 are only pictures and hold no readable script cannot be searched; the eyes
 could describe each page once (kept like the text of other books, read again

@@ -210,6 +210,40 @@ impl Concordantia {
         self.verba.len() + self.phrases.len()
     }
 
+    /// The concordance as lines, one word or phrase to a line, a tab, then the
+    /// form it is read as (words are roots: letters and digits, no tabs).
+    pub fn lines(&self) -> String {
+        let mut out = String::new();
+        for (p, f) in &self.phrases {
+            out.push_str(&format!("{}\t{f}\n", p.join(" ")));
+        }
+        for (w, f) in &self.verba {
+            out.push_str(&format!("{w}\t{f}\n"));
+        }
+        out
+    }
+
+    /// Reads back what `lines` wrote; a line that is not word, tab, form is
+    /// skipped.
+    pub fn from_lines(text: &str) -> Concordantia {
+        let mut c = Concordantia::default();
+        for line in text.lines() {
+            let Some((p, f)) = line.split_once('\t') else {
+                continue;
+            };
+            let item: Vec<String> = p
+                .split(' ')
+                .filter(|w| !w.is_empty())
+                .map(String::from)
+                .collect();
+            if !f.is_empty() && !f.contains(char::is_whitespace) {
+                c.add(&item, f);
+            }
+        }
+        c.order();
+        c
+    }
+
     /// Every word and phrase it sets, with the form each is read as.
     pub fn groups(&self) -> Vec<(String, String)> {
         let mut v: Vec<(String, String)> = self

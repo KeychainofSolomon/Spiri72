@@ -3,6 +3,7 @@ pub mod aula;
 pub mod concordantia;
 pub mod forma;
 pub mod fors;
+pub mod index;
 pub mod ingenium;
 pub mod initium;
 pub mod latina;
